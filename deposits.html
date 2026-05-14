@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - NovaTrade Finance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #5D5FEF;
+            --success: #27AE60;
+            --danger: #EB5757;
+            --warning: #F2994A;
+            --dark: #1A202C;
+            --bg: #F4F7FE;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--dark); padding-bottom: 50px; }
+
+        /* Sidebar simple ou Header */
+        .admin-header {
+            background: white; padding: 20px 40px; display: flex; 
+            justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 30px;
+        }
+        .admin-header h2 { font-weight: 800; font-size: 22px; color: var(--primary); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card {
+            background: white; padding: 25px; border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 20px;
+        }
+        .stat-icon {
+            width: 55px; height: 55px; border-radius: 15px; display: flex;
+            align-items: center; justify-content: center; font-size: 24px;
+        }
+        .stat-info h3 { font-size: 13px; color: #718096; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-info p { font-size: 24px; font-weight: 800; color: var(--dark); }
+
+        /* Onglets */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: #E2E8F0; padding: 5px; border-radius: 12px; width: fit-content; }
+        .tab-btn {
+            padding: 10px 20px; border: none; background: none; border-radius: 10px;
+            font-weight: 700; color: #718096; cursor: pointer; transition: 0.3s;
+        }
+        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+        /* Tableaux */
+        .card-table { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.03); display: none; }
+        .card-table.active { display: block; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #F8FAFC; padding: 15px 20px; text-align: left; font-size: 12px; color: #A0AEC0; text-transform: uppercase; }
+        td { padding: 18px 20px; border-top: 1px solid #F1F5F9; font-size: 14px; color: #4A5568; font-weight: 600; }
+        
+        .badge { padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; }
+        .badge-success { background: #E3FBE3; color: var(--success); }
+        .badge-danger { background: #FFF5F5; color: var(--danger); }
+        .badge-warning { background: #FFF9E6; color: var(--warning); }
+
+        /* Pagination */
+        .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 30px; }
+        .page-link { 
+            padding: 8px 16px; background: white; border-radius: 8px; 
+            text-decoration: none; color: var(--dark); font-weight: 700; border: 1px solid #E2E8F0;
+        }
+        .page-link.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .btn-action {
+            padding: 6px 12px; border-radius: 8px; border: none; 
+            font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .btn-approve { background: var(--success); color: white; }
+    </style>
+</head>
+<body>
+
+    <header class="admin-header">
+        <h2><i class="fa fa-chart-line"></i> NovaTrade Admin</h2>
+        <div class="user-info">
+            <span style="font-weight: 700; color: #4A5568;">Dashboard Finance</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #EBF8FF; color: #3182CE;"><i class="fa fa-users"></i></div>
+                <div class="stat-info"><h3>Total Actifs</h3><p>{{ total_actifs }}</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #FFF5F5; color: #E53E3E;"><i class="fa fa-user-slash"></i></div>
+                <div class="stat-info"><h3>Total Inactifs</h3><p>{{ total_inactifs }}</p></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #E3FBE3; color: #27AE60;"><i class="fa fa-wallet"></i></div>
+                <div class="stat-info"><h3>Dépôts en attente</h3><p>{{ depots|length }}</p></div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('tab-users', this)">Utilisateurs</button>
+            <button class="tab-btn" onclick="showTab('tab-deposits', this)">Dépôts à Valider ({{ depots|length }})</button>
+            <button class="tab-btn" onclick="showTab('tab-withdrawals', this)">Retraits Réussis</button>
+        </div>
+
+        <div id="tab-users" class="card-table active">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Contact</th>
+                        <th>Parrain</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td><strong>{{ u.username }}</strong><br><small style="color:#A0AEC0">{{ u.email }}</small></td>
+                        <td>{{ u.phone }}</td>
+                        <td>{{ u.parrain }}</td>
+                        <td>
+                            {% if u.premier_depot %}
+                            <span class="badge badge-success">ACTIF</span>
+                            {% else %}
+                            <span class="badge badge-danger">INACTIF</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ u.date_creation.strftime('%d/%m/%Y') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="pagination">
+                {% for page_num in users_paginated.iter_pages() %}
+                    {% if page_num %}
+                        <a href="{{ url_for('admin_deposits', page=page_num) }}" class="page-link {{ 'active' if page_num == users_paginated.page else '' }}">{{ page_num }}</a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="tab-deposits" class="card-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Numéro Mobile</th>
+                        <th>Montant</th>
+                        <th>Opérateur</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in depots %}
+                    <tr>
+                        <td>{{ d.username_display }}</td>
+                        <td>{{ d.phone }}</td>
+                        <td style="color: var(--primary); font-weight: 800;">{{ d.montant }} XOF</td>
+                        <td><span class="badge badge-warning">{{ d.operator }}</span></td>
+                        <td>
+                            <form action="/admin/approve-deposit/{{ d.id }}" method="POST">
+                                <button type="submit" class="btn-action btn-approve">Valider l'activation</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tab-withdrawals" class="card-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Numéro</th>
+                        <th>Montant</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in retraits %}
+                    <tr>
+                        <td>{{ r.username_display }}</td>
+                        <td>{{ r.phone }}</td>
+                        <td style="color: var(--success);">+{{ r.montant }} XOF</td>
+                        <td>{{ r.date.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td><span class="badge badge-success">Terminé</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        function showTab(tabId, btn) {
+            // Masquer tous les tableaux
+            document.querySelectorAll('.card-table').forEach(table => table.classList.remove('active'));
+            // Désactiver tous les boutons
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            // Afficher la cible
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+    </script>
+</body>
+</html>
+
