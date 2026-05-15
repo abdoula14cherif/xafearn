@@ -4,42 +4,30 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import json
 import asyncio
-from http.server import BaseHTTPRequestHandler
+from flask import Flask, request, Response
 from lib.config import BOT_TOKEN
 from lib.keyboards import main_keyboard
 from telegram import Bot
 
+app = Flask(__name__)
 bot = Bot(token=BOT_TOKEN)
 
-class handler(BaseHTTPRequestHandler):
-    def log_message(self, format, *args):
-        pass
+@app.route("/api/webhook", methods=["GET"])
+def health():
+    return "XAFEARN BOT OK", 200
 
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header("Content-Type", "text/plain")
-        self.end_headers()
-        self.wfile.write(b"XAFEARN BOT OK")
-
-    def do_POST(self):
-        try:
-            length = int(self.headers.get("Content-Length", 0))
-            if length == 0:
-                self._ok()
-                return
-            body = self.rfile.read(length)
-            update = json.loads(body.decode("utf-8"))
-            asyncio.run(process_update(update))
-        except Exception as e:
-            print(f"Error: {e}")
-        self._ok()
-
-    def _ok(self):
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(b'{"ok":true}')
-
+@app.route("/api/webhook", methods=["POST"])
+def webhook():
+    try:
+        body = request.get_json(force=True)
+        if body:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(process_update(body))
+            loop.close()
+    except Exception as e:
+        print(f"Webhook error: {e}")
+    return Response('{"ok":true}', mimetype="application/json")
 
 async def process_update(body):
     try:
@@ -78,13 +66,13 @@ async def process_update(body):
                 if await handle_admin_command(uid, text):
                     return
                 admin_map = {
-                    "👥 Tous les Users":     handle_all_users,
-                    "📊 Statistiques":        handle_admin_panel,
-                    "⚙️ Modifier les Prix":  handle_modify_prices,
-                    "➕ Ajouter une Tâche":  handle_add_task_start,
-                    "💸 Demandes Retrait":   handle_list_withdrawals,
-                    "🚫 Bannir / Débannir":  handle_ban_start,
-                    "📢 Broadcast":           handle_broadcast_start,
+                    "👥 Tous les Users":    handle_all_users,
+                    "📊 Statistiques":       handle_admin_panel,
+                    "⚙️ Modifier les Prix": handle_modify_prices,
+                    "➕ Ajouter une Tâche": handle_add_task_start,
+                    "💸 Demandes Retrait":  handle_list_withdrawals,
+                    "🚫 Bannir / Débannir": handle_ban_start,
+                    "📢 Broadcast":          handle_broadcast_start,
                 }
                 if text in admin_map:
                     await admin_map[text](uid)
@@ -97,14 +85,14 @@ async def process_update(body):
             if text.startswith("/start"):
                 parts = text.split(" ")
                 await handle_start(uid, uname, parts[1] if len(parts) > 1 else None)
-            elif text == "🎁 Bonus Journalier":  await handle_bonus(uid)
-            elif text == "💰 Mon Solde":          await handle_solde(uid)
-            elif text == "👥 Parrainage":          await handle_parrainage(uid)
-            elif text == "✅ Tâches du Jour":      await handle_tasks(uid)
-            elif text == "📋 Historique":          await handle_historique(uid)
-            elif text == "💸 Retrait":             await handle_retrait_start(uid)
-            elif text == "🏆 Classement":          await handle_classement(uid)
-            elif text == "❓ Aide":               await handle_aide(uid)
+            elif text == "🎁 Bonus Journalier": await handle_bonus(uid)
+            elif text == "💰 Mon Solde":         await handle_solde(uid)
+            elif text == "👥 Parrainage":         await handle_parrainage(uid)
+            elif text == "✅ Tâches du Jour":     await handle_tasks(uid)
+            elif text == "📋 Historique":         await handle_historique(uid)
+            elif text == "💸 Retrait":            await handle_retrait_start(uid)
+            elif text == "🏆 Classement":         await handle_classement(uid)
+            elif text == "❓ Aide":              await handle_aide(uid)
             elif text == "/admin" and is_admin(uid):
                 await handle_admin_panel(uid)
 
@@ -134,3 +122,6 @@ async def process_update(body):
 
     except Exception as e:
         print(f"process_update error: {e}")
+
+# Point d'entrée Vercel
+handler = app
