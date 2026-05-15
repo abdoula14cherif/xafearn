@@ -57,4 +57,5 @@ async def process_update(body):
             except:
                 pass
 
-handler = app
+# Vercel entry point
+application = app
