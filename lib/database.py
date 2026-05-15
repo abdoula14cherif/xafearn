@@ -1,3 +1,10 @@
+import httpx
+# Fix proxy conflict
+try:
+    httpx._config.DEFAULT_TIMEOUT_CONFIG = httpx.Timeout(30.0)
+except:
+    pass
+
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
