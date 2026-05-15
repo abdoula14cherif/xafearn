@@ -242,3 +242,7 @@ def get_stats():
         "total_paid": sum(w.get("amount", 0) for w in ws if w.get("status") == "approved"),
         "pending_withdrawals": sum(1 for w in ws if w.get("status") == "pending"),
     }
+def get_client_headers():
+    return HEADERS
+
+BASE = f"{SUPABASE_URL}/rest/v1"
