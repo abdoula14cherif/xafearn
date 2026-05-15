@@ -1,58 +1,95 @@
-import httpx
-# Fix proxy conflict
-try:
-    httpx._config.DEFAULT_TIMEOUT_CONFIG = httpx.Timeout(30.0)
-except:
-    pass
-
-import sys
-import os
+import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from supabase import create_client
+import requests
 from lib.config import SUPABASE_URL, SUPABASE_KEY
 
-def get_client():
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
+}
+
+BASE = f"{SUPABASE_URL}/rest/v1"
+
+# ── USERS ──────────────────────────────────────────
 
 def add_user(user_id, username, referred_by=None):
     try:
-        get_client().table("users").insert({
-            "user_id": user_id, "username": username,
-            "referred_by": referred_by, "balance": 0,
-            "is_banned": False, "is_registered": False
-        }).execute()
+        requests.post(f"{BASE}/users", headers=HEADERS, json={
+            "user_id": user_id,
+            "username": username,
+            "referred_by": referred_by,
+            "balance": 0,
+            "is_banned": False,
+            "is_registered": False
+        })
     except:
         pass
 
 def get_user(user_id):
-    r = get_client().table("users").select("*").eq("user_id", user_id).execute()
-    return r.data[0] if r.data else None
+    r = requests.get(f"{BASE}/users",
+        headers=HEADERS,
+        params={"user_id": f"eq.{user_id}"}
+    )
+    data = r.json()
+    return data[0] if data else None
 
 def get_all_users():
-    return get_client().table("users").select("*").order("joined_at", desc=True).execute().data
+    r = requests.get(f"{BASE}/users",
+        headers=HEADERS,
+        params={"order": "joined_at.desc"}
+    )
+    return r.json() or []
 
 def activate_user(user_id):
-    get_client().table("users").update({"is_registered": True}).eq("user_id", user_id).execute()
+    requests.patch(f"{BASE}/users",
+        headers=HEADERS,
+        params={"user_id": f"eq.{user_id}"},
+        json={"is_registered": True}
+    )
 
 def update_balance(user_id, amount):
     user = get_user(user_id)
     if user:
         new_balance = max(0, user["balance"] + amount)
-        get_client().table("users").update({"balance": new_balance}).eq("user_id", user_id).execute()
+        requests.patch(f"{BASE}/users",
+            headers=HEADERS,
+            params={"user_id": f"eq.{user_id}"},
+            json={"balance": new_balance}
+        )
 
 def set_last_bonus(user_id, today):
-    get_client().table("users").update({"last_bonus": str(today)}).eq("user_id", user_id).execute()
+    requests.patch(f"{BASE}/users",
+        headers=HEADERS,
+        params={"user_id": f"eq.{user_id}"},
+        json={"last_bonus": str(today)}
+    )
 
 def ban_user(user_id, state=True):
-    get_client().table("users").update({"is_banned": state}).eq("user_id", user_id).execute()
+    requests.patch(f"{BASE}/users",
+        headers=HEADERS,
+        params={"user_id": f"eq.{user_id}"},
+        json={"is_banned": state}
+    )
 
 def get_referral_count(user_id):
-    r = get_client().table("users").select("user_id", count="exact").eq("referred_by", user_id).eq("is_registered", True).execute()
-    return r.count or 0
+    r = requests.get(f"{BASE}/users",
+        headers={**HEADERS, "Prefer": "count=exact"},
+        params={"referred_by": f"eq.{user_id}", "is_registered": "eq.true"}
+    )
+    count = r.headers.get("Content-Range", "0")
+    try:
+        return int(count.split("/")[-1])
+    except:
+        return len(r.json() or [])
 
 def get_top_referrers(limit=10):
-    users = get_client().table("users").select("user_id, username, balance").eq("is_registered", True).execute().data
+    users = requests.get(f"{BASE}/users",
+        headers=HEADERS,
+        params={"is_registered": "eq.true"}
+    ).json() or []
     result = []
     for u in users:
         count = get_referral_count(u["user_id"])
@@ -60,79 +97,143 @@ def get_top_referrers(limit=10):
     result.sort(key=lambda x: x["referral_count"], reverse=True)
     return result[:limit]
 
+# ── CONFIG ─────────────────────────────────────────
+
 def get_config(key):
-    r = get_client().table("config").select("value").eq("key", key).execute()
-    if r.data:
+    r = requests.get(f"{BASE}/config",
+        headers=HEADERS,
+        params={"key": f"eq.{key}"}
+    )
+    data = r.json()
+    if data:
         try:
-            return int(r.data[0]["value"])
+            return int(data[0]["value"])
         except:
             return 0
     defaults = {"bonus_daily": 100, "bonus_referral": 75, "bonus_task": 35, "min_withdrawal": 500}
     return defaults.get(key, 0)
 
 def set_config(key, value):
-    try:
-        get_client().table("config").update({"value": str(value)}).eq("key", key).execute()
-    except:
-        get_client().table("config").insert({"key": key, "value": str(value)}).execute()
+    requests.patch(f"{BASE}/config",
+        headers=HEADERS,
+        params={"key": f"eq.{key}"},
+        json={"value": str(value)}
+    )
+
+# ── TÂCHES ─────────────────────────────────────────
 
 def get_tasks_today():
     from datetime import date
-    return get_client().table("tasks").select("*").eq("date", str(date.today())).eq("is_active", True).execute().data
+    r = requests.get(f"{BASE}/tasks",
+        headers=HEADERS,
+        params={"date": f"eq.{date.today()}", "is_active": "eq.true"}
+    )
+    return r.json() or []
 
 def add_task(description, link, reward):
     from datetime import date
-    get_client().table("tasks").insert({
-        "description": description, "link": link,
-        "reward": reward, "date": str(date.today()), "is_active": True
-    }).execute()
+    requests.post(f"{BASE}/tasks",
+        headers=HEADERS,
+        json={
+            "description": description,
+            "link": link,
+            "reward": reward,
+            "date": str(date.today()),
+            "is_active": True
+        }
+    )
 
 def user_completed_task(user_id, task_id):
-    r = get_client().table("user_tasks").select("*").eq("user_id", user_id).eq("task_id", task_id).execute()
-    return len(r.data) > 0
+    r = requests.get(f"{BASE}/user_tasks",
+        headers=HEADERS,
+        params={"user_id": f"eq.{user_id}", "task_id": f"eq.{task_id}"}
+    )
+    return len(r.json() or []) > 0
 
 def complete_task(user_id, task_id):
     try:
-        get_client().table("user_tasks").insert({"user_id": user_id, "task_id": task_id}).execute()
-        return True
+        r = requests.post(f"{BASE}/user_tasks",
+            headers=HEADERS,
+            json={"user_id": user_id, "task_id": task_id}
+        )
+        return r.status_code in [200, 201]
     except:
         return False
 
+# ── RETRAITS ───────────────────────────────────────
+
 def create_withdrawal(user_id, amount, method, number, name):
-    r = get_client().table("withdrawals").insert({
-        "user_id": user_id, "amount": amount, "method": method,
-        "number": number, "name": name, "status": "pending"
-    }).execute()
-    return r.data[0]["id"] if r.data else None
+    r = requests.post(f"{BASE}/withdrawals",
+        headers=HEADERS,
+        json={
+            "user_id": user_id,
+            "amount": amount,
+            "method": method,
+            "number": number,
+            "name": name,
+            "status": "pending"
+        }
+    )
+    data = r.json()
+    return data[0]["id"] if data else None
 
 def get_pending_withdrawals():
-    return get_client().table("withdrawals").select("*").eq("status", "pending").execute().data
+    r = requests.get(f"{BASE}/withdrawals",
+        headers=HEADERS,
+        params={"status": "eq.pending"}
+    )
+    return r.json() or []
 
 def get_withdrawal_by_id(w_id):
-    r = get_client().table("withdrawals").select("*").eq("id", w_id).execute()
-    return r.data[0] if r.data else None
+    r = requests.get(f"{BASE}/withdrawals",
+        headers=HEADERS,
+        params={"id": f"eq.{w_id}"}
+    )
+    data = r.json()
+    return data[0] if data else None
 
 def update_withdrawal_status(w_id, status):
-    get_client().table("withdrawals").update({"status": status}).eq("id", w_id).execute()
+    requests.patch(f"{BASE}/withdrawals",
+        headers=HEADERS,
+        params={"id": f"eq.{w_id}"},
+        json={"status": status}
+    )
 
 def get_user_withdrawals(user_id):
-    return get_client().table("withdrawals").select("*").eq("user_id", user_id).order("requested_at", desc=True).limit(10).execute().data
+    r = requests.get(f"{BASE}/withdrawals",
+        headers=HEADERS,
+        params={"user_id": f"eq.{user_id}", "order": "requested_at.desc", "limit": "10"}
+    )
+    return r.json() or []
+
+# ── TRANSACTIONS ───────────────────────────────────
 
 def add_transaction(user_id, type_, amount, description):
     try:
-        get_client().table("transactions").insert({
-            "user_id": user_id, "type": type_,
-            "amount": amount, "description": description
-        }).execute()
+        requests.post(f"{BASE}/transactions",
+            headers=HEADERS,
+            json={
+                "user_id": user_id,
+                "type": type_,
+                "amount": amount,
+                "description": description
+            }
+        )
     except:
         pass
 
 def get_user_transactions(user_id):
-    return get_client().table("transactions").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(15).execute().data
+    r = requests.get(f"{BASE}/transactions",
+        headers=HEADERS,
+        params={"user_id": f"eq.{user_id}", "order": "created_at.desc", "limit": "15"}
+    )
+    return r.json() or []
+
+# ── STATS ──────────────────────────────────────────
 
 def get_stats():
     users = get_all_users()
-    ws = get_client().table("withdrawals").select("*").execute().data
+    ws = requests.get(f"{BASE}/withdrawals", headers=HEADERS).json() or []
     return {
         "total_users": len(users),
         "registered_users": sum(1 for u in users if u.get("is_registered")),
