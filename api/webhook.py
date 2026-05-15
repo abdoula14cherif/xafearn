@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import json
 import asyncio
 from http.server import BaseHTTPRequestHandler
-from lib.config import ADMIN_IDS, WEBHOOK_SECRET, BOT_TOKEN
+from lib.config import BOT_TOKEN
 from lib.keyboards import main_keyboard
 from telegram import Bot
 
@@ -28,11 +28,6 @@ class handler(BaseHTTPRequestHandler):
                 self._ok()
                 return
             body = self.rfile.read(length)
-            secret = self.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-            if WEBHOOK_SECRET and secret != WEBHOOK_SECRET:
-                self.send_response(403)
-                self.end_headers()
-                return
             update = json.loads(body.decode("utf-8"))
             asyncio.run(process_update(update))
         except Exception as e:
