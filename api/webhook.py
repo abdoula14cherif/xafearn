@@ -1,11 +1,10 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import json, asyncio
+import asyncio
 from flask import Flask, request, Response
 from telegram import Bot
 from lib.config import BOT_TOKEN
-from lib.keyboards import main_keyboard
 
 app = Flask(__name__)
 bot = Bot(token=BOT_TOKEN)
@@ -28,97 +27,34 @@ def webhook():
     return Response('{"ok":true}', mimetype="application/json")
 
 async def process_update(body):
+    uid = None
     try:
-        from handlers.user import (
-            handle_start, handle_check_join, handle_bonus, handle_solde,
-            handle_parrainage, handle_tasks, handle_task_complete,
-            handle_historique, handle_classement, handle_aide
-        )
-        from handlers.admin import (
-            is_admin, handle_admin_panel, handle_all_users, handle_modify_prices,
-            handle_add_task_start, handle_list_withdrawals, handle_ban_start,
-            handle_broadcast_start, handle_admin_session, handle_admin_command,
-            admin_sessions
-        )
-        from handlers.retrait import (
-            handle_retrait_start, handle_retrait_method, handle_retrait_step,
-            handle_cancel_retrait, handle_retrait_decision, retrait_sessions
-        )
-
         if "message" in body:
-            msg   = body["message"]
-            user  = msg.get("from", {})
-            uid   = user.get("id")
-            uname = user.get("username") or user.get("first_name", "User")
-            text  = msg.get("text", "")
-            if not uid or not text:
-                return
+            uid = body["message"]["from"]["id"]
+            text = body["message"].get("text", "")
+            uname = body["message"]["from"].get("username") or body["message"]["from"].get("first_name", "User")
 
-            if uid in retrait_sessions:
-                await handle_retrait_step(uid, text)
+            # Test import
+            try:
+                from lib.keyboards import main_keyboard
+                from lib.database import get_user, add_user
+                from handlers.user import handle_start
+            except Exception as import_err:
+                await bot.send_message(uid, f"❌ Erreur import:\n`{import_err}`", parse_mode="Markdown")
                 return
-            if is_admin(uid) and uid in admin_sessions:
-                await handle_admin_session(uid, text)
-                return
-            if is_admin(uid):
-                if await handle_admin_command(uid, text):
-                    return
-                admin_map = {
-                    "👥 Tous les Users":    handle_all_users,
-                    "📊 Statistiques":       handle_admin_panel,
-                    "⚙️ Modifier les Prix": handle_modify_prices,
-                    "➕ Ajouter une Tâche": handle_add_task_start,
-                    "💸 Demandes Retrait":  handle_list_withdrawals,
-                    "🚫 Bannir / Débannir": handle_ban_start,
-                    "📢 Broadcast":          handle_broadcast_start,
-                }
-                if text in admin_map:
-                    await admin_map[text](uid)
-                    return
-                if text == "🔙 Mode Utilisateur":
-                    await bot.send_message(uid, "👤 *Mode Utilisateur*",
-                        parse_mode="Markdown", reply_markup=main_keyboard())
-                    return
 
             if text.startswith("/start"):
                 parts = text.split(" ")
                 await handle_start(uid, uname, parts[1] if len(parts) > 1 else None)
-            elif text == "🎁 Bonus Journalier": await handle_bonus(uid)
-            elif text == "💰 Mon Solde":         await handle_solde(uid)
-            elif text == "👥 Parrainage":         await handle_parrainage(uid)
-            elif text == "✅ Tâches du Jour":     await handle_tasks(uid)
-            elif text == "📋 Historique":         await handle_historique(uid)
-            elif text == "💸 Retrait":            await handle_retrait_start(uid)
-            elif text == "🏆 Classement":         await handle_classement(uid)
-            elif text == "❓ Aide":              await handle_aide(uid)
-            elif text == "/admin" and is_admin(uid):
-                await handle_admin_panel(uid)
-
-        elif "callback_query" in body:
-            cq      = body["callback_query"]
-            uid     = cq["from"]["id"]
-            data    = cq.get("data", "")
-            msg_id  = cq["message"]["message_id"]
-            chat_id = cq["message"]["chat"]["id"]
-            cq_id   = cq.get("id", "")
-            try:
-                await bot.answer_callback_query(cq_id)
-            except:
-                pass
-
-            if data == "check_join":
-                await handle_check_join(uid, msg_id)
-            elif data.startswith("task_"):
-                await handle_task_complete(uid, int(data.split("_")[1]), cq_id)
-            elif data.startswith("method_"):
-                await handle_retrait_method(uid, data.split("_")[1], msg_id)
-            elif data == "cancel_retrait":
-                await handle_cancel_retrait(uid, msg_id)
-            elif data.startswith("approve_") or data.startswith("reject_"):
-                parts = data.split("_")
-                await handle_retrait_decision(uid, parts[0], int(parts[1]), msg_id, chat_id)
+            else:
+                await bot.send_message(uid, f"Tu as écrit : {text}")
 
     except Exception as e:
-        print(f"process_update error: {e}")
+        print(f"Error: {e}")
+        if uid:
+            try:
+                await bot.send_message(uid, f"❌ Erreur:\n`{e}`", parse_mode="Markdown")
+            except:
+                pass
 
 handler = app
