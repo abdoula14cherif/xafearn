@@ -1,7 +1,7 @@
 import os
 
 BOT_TOKEN        = os.environ.get("BOT_TOKEN", "")
-BOT_USERNAME     = "xafearn_bot"
+BOT_USERNAME     = "@xafearn_bot"
 SUPABASE_URL     = os.environ.get("SUPABASE_URL", "")
 SUPABASE_KEY     = os.environ.get("SUPABASE_KEY", "")
 WEBHOOK_SECRET   = os.environ.get("WEBHOOK_SECRET", "xafearn_secure_2024")
