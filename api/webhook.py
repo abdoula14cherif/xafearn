@@ -413,7 +413,7 @@ def handle_msg(uid, uname, text):
             "Parrainage : " + str(get_cfg("bonus_referral")) + "F par ami\n"
             "Tache : " + str(get_cfg("bonus_task")) + "F par tache\n"
             "Retrait minimum : " + str(get_cfg("min_withdrawal")) + "F\n\n"
-            "Support WhatsApp :\nhttps://wa.me/22890000000")
+            ""Support WhatsApp :\nhttps://wa.me/699663183")")
 
 
 def handle_retrait_step(uid, text, sess):
