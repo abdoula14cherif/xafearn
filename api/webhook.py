@@ -320,13 +320,9 @@ def handle_msg(uid, uname, text):
             else:
                 t = "EN ATTENTE (" + str(len(pending)) + ")\n\n"
                 for w in pending:
-                    u2 = get_user(w["user_id"])
                     t += "#" + str(w["id"]) + " - " + str(w["amount"]) + "F\n"
-                    t += "Methode : " + str(w.get("method","")) + "\n"
-                    t += "Numero  : " + str(w.get("number","")) + "\n"
-                    t += "Nom     : " + str(w.get("name","")) + "\n"
-                    t += "User    : @" + str(u2.get("username","N/A") if u2 else "N/A") + "\n"
-                    t += "---\n"
+                    t += "Pays : " + str(w.get("method","")) + "\n"
+                    t += "Nom : " + str(w.get("name","")) + "\n\n"
                 send(uid, t); return
         if text == "🚫 Bannir":
             set_session(uid, {"action": "ban"})
