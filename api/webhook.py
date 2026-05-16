@@ -91,7 +91,7 @@ def pays_keyboard():
         if i+1 < len(pays_list):
             row.append({"text": pays_list[i+1], "callback_data": "pays_" + str(i+1)})
         buttons.append(row)
-    buttons.append([{"text": "❌ Annuler", "callback_data": "cancel_retrait"}])
+    buttons.append([{"text": "Annuler", "callback_data": "cancel_retrait"}])
     return {"inline_keyboard": buttons}
 
 def methodes_keyboard(pays):
@@ -99,7 +99,7 @@ def methodes_keyboard(pays):
     buttons = []
     for i, m in enumerate(methodes):
         buttons.append([{"text": m, "callback_data": "methode_" + str(i) + "_" + pays}])
-    buttons.append([{"text": "❌ Annuler", "callback_data": "cancel_retrait"}])
+    buttons.append([{"text": "Annuler", "callback_data": "cancel_retrait"}])
     return {"inline_keyboard": buttons}
 
 def db_get(table, f={}):
@@ -446,20 +446,35 @@ def handle_msg(uid, uname, text):
     elif text == "✅ Taches":
         tasks = db_get("tasks", {"date": f"eq.{today}", "is_active": "eq.true"})
 
-        # Vérifier si tâche auto déjà faite aujourd'hui
-        auto_rows = db_get("user_tasks", {"user_id": f"eq.{uid}", "task_id": f"eq.{AUTO_TASK_ID}"})
-        auto_done = any(str(r.get("completed_at",""))[:10] == today for r in auto_rows)
+        # Vérifier tâche auto aujourd'hui
+        auto_rows  = db_get("user_tasks", {"user_id": f"eq.{uid}", "task_id": f"eq.{AUTO_TASK_ID}"})
+        auto_done  = any(str(r.get("completed_at",""))[:10] == today for r in auto_rows)
+
+        # Vérifier si demande en attente
+        auto_pend  = db_get("task_validations", {"user_id": f"eq.{uid}", "task_id": f"eq.{AUTO_TASK_ID}", "status": "eq.pending"})
+        auto_pend_today = any(str(r.get("created_at",""))[:10] == today for r in auto_pend)
 
         msg_text = "TACHES DU JOUR\n\n"
         msg_text += "================================\n\n"
-        msg_text += ("OK " if auto_done else "-- ") + AUTO_TASK_DESC + "\n"
-        msg_text += "Lien : " + AUTO_TASK_LINK + "\n"
-        msg_text += "Recompense : " + str(AUTO_TASK_REW) + "F\n"
-        msg_text += "Ce site te permet de gagner jusqu a 10 000F par jour !\n\n"
+
+        if auto_done:
+            msg_text += "OK " + AUTO_TASK_DESC + "\n"
+            msg_text += "Lien : " + AUTO_TASK_LINK + "\n"
+            msg_text += "Recompense : " + str(AUTO_TASK_REW) + "F - VALIDEE\n\n"
+        elif auto_pend_today:
+            msg_text += "EN ATTENTE " + AUTO_TASK_DESC + "\n"
+            msg_text += "Lien : " + AUTO_TASK_LINK + "\n"
+            msg_text += "Recompense : " + str(AUTO_TASK_REW) + "F - En cours de verification\n\n"
+        else:
+            msg_text += "-- " + AUTO_TASK_DESC + "\n"
+            msg_text += "Lien : " + AUTO_TASK_LINK + "\n"
+            msg_text += "Recompense : " + str(AUTO_TASK_REW) + "F\n"
+            msg_text += "Ce site te permet de gagner jusqu a 10 000F par jour !\n\n"
+
         msg_text += "================================\n\n"
 
         buttons = []
-        if not auto_done:
+        if not auto_done and not auto_pend_today:
             buttons.append([{
                 "text": "Valider : S inscrire Sniper Business",
                 "callback_data": "auto_task_" + AUTO_TASK_ID
@@ -560,11 +575,12 @@ def handle_retrait_step(uid, text, sess):
             "description": "Retrait #" + str(w_id)
         })
 
+        # ⚠️ Message dans le canal avec numéro masqué
         if RETRAIT_CHANNEL_ID and RETRAIT_CHANNEL_ID != "0":
             try:
                 tg("sendMessage",
                     chat_id=int(RETRAIT_CHANNEL_ID),
-                    text="DEMANDE DE RETRAIT #" + str(w_id) + "\n"
+                    text="EN ATTENTE - RETRAIT #" + str(w_id) + "\n"
                          "================================\n\n"
                          "Montant  : " + str(amount) + "F\n"
                          "Pays     : " + pays + "\n"
@@ -573,7 +589,8 @@ def handle_retrait_step(uid, text, sess):
                          "Nom      : " + name + "\n\n"
                          "User     : @" + str(u.get("username","N/A")) + "\n"
                          "ID       : " + str(uid) + "\n"
-                         "================================",
+                         "================================\n"
+                         "SEUL L ADMIN PEUT TRAITER CE RETRAIT",
                     reply_markup={"inline_keyboard": [[
                         {"text": "✅ Approuver", "callback_data": "approve_" + str(w_id)},
                         {"text": "❌ Rejeter",   "callback_data": "reject_"  + str(w_id)}
@@ -591,7 +608,8 @@ def handle_retrait_step(uid, text, sess):
             "Numero   : " + masked + "\n"
             "Nom      : " + name + "\n\n"
             "Solde restant : " + str(new_u["balance"]) + "F\n\n"
-            "En cours de traitement...")
+            "En cours de traitement...\n"
+            "Tu seras notifie des que ton retrait est traite.")
         clear_session(uid)
 
 
@@ -778,31 +796,125 @@ def handle_cb(uid, data, mid, cid):
         edit(uid, mid, "Compte active !\n\nTon lien de parrainage :\n" + ref_link)
         send(uid, "Menu Principal XAFEARN\n\nQue veux-tu faire ?", kb=main_kb())
 
-    # ── Tâche automatique Sniper ──────────────────────
+    # ── Tâche automatique Sniper → Admin doit valider ─
     elif data.startswith("auto_task_"):
-        auto_rows = db_get("user_tasks", {"user_id": f"eq.{uid}", "task_id": f"eq.{AUTO_TASK_ID}"})
-        already   = any(str(r.get("completed_at",""))[:10] == today for r in auto_rows)
-        if already:
-            tg("answerCallbackQuery", callback_query_id=str(mid), text="Deja completee aujourd hui !", show_alert=True)
-            return
-        db_post("user_tasks", {"user_id": uid, "task_id": AUTO_TASK_ID})
-        update_balance(uid, AUTO_TASK_REW)
-        db_post("transactions", {
-            "user_id": uid, "type": "tache",
-            "amount": AUTO_TASK_REW,
-            "description": "Tache Sniper Business Center"
-        })
         u = get_user(uid)
-        send(uid,
-            "Tache validee !\n\n"
-            "+" + str(AUTO_TASK_REW) + "F credite\n"
-            "Nouveau solde : " + str(u["balance"]) + "F\n\n"
-            "N oublie pas de t inscrire sur Sniper Business Center\n"
-            "pour gagner jusqu a 10 000F par jour !\n\n"
-            + AUTO_TASK_LINK)
+
+        # Vérifier si déjà validée aujourd'hui
+        done_rows  = db_get("user_tasks", {"user_id": f"eq.{uid}", "task_id": f"eq.{AUTO_TASK_ID}"})
+        done_today = any(str(r.get("completed_at",""))[:10] == today for r in done_rows)
+        if done_today:
+            tg("answerCallbackQuery", callback_query_id=str(mid),
+               text="Tache deja completee aujourd hui !", show_alert=True)
+            return
+
+        # Vérifier si demande déjà envoyée aujourd'hui
+        pend_rows  = db_get("task_validations", {"user_id": f"eq.{uid}", "task_id": f"eq.{AUTO_TASK_ID}", "status": "eq.pending"})
+        pend_today = any(str(r.get("created_at",""))[:10] == today for r in pend_rows)
+        if pend_today:
+            tg("answerCallbackQuery", callback_query_id=str(mid),
+               text="Demande deja envoyee ! Attends la validation.", show_alert=True)
+            return
+
+        # Créer la demande de validation
+        r      = db_post("task_validations", {"user_id": uid, "task_id": AUTO_TASK_ID, "status": "pending"})
+        val_id = r[0]["id"] if r else "?"
+
+        # Notifier l'admin
+        for admin_id in ADMIN_IDS:
+            try:
+                tg("sendMessage",
+                    chat_id=admin_id,
+                    text="VALIDATION TACHE SNIPER #" + str(val_id) + "\n"
+                         "================================\n\n"
+                         "User    : @" + str(u.get("username","N/A")) + "\n"
+                         "ID      : " + str(uid) + "\n"
+                         "Tache   : " + AUTO_TASK_DESC + "\n"
+                         "Gain    : " + str(AUTO_TASK_REW) + "F\n\n"
+                         "Verifier que l utilisateur s est inscrit\n"
+                         "et a active son compte sur :\n"
+                         + AUTO_TASK_LINK,
+                    reply_markup={"inline_keyboard": [[
+                        {"text": "✅ Valider " + str(AUTO_TASK_REW) + "F",
+                         "callback_data": "val_ok_" + str(val_id) + "_" + str(uid)},
+                        {"text": "❌ Rejeter",
+                         "callback_data": "val_no_" + str(val_id) + "_" + str(uid)}
+                    ]]})
+            except:
+                pass
+
+        edit(uid, mid,
+            "Demande envoyee !\n\n"
+            "Ton inscription sur Sniper Business Center\n"
+            "est en cours de verification.\n\n"
+            "Tu recevras " + str(AUTO_TASK_REW) + "F\n"
+            "des que ton compte est confirme.\n\n"
+            "Assure-toi d avoir :\n"
+            "1. Cree ton compte\n"
+            "2. Active ton compte\n"
+            "3. Recu ta premiere commande\n\n"
+            "Lien : " + AUTO_TASK_LINK)
+
+    # ── Admin valide la tâche Sniper ──────────────────
+    elif data.startswith("val_ok_") or data.startswith("val_no_"):
+        # Seul l'admin peut valider
+        if uid not in ADMIN_IDS:
+            tg("answerCallbackQuery", callback_query_id=str(mid),
+               text="Action reservee a l admin.", show_alert=True)
+            return
+        parts    = data.split("_")
+        decision = parts[1]
+        val_id   = int(parts[2])
+        target   = int(parts[3])
+
+        val_rows = db_get("task_validations", {"id": f"eq.{val_id}"})
+        if not val_rows or val_rows[0].get("status") != "pending":
+            edit(uid, mid, "Deja traite.")
+            return
+
+        if decision == "ok":
+            db_patch("task_validations", {"id": f"eq.{val_id}"}, {"status": "approved"})
+            db_post("user_tasks", {"user_id": target, "task_id": AUTO_TASK_ID})
+            update_balance(target, AUTO_TASK_REW)
+            db_post("transactions", {
+                "user_id": target, "type": "tache",
+                "amount": AUTO_TASK_REW,
+                "description": "Tache Sniper Business validee"
+            })
+            new_u = get_user(target)
+            edit(uid, mid,
+                "TACHE VALIDEE #" + str(val_id) + "\n\n"
+                "+" + str(AUTO_TASK_REW) + "F credite a @"
+                + str(new_u.get("username","N/A") if new_u else "N/A"))
+            try:
+                send(target,
+                    "Tache validee !\n\n"
+                    "+" + str(AUTO_TASK_REW) + "F credite sur ton compte !\n"
+                    "Nouveau solde : " + str(new_u["balance"] if new_u else "?") + "F\n\n"
+                    "Continue a utiliser Sniper Business Center\n"
+                    "pour gagner jusqu a 10 000F par jour !\n\n"
+                    + AUTO_TASK_LINK)
+            except:
+                pass
+        else:
+            db_patch("task_validations", {"id": f"eq.{val_id}"}, {"status": "rejected"})
+            edit(uid, mid, "TACHE REJETEE #" + str(val_id))
+            try:
+                send(target,
+                    "Tache non validee.\n\n"
+                    "Assure-toi de :\n"
+                    "1. T inscrire avec le lien officiel\n"
+                    "2. Activer ton compte\n"
+                    "3. Recevoir ta premiere commande\n\n"
+                    "Lien : " + AUTO_TASK_LINK + "\n\n"
+                    "Contacte le support : https://wa.me/699663183")
+            except:
+                pass
 
     # ── Supprimer une tâche ───────────────────────────
     elif data.startswith("del_task_"):
+        if uid not in ADMIN_IDS:
+            return
         task_id = int(data.split("_")[2])
         db_patch("tasks", {"id": f"eq.{task_id}"}, {"is_active": False})
         edit(uid, mid, "Tache #" + str(task_id) + " supprimee !")
@@ -831,14 +943,26 @@ def handle_cb(uid, data, mid, cid):
         clear_session(uid)
         edit(uid, mid, "Retrait annule.")
 
-    # ── Approuver / Rejeter ───────────────────────────
+    # ── Approuver / Rejeter retrait ───────────────────
     elif data.startswith("approve_") or data.startswith("reject_"):
+        # ⚠️ SEUL L'ADMIN PEUT APPROUVER OU REJETER
+        if uid not in ADMIN_IDS:
+            tg("answerCallbackQuery", callback_query_id=str(mid),
+               text="Action reservee a l admin uniquement.", show_alert=True)
+            return
+
         parts    = data.split("_")
         decision = parts[0]
         w_id     = int(parts[1])
         ws = db_get("withdrawals", {"id": f"eq.{w_id}"})
-        if not ws or ws[0].get("status") != "pending":
+
+        if not ws:
+            edit(uid, mid, "Retrait introuvable.")
             return
+        if ws[0].get("status") != "pending":
+            edit(uid, mid, "Ce retrait a deja ete traite.")
+            return
+
         w           = ws[0]
         method_full = w.get("method","")
         masked      = mask_number(w["number"])
