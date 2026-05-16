@@ -155,14 +155,12 @@ def webhook():
         body = request.get_json(force=True)
         if not body:
             return Response('{"ok":true}', mimetype="application/json")
-
         if "message" in body:
             uid   = body["message"]["from"]["id"]
             uname = body["message"]["from"].get("username") or body["message"]["from"].get("first_name", "User")
             text  = body["message"].get("text", "")
             if text:
                 handle_msg(uid, uname, text)
-
         elif "callback_query" in body:
             cq   = body["callback_query"]
             uid  = cq["from"]["id"]
@@ -171,7 +169,6 @@ def webhook():
             cid  = cq["message"]["chat"]["id"]
             tg("answerCallbackQuery", callback_query_id=cq["id"])
             handle_cb(uid, data, mid, cid)
-
     except Exception as e:
         print(f"ERROR: {traceback.format_exc()}")
         if uid:
@@ -179,7 +176,6 @@ def webhook():
                 send(uid, "Erreur technique. Reessaie.")
             except:
                 pass
-
     return Response('{"ok":true}', mimetype="application/json")
 
 
@@ -192,6 +188,7 @@ def handle_msg(uid, uname, text):
         handle_admin_step(uid, text, sess)
         return
 
+    # ── /start ───────────────────────────────────────
     if text.startswith("/start"):
         parts = text.split(" ")
         referred_by = None
@@ -217,25 +214,31 @@ def handle_msg(uid, uname, text):
                 "is_registered": False
             })
 
-        channels_list = "\n".join([f"  -> {ch}" for ch in CHANNELS])
+        ch1 = str(CHANNELS[0]) if len(CHANNELS) > 0 else ""
+        ch2 = str(CHANNELS[1]) if len(CHANNELS) > 1 else ""
+        ch3 = str(CHANNELS[2]) if len(CHANNELS) > 2 else ""
+
+        msg = "Bienvenue sur XAFEARN " + str(uname) + "!\n\n"
+        msg += "Gagne de l argent chaque jour :\n"
+        msg += "- Bonus journalier\n"
+        msg += "- Parrainage\n"
+        msg += "- Taches quotidiennes\n\n"
+        msg += "Rejoins nos canaux :\n"
+        msg += "1. " + ch1 + "\n"
+        msg += "2. " + ch2 + "\n"
+        msg += "3. " + ch3 + "\n\n"
+        msg += "Puis clique le bouton ci-dessous"
 
         req.post(f"{API}/sendMessage", json={
             "chat_id": uid,
-            "text": (
-                "Bienvenue sur XAFEARN " + str(uname) + " !\n\n"
-                "Gagne de l argent chaque jour :\n"
-                "  Bonus journalier\n"
-                "  Parrainage\n"
-                "  Taches quotidiennes\n\n"
-                "Rejoins nos canaux :\n" + channels_list + "\n\n"
-                "Puis clique le bouton ci-dessous"
-            ),
+            "text": msg,
             "reply_markup": {"inline_keyboard": [[
                 {"text": "J ai tout rejoint - Verifier", "callback_data": "check_join"}
             ]]}
         }, timeout=15)
         return
 
+    # ── Vérif user ───────────────────────────────────
     u = get_user(uid)
     if not u:
         send(uid, "Utilise /start pour t inscrire.")
@@ -244,6 +247,7 @@ def handle_msg(uid, uname, text):
         send(uid, "Compte suspendu.")
         return
 
+    # ── ADMIN ────────────────────────────────────────
     if uid in ADMIN_IDS:
         if text in ["/admin", "📊 Statistiques"]:
             users = db_get("users")
@@ -258,43 +262,32 @@ def handle_msg(uid, uname, text):
                 "En attente : " + str(sum(1 for x in ws if x.get("status")=="pending")),
                 kb=admin_kb())
             return
-
         if text == "👥 Tous les Users":
             users = db_get("users")
             t = "UTILISATEURS (" + str(len(users)) + ")\n\n"
             for uu in users[:20]:
                 s = "BANNI" if uu.get("is_banned") else ("OK" if uu.get("is_registered") else "EN ATTENTE")
                 t += s + " @" + str(uu.get("username","N/A")) + " - " + str(uu.get("balance",0)) + "F\n"
-            send(uid, t)
-            return
-
+            send(uid, t); return
         if text == "⚙️ Prix":
             send(uid,
                 "CONFIG ACTUELLE\n\n"
-                "Bonus journalier : " + str(get_cfg("bonus_daily")) + "F\n"
-                "Bonus parrainage : " + str(get_cfg("bonus_referral")) + "F\n"
-                "Bonus tache : " + str(get_cfg("bonus_task")) + "F\n"
-                "Retrait min : " + str(get_cfg("min_withdrawal")) + "F\n\n"
-                "/setbonus 50\n/setref 75\n/settask 35\n/setmin 2500")
-            return
-
+                "Bonus : " + str(get_cfg("bonus_daily")) + "F\n"
+                "Parrainage : " + str(get_cfg("bonus_referral")) + "F\n"
+                "Tache : " + str(get_cfg("bonus_task")) + "F\n"
+                "Min retrait : " + str(get_cfg("min_withdrawal")) + "F\n\n"
+                "/setbonus 50\n/setref 75\n/settask 35\n/setmin 2500"); return
         if text.startswith("/setbonus "):
-            set_cfg("bonus_daily", text.split()[1])
-            send(uid, "Bonus journalier mis a jour : " + text.split()[1] + "F"); return
+            set_cfg("bonus_daily", text.split()[1]); send(uid, "Bonus -> " + text.split()[1] + "F"); return
         if text.startswith("/setref "):
-            set_cfg("bonus_referral", text.split()[1])
-            send(uid, "Bonus parrainage mis a jour : " + text.split()[1] + "F"); return
+            set_cfg("bonus_referral", text.split()[1]); send(uid, "Parrainage -> " + text.split()[1] + "F"); return
         if text.startswith("/settask "):
-            set_cfg("bonus_task", text.split()[1])
-            send(uid, "Bonus tache mis a jour : " + text.split()[1] + "F"); return
+            set_cfg("bonus_task", text.split()[1]); send(uid, "Tache -> " + text.split()[1] + "F"); return
         if text.startswith("/setmin "):
-            set_cfg("min_withdrawal", text.split()[1])
-            send(uid, "Retrait minimum mis a jour : " + text.split()[1] + "F"); return
-
+            set_cfg("min_withdrawal", text.split()[1]); send(uid, "Min retrait -> " + text.split()[1] + "F"); return
         if text == "➕ Ajouter Tache":
             set_session(uid, {"action": "add_task", "step": "description"})
             send(uid, "NOUVELLE TACHE\n\nDecris la tache :"); return
-
         if text == "💸 Retraits":
             pending = db_get("withdrawals", {"status": "eq.pending"})
             if not pending:
@@ -303,20 +296,17 @@ def handle_msg(uid, uname, text):
                 t = "EN ATTENTE (" + str(len(pending)) + ")\n\n"
                 for w in pending:
                     t += "#" + str(w["id"]) + " - " + str(w["amount"]) + "F - " + str(w.get("name","")) + "\n"
-                send(uid, t)
-            return
-
+                send(uid, t); return
         if text == "🚫 Bannir":
             set_session(uid, {"action": "ban"})
             send(uid, "ID a bannir :\n123456789\nDebannir : debannir 123456789"); return
-
         if text == "📢 Broadcast":
             set_session(uid, {"action": "broadcast"})
             send(uid, "Ecris le message a envoyer a tous :"); return
-
         if text == "🔙 Mode User":
             send(uid, "Mode Utilisateur", kb=main_kb()); return
 
+    # ── Vérif inscription ────────────────────────────
     if not u.get("is_registered"):
         send(uid, "Rejoins nos canaux d abord.\nEnvoie /start")
         return
@@ -359,7 +349,7 @@ def handle_msg(uid, uname, text):
     elif text == "📋 Historique":
         txs = db_get("transactions", {"user_id": f"eq.{uid}", "order": "created_at.desc", "limit": "10"})
         wds = db_get("withdrawals", {"user_id": f"eq.{uid}", "order": "requested_at.desc", "limit": "5"})
-        t = "HISTORIQUE DE TON COMPTE\n\nTransactions :\n"
+        t = "HISTORIQUE\n\nTransactions :\n"
         for tx in (txs or []):
             t += ("+" if tx["amount"] > 0 else "") + str(tx["amount"]) + "F - " + str(tx["description"]) + "\n"
         if not txs:
@@ -375,7 +365,7 @@ def handle_msg(uid, uname, text):
     elif text == "💸 Retrait":
         min_w = get_cfg("min_withdrawal")
         if u["balance"] < min_w:
-            send(uid, "Solde insuffisant\n\nSolde : " + str(u["balance"]) + "F\nMinimum requis : " + str(min_w) + "F")
+            send(uid, "Solde insuffisant\n\nSolde : " + str(u["balance"]) + "F\nMinimum : " + str(min_w) + "F")
             return
         pending = db_get("withdrawals", {"user_id": f"eq.{uid}", "status": "eq.pending"})
         if pending:
@@ -466,7 +456,6 @@ def handle_retrait_step(uid, text, sess):
         method = sess["method"]
         number = sess["number"]
         name   = sess["name"]
-
         update_balance(uid, -amount)
         r = db_post("withdrawals", {
             "user_id": uid, "amount": amount,
@@ -475,10 +464,8 @@ def handle_retrait_step(uid, text, sess):
         })
         w_id = r[0]["id"] if r else "?"
         db_post("transactions", {"user_id": uid, "type": "retrait", "amount": -amount, "description": "Retrait #" + str(w_id)})
-
         masked = number[:4] + " *** ** ** " + number[-2:] if len(number) >= 6 else number
         label  = "Mobile Money" if method == "mobile" else "Virement"
-
         if RETRAIT_CHANNEL_ID and RETRAIT_CHANNEL_ID != "0":
             try:
                 tg("sendMessage",
@@ -496,7 +483,6 @@ def handle_retrait_step(uid, text, sess):
                     ]]})
             except:
                 pass
-
         new_u = get_user(uid)
         send(uid,
             "Demande envoyee !\n\n"
@@ -511,7 +497,6 @@ def handle_retrait_step(uid, text, sess):
 
 def handle_admin_step(uid, text, sess):
     action = sess.get("action")
-
     if action == "add_task":
         step = sess.get("step")
         if step == "description":
@@ -538,7 +523,6 @@ def handle_admin_step(uid, text, sess):
             })
             send(uid, "Tache ajoutee !\n\n" + str(sess["description"]) + "\nRecompense : " + str(reward) + "F")
             clear_session(uid)
-
     elif action == "ban":
         t = text.strip()
         if t.startswith("debannir "):
@@ -558,16 +542,13 @@ def handle_admin_step(uid, text, sess):
             except:
                 send(uid, "ID invalide.")
         clear_session(uid)
-
     elif action == "broadcast":
         users = db_get("users", {"is_registered": "eq.true"})
         sent = 0
         for uu in users:
             if not uu.get("is_banned"):
                 try:
-                    tg("sendMessage",
-                        chat_id=uu["user_id"],
-                        text="Message XAFEARN\n\n" + text)
+                    tg("sendMessage", chat_id=uu["user_id"], text="Message XAFEARN\n\n" + text)
                     sent += 1
                 except:
                     pass
@@ -580,11 +561,16 @@ def handle_cb(uid, data, mid, cid):
         u = get_user(uid)
         if not u:
             return
-
         if not check_joined(uid):
-            channels_list = "\n".join([f"  -> {ch}" for ch in CHANNELS])
-            edit(uid, mid,
-                "Tu n as pas encore tout rejoint.\n\n" + channels_list + "\n\nRejoins puis clique Verifier",
+            ch1 = str(CHANNELS[0]) if len(CHANNELS) > 0 else ""
+            ch2 = str(CHANNELS[1]) if len(CHANNELS) > 1 else ""
+            ch3 = str(CHANNELS[2]) if len(CHANNELS) > 2 else ""
+            msg = "Tu n as pas encore tout rejoint.\n\n"
+            msg += "1. " + ch1 + "\n"
+            msg += "2. " + ch2 + "\n"
+            msg += "3. " + ch3 + "\n\n"
+            msg += "Rejoins puis clique Verifier"
+            edit(uid, mid, msg,
                 kb={"inline_keyboard": [[
                     {"text": "Verifier a nouveau", "callback_data": "check_join"}
                 ]]})
@@ -606,7 +592,7 @@ def handle_cb(uid, data, mid, cid):
                 try:
                     send(u["referred_by"],
                         "+" + str(bonus_ref) + "F credite !\n\n"
-                        "Ton filleul @" + str(u.get("username","?")) + " vient de valider son inscription !")
+                        "Ton filleul @" + str(u.get("username","?")) + " vient de valider !")
                 except:
                     pass
 
@@ -652,7 +638,6 @@ def handle_cb(uid, data, mid, cid):
         w      = ws[0]
         masked = w["number"][:4] + " *** ** ** " + w["number"][-2:]
         label  = "Mobile Money" if w["method"] == "mobile" else "Virement"
-
         if decision == "approve":
             db_patch("withdrawals", {"id": f"eq.{w_id}"}, {"status": "approved"})
             edit(cid, mid,
@@ -664,7 +649,7 @@ def handle_cb(uid, data, mid, cid):
                 "Via @" + BOT_USERNAME + "\n"
                 "Rejoins et gagne toi aussi !")
             try:
-                send(w["user_id"], "Retrait approuve !\n\n" + str(w["amount"]) + "F envoye sur ton compte. Merci !")
+                send(w["user_id"], "Retrait approuve !\n\n" + str(w["amount"]) + "F envoye. Merci !")
             except:
                 pass
         else:
@@ -677,7 +662,7 @@ def handle_cb(uid, data, mid, cid):
             })
             edit(cid, mid, "RETRAIT REJETE #" + str(w_id))
             try:
-                send(w["user_id"], "Retrait refuse.\n\n" + str(w["amount"]) + "F rembourse sur ton solde.\nContacte le support.")
+                send(w["user_id"], "Retrait refuse.\n\n" + str(w["amount"]) + "F rembourse.\nContacte le support.")
             except:
                 pass
 
