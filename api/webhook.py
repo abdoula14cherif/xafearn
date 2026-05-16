@@ -20,6 +20,23 @@ CHANNELS_DISPLAY = [
     "https://t.me/+JlqLH_-LD4syZmY0"
 ]
 
+# ── Pays et méthodes de paiement ─────────────────────
+PAYS_METHODES = {
+    "🇹🇬 Togo":         ["Flooz", "T-Money"],
+    "🇨🇮 Cote d Ivoire": ["Orange Money", "Wave", "MTN Money", "Moov Money"],
+    "🇸🇳 Senegal":       ["Orange Money", "Wave", "Free Money"],
+    "🇧🇫 Burkina Faso":  ["Orange Money", "Moov Money"],
+    "🇲🇱 Mali":          ["Orange Money", "Moov Money"],
+    "🇧🇯 Benin":         ["MTN Money", "Moov Money"],
+    "🇨🇲 Cameroun":      ["Orange Money", "MTN Money"],
+    "🇬🇳 Guinee":        ["Orange Money", "MTN Money"],
+    "🇳🇪 Niger":         ["Airtel Money", "Moov Money"],
+    "🇨🇬 Congo":         ["Airtel Money", "MTN Money"],
+    "🇬🇦 Gabon":         ["Airtel Money", "Moov Money"],
+    "🇹🇩 Tchad":         ["Airtel Money", "Moov Money"],
+    "Autre":             ["Virement Bancaire", "PayPal"]
+}
+
 H = {
     "apikey": SB_KEY,
     "Authorization": f"Bearer {SB_KEY}",
@@ -61,6 +78,25 @@ def admin_kb():
         ["💵 Ajouter Solde", "📢 Broadcast"],
         ["🔙 Mode User", ""]
     ], "resize_keyboard": True}
+
+def pays_keyboard():
+    pays_list = list(PAYS_METHODES.keys())
+    buttons = []
+    for i in range(0, len(pays_list), 2):
+        row = [{"text": pays_list[i], "callback_data": "pays_" + str(i)}]
+        if i+1 < len(pays_list):
+            row.append({"text": pays_list[i+1], "callback_data": "pays_" + str(i+1)})
+        buttons.append(row)
+    buttons.append([{"text": "❌ Annuler", "callback_data": "cancel_retrait"}])
+    return {"inline_keyboard": buttons}
+
+def methodes_keyboard(pays):
+    methodes = PAYS_METHODES.get(pays, [])
+    buttons = []
+    for i, m in enumerate(methodes):
+        buttons.append([{"text": m, "callback_data": "methode_" + str(i) + "_" + pays}])
+    buttons.append([{"text": "❌ Annuler", "callback_data": "cancel_retrait"}])
+    return {"inline_keyboard": buttons}
 
 def db_get(table, f={}):
     try:
@@ -201,34 +237,25 @@ def handle_msg(uid, uname, text):
                     referred_by = ref
             except:
                 pass
-
         u = get_user(uid)
         if u and u.get("is_banned"):
             send(uid, "Compte suspendu.")
             return
         if not u:
             db_post("users", {
-                "user_id": uid,
-                "username": uname,
-                "referred_by": referred_by,
-                "balance": 0,
-                "is_banned": False,
-                "is_registered": False
+                "user_id": uid, "username": uname,
+                "referred_by": referred_by, "balance": 0,
+                "is_banned": False, "is_registered": False
             })
-
-        msg = "Bienvenue sur XAFEARN " + str(uname) + "!\n\n"
+        msg  = "Bienvenue sur XAFEARN " + str(uname) + "!\n\n"
         msg += "Gagne de l argent chaque jour :\n"
-        msg += "- Bonus journalier\n"
-        msg += "- Parrainage\n"
-        msg += "- Taches quotidiennes\n\n"
+        msg += "- Bonus journalier\n- Parrainage\n- Taches quotidiennes\n\n"
         msg += "Rejoins nos canaux :\n"
         msg += "1. " + CHANNELS_DISPLAY[0] + "\n"
         msg += "2. " + CHANNELS_DISPLAY[1] + "\n\n"
         msg += "Puis clique le bouton ci-dessous"
-
         req.post(f"{API}/sendMessage", json={
-            "chat_id": uid,
-            "text": msg,
+            "chat_id": uid, "text": msg,
             "reply_markup": {"inline_keyboard": [[
                 {"text": "J ai tout rejoint - Verifier", "callback_data": "check_join"}
             ]]}
@@ -246,7 +273,7 @@ def handle_msg(uid, uname, text):
     if uid in ADMIN_IDS:
         if text in ["/admin", "📊 Statistiques"]:
             users = db_get("users")
-            ws = db_get("withdrawals")
+            ws    = db_get("withdrawals")
             send(uid,
                 "PANEL ADMIN XAFEARN\n\n"
                 "Total : " + str(len(users)) + "\n"
@@ -257,7 +284,6 @@ def handle_msg(uid, uname, text):
                 "En attente : " + str(sum(1 for x in ws if x.get("status")=="pending")),
                 kb=admin_kb())
             return
-
         if text == "👥 Tous les Users":
             users = db_get("users")
             t = "UTILISATEURS (" + str(len(users)) + ")\n\n"
@@ -265,7 +291,6 @@ def handle_msg(uid, uname, text):
                 s = "BANNI" if uu.get("is_banned") else ("OK" if uu.get("is_registered") else "EN ATTENTE")
                 t += s + " @" + str(uu.get("username","N/A")) + " - " + str(uu.get("balance",0)) + "F\n"
             send(uid, t); return
-
         if text == "⚙️ Prix":
             send(uid,
                 "CONFIG ACTUELLE\n\n"
@@ -274,7 +299,6 @@ def handle_msg(uid, uname, text):
                 "Tache : " + str(get_cfg("bonus_task")) + "F\n"
                 "Min retrait : " + str(get_cfg("min_withdrawal")) + "F\n\n"
                 "/setbonus 50\n/setref 75\n/settask 35\n/setmin 2500"); return
-
         if text.startswith("/setbonus "):
             set_cfg("bonus_daily", text.split()[1]); send(uid, "Bonus -> " + text.split()[1] + "F"); return
         if text.startswith("/setref "):
@@ -283,15 +307,12 @@ def handle_msg(uid, uname, text):
             set_cfg("bonus_task", text.split()[1]); send(uid, "Tache -> " + text.split()[1] + "F"); return
         if text.startswith("/setmin "):
             set_cfg("min_withdrawal", text.split()[1]); send(uid, "Min retrait -> " + text.split()[1] + "F"); return
-
         if text == "➕ Ajouter Tache":
             set_session(uid, {"action": "add_task", "step": "description"})
             send(uid, "NOUVELLE TACHE\n\nDecris la tache :"); return
-
         if text == "💵 Ajouter Solde":
             set_session(uid, {"action": "add_solde", "step": "user_id"})
-            send(uid, "ID Telegram du user :\n(ex: 123456789)\n\nTrouve l ID en demandant au user d envoyer son ID via @userinfobot"); return
-
+            send(uid, "ID Telegram du user :\n(ex: 123456789)"); return
         if text == "💸 Retraits":
             pending = db_get("withdrawals", {"status": "eq.pending"})
             if not pending:
@@ -299,17 +320,16 @@ def handle_msg(uid, uname, text):
             else:
                 t = "EN ATTENTE (" + str(len(pending)) + ")\n\n"
                 for w in pending:
-                    t += "#" + str(w["id"]) + " - " + str(w["amount"]) + "F - " + str(w.get("name","")) + "\n"
+                    t += "#" + str(w["id"]) + " - " + str(w["amount"]) + "F\n"
+                    t += "Pays : " + str(w.get("method","")) + "\n"
+                    t += "Nom : " + str(w.get("name","")) + "\n\n"
                 send(uid, t); return
-
         if text == "🚫 Bannir":
             set_session(uid, {"action": "ban"})
             send(uid, "ID a bannir :\n123456789\nDebannir : debannir 123456789"); return
-
         if text == "📢 Broadcast":
             set_session(uid, {"action": "broadcast"})
             send(uid, "Ecris le message a envoyer a tous :"); return
-
         if text == "🔙 Mode User":
             send(uid, "Mode Utilisateur", kb=main_kb()); return
 
@@ -322,7 +342,7 @@ def handle_msg(uid, uname, text):
     if text == "🎁 Bonus":
         bonus = get_cfg("bonus_daily")
         if str(u.get("last_bonus")) == today:
-            send(uid, "Bonus deja recupere aujourd hui !\n\nSolde : " + str(u["balance"]) + "F\nReviens demain pour +" + str(bonus) + "F")
+            send(uid, "Bonus deja recupere !\n\nSolde : " + str(u["balance"]) + "F\nReviens demain pour +" + str(bonus) + "F")
             return
         update_balance(uid, bonus)
         db_patch("users", {"user_id": f"eq.{uid}"}, {"last_bonus": today})
@@ -378,12 +398,11 @@ def handle_msg(uid, uname, text):
             send(uid, "Tu as deja une demande en attente de " + str(pending[0]["amount"]) + "F")
             return
         send(uid,
-            "DEMANDE DE RETRAIT\n\nSolde : " + str(u["balance"]) + "F\nMinimum : " + str(min_w) + "F\n\nChoisis ta methode :",
-            kb={"inline_keyboard": [
-                [{"text": "Mobile Money", "callback_data": "method_mobile"}],
-                [{"text": "Virement Bancaire", "callback_data": "method_bank"}],
-                [{"text": "Annuler", "callback_data": "cancel_retrait"}]
-            ]})
+            "DEMANDE DE RETRAIT\n\n"
+            "Solde : " + str(u["balance"]) + "F\n"
+            "Minimum : " + str(min_w) + "F\n\n"
+            "Choisis ton pays :",
+            kb=pays_keyboard())
 
     elif text == "✅ Taches":
         tasks = db_get("tasks", {"date": f"eq.{today}", "is_active": "eq.true"})
@@ -424,14 +443,14 @@ def handle_msg(uid, uname, text):
 
 def handle_retrait_step(uid, text, sess):
     step = sess.get("step")
-    u = get_user(uid)
+    u    = get_user(uid)
     min_w = get_cfg("min_withdrawal")
 
     if step == "amount":
         try:
-            amount = int(text.strip())
+            amount = int(text.strip().replace("f","").replace("F","").replace(" ",""))
         except:
-            send(uid, "Montant invalide. Envoie un nombre ex: 2500")
+            send(uid, "Montant invalide. Envoie un chiffre ex: 2500")
             return
         if amount < min_w:
             send(uid, "Minimum : " + str(min_w) + "F")
@@ -440,16 +459,20 @@ def handle_retrait_step(uid, text, sess):
             send(uid, "Solde insuffisant. Ton solde : " + str(u["balance"]) + "F")
             return
         sess["amount"] = amount
-        sess["step"] = "number"
+        sess["step"]   = "number"
         set_session(uid, sess)
-        send(uid, "Montant : " + str(amount) + "F\n\nEnvoie ton numero de paiement :")
+        send(uid,
+            "Montant : " + str(amount) + "F\n"
+            "Pays : " + str(sess.get("pays","")) + "\n"
+            "Methode : " + str(sess.get("methode","")) + "\n\n"
+            "Envoie ton numero de paiement :")
 
     elif step == "number":
         if len(text.strip()) < 8:
             send(uid, "Numero invalide. Reessaie.")
             return
         sess["number"] = text.strip()
-        sess["step"] = "name"
+        sess["step"]   = "name"
         set_session(uid, sess)
         send(uid, "Numero enregistre.\n\nEnvoie ton nom complet :")
 
@@ -458,44 +481,59 @@ def handle_retrait_step(uid, text, sess):
             send(uid, "Nom invalide. Reessaie.")
             return
         sess["name"] = text.strip()
-        amount = sess["amount"]
-        method = sess["method"]
-        number = sess["number"]
-        name   = sess["name"]
+
+        amount  = sess["amount"]
+        pays    = sess.get("pays", "")
+        methode = sess.get("methode", "")
+        number  = sess["number"]
+        name    = sess["name"]
+
         update_balance(uid, -amount)
         r = db_post("withdrawals", {
             "user_id": uid, "amount": amount,
-            "method": method, "number": number,
-            "name": name, "status": "pending"
+            "method": pays + " - " + methode,
+            "number": number, "name": name,
+            "status": "pending"
         })
         w_id = r[0]["id"] if r else "?"
-        db_post("transactions", {"user_id": uid, "type": "retrait", "amount": -amount, "description": "Retrait #" + str(w_id)})
-        masked = number[:4] + " *** ** ** " + number[-2:] if len(number) >= 6 else number
-        label  = "Mobile Money" if method == "mobile" else "Virement"
+        db_post("transactions", {
+            "user_id": uid, "type": "retrait",
+            "amount": -amount,
+            "description": "Retrait #" + str(w_id)
+        })
+
+        masked = number[:2] + "X" * (len(number)-4) + number[-2:] if len(number) >= 4 else number
+
         if RETRAIT_CHANNEL_ID and RETRAIT_CHANNEL_ID != "0":
             try:
                 tg("sendMessage",
                     chat_id=int(RETRAIT_CHANNEL_ID),
-                    text="DEMANDE RETRAIT #" + str(w_id) + "\n\n"
-                         "Montant : " + str(amount) + "F\n"
-                         "Methode : " + label + "\n"
-                         "Numero : " + masked + "\n"
-                         "Nom : " + name + "\n"
-                         "ID : " + str(uid) + "\n"
-                         "User : @" + str(u.get("username","N/A")),
+                    text="DEMANDE DE RETRAIT #" + str(w_id) + "\n"
+                         "================================\n\n"
+                         "Montant  : " + str(amount) + "F\n"
+                         "Pays     : " + pays + "\n"
+                         "Methode  : " + methode + "\n"
+                         "Numero   : " + number + "\n"
+                         "Nom      : " + name + "\n\n"
+                         "User     : @" + str(u.get("username","N/A")) + "\n"
+                         "ID       : " + str(uid) + "\n"
+                         "================================",
                     reply_markup={"inline_keyboard": [[
-                        {"text": "Approuver", "callback_data": "approve_" + str(w_id)},
-                        {"text": "Rejeter",   "callback_data": "reject_"  + str(w_id)}
+                        {"text": "✅ Approuver", "callback_data": "approve_" + str(w_id)},
+                        {"text": "❌ Rejeter",   "callback_data": "reject_"  + str(w_id)}
                     ]]})
             except:
                 pass
+
         new_u = get_user(uid)
         send(uid,
-            "Demande envoyee !\n\n"
-            "Montant : " + str(amount) + "F\n"
-            "Methode : " + label + "\n"
-            "Numero : " + masked + "\n"
-            "Nom : " + name + "\n\n"
+            "Demande envoyee !\n"
+            "================================\n\n"
+            "Montant  : " + str(amount) + "F\n"
+            "Pays     : " + pays + "\n"
+            "Methode  : " + methode + "\n"
+            "Numero   : " + masked + "\n"
+            "Nom      : " + name + "\n\n"
             "Solde restant : " + str(new_u["balance"]) + "F\n\n"
             "En cours de traitement...")
         clear_session(uid)
@@ -553,18 +591,16 @@ def handle_admin_step(uid, text, sess):
                 clear_session(uid)
         elif step == "amount":
             try:
-                amount = int(text.strip())
+                amount = int(text.strip().replace("f","").replace("F","").replace(" ",""))
                 target_id = sess["target_id"]
                 update_balance(target_id, amount)
                 db_post("transactions", {
-                    "user_id": target_id,
-                    "type": "credit_admin",
-                    "amount": amount,
-                    "description": "Credit manuel par admin"
+                    "user_id": target_id, "type": "credit_admin",
+                    "amount": amount, "description": "Credit manuel par admin"
                 })
                 new_u = get_user(target_id)
                 send(uid,
-                    "Solde ajoute avec succes !\n\n"
+                    "Solde ajoute !\n\n"
                     "User : @" + str(new_u.get("username","N/A")) + "\n"
                     "+" + str(amount) + "F credite\n"
                     "Nouveau solde : " + str(new_u["balance"]) + "F")
@@ -577,7 +613,7 @@ def handle_admin_step(uid, text, sess):
                     pass
                 clear_session(uid)
             except:
-                send(uid, "Montant invalide. Reessaie.")
+                send(uid, "Montant invalide. Envoie un chiffre ex: 1000")
                 clear_session(uid)
 
     elif action == "ban":
@@ -615,12 +651,48 @@ def handle_admin_step(uid, text, sess):
 
 
 def handle_cb(uid, data, mid, cid):
+
+    # ── Sélection du pays ─────────────────────────────
+    if data.startswith("pays_"):
+        idx = int(data.split("_")[1])
+        pays_list = list(PAYS_METHODES.keys())
+        if idx >= len(pays_list):
+            return
+        pays = pays_list[idx]
+        set_session(uid, {"action": "retrait", "step": "methode", "pays": pays})
+        edit(uid, mid,
+            "Pays : " + pays + "\n\n"
+            "Choisis ta methode de paiement :",
+            kb=methodes_keyboard(pays))
+        return
+
+    # ── Sélection de la méthode ───────────────────────
+    if data.startswith("methode_"):
+        parts   = data.split("_", 2)
+        idx     = int(parts[1])
+        pays    = parts[2]
+        methodes = PAYS_METHODES.get(pays, [])
+        if idx >= len(methodes):
+            return
+        methode = methodes[idx]
+        u = get_user(uid)
+        min_w = get_cfg("min_withdrawal")
+        set_session(uid, {"action": "retrait", "step": "amount", "pays": pays, "methode": methode})
+        edit(uid, mid,
+            "Pays    : " + pays + "\n"
+            "Methode : " + methode + "\n\n"
+            "Solde disponible : " + str(u["balance"]) + "F\n"
+            "Minimum : " + str(min_w) + "F\n\n"
+            "Combien veux-tu retirer ? (en F)")
+        return
+
+    # ── Vérifier les canaux ───────────────────────────
     if data == "check_join":
         u = get_user(uid)
         if not u:
             return
         if not check_joined(uid):
-            msg = "Tu n as pas encore tout rejoint.\n\n"
+            msg  = "Tu n as pas encore tout rejoint.\n\n"
             msg += "1. " + CHANNELS_DISPLAY[0] + "\n"
             msg += "2. " + CHANNELS_DISPLAY[1] + "\n\n"
             msg += "Rejoins puis clique Verifier"
@@ -629,17 +701,14 @@ def handle_cb(uid, data, mid, cid):
                     {"text": "Verifier a nouveau", "callback_data": "check_join"}
                 ]]})
             return
-
         db_patch("users", {"user_id": f"eq.{uid}"}, {"is_registered": True})
-
         if u.get("referred_by") and not u.get("is_registered"):
             parrain = get_user(u["referred_by"])
             if parrain and parrain.get("is_registered") and not parrain.get("is_banned"):
                 bonus_ref = get_cfg("bonus_referral")
                 update_balance(u["referred_by"], bonus_ref)
                 db_post("transactions", {
-                    "user_id": u["referred_by"],
-                    "type": "parrainage",
+                    "user_id": u["referred_by"], "type": "parrainage",
                     "amount": bonus_ref,
                     "description": "Filleul @" + str(u.get("username","?"))
                 })
@@ -649,11 +718,11 @@ def handle_cb(uid, data, mid, cid):
                         "Ton filleul @" + str(u.get("username","?")) + " vient de valider !")
                 except:
                     pass
-
         ref_link = "https://t.me/" + BOT_USERNAME + "?start=" + str(uid)
-        edit(uid, mid, "Compte active avec succes !\n\nTon lien de parrainage :\n" + ref_link)
+        edit(uid, mid, "Compte active !\n\nTon lien de parrainage :\n" + ref_link)
         send(uid, "Menu Principal XAFEARN\n\nQue veux-tu faire ?", kb=main_kb())
 
+    # ── Valider une tâche ─────────────────────────────
     elif data.startswith("task_"):
         task_id = int(data.split("_")[1])
         if db_get("user_tasks", {"user_id": f"eq.{uid}", "task_id": f"eq.{task_id}"}):
@@ -672,16 +741,12 @@ def handle_cb(uid, data, mid, cid):
             u = get_user(uid)
             send(uid, "Tache validee !\n\n+" + str(task["reward"]) + "F credite\nNouveau solde : " + str(u["balance"]) + "F")
 
-    elif data.startswith("method_"):
-        method = data.split("_")[1]
-        label  = "Mobile Money" if method == "mobile" else "Virement"
-        set_session(uid, {"action": "retrait", "method": method, "step": "amount"})
-        edit(uid, mid, label + "\n\nCombien veux-tu retirer ? (en F)")
-
+    # ── Annuler retrait ───────────────────────────────
     elif data == "cancel_retrait":
         clear_session(uid)
         edit(uid, mid, "Retrait annule.")
 
+    # ── Approuver / Rejeter ───────────────────────────
     elif data.startswith("approve_") or data.startswith("reject_"):
         parts    = data.split("_")
         decision = parts[0]
@@ -689,21 +754,28 @@ def handle_cb(uid, data, mid, cid):
         ws = db_get("withdrawals", {"id": f"eq.{w_id}"})
         if not ws or ws[0].get("status") != "pending":
             return
-        w      = ws[0]
-        masked = w["number"][:4] + " *** ** ** " + w["number"][-2:]
-        label  = "Mobile Money" if w["method"] == "mobile" else "Virement"
+        w = ws[0]
+        method_full = w.get("method","")
+        masked = w["number"][:2] + "X" * (len(w["number"])-4) + w["number"][-2:] if len(w["number"]) >= 4 else w["number"]
+
         if decision == "approve":
             db_patch("withdrawals", {"id": f"eq.{w_id}"}, {"status": "approved"})
             edit(cid, mid,
-                "PAIEMENT EFFECTUE\n\n"
-                "Montant : " + str(w["amount"]) + "F\n"
-                "Methode : " + label + "\n"
-                "Numero : " + masked + "\n"
-                "Nom : " + str(w["name"]) + "\n\n"
+                "PAIEMENT EFFECTUE\n"
+                "================================\n\n"
+                "Montant  : " + str(w["amount"]) + "F\n"
+                "Methode  : " + method_full + "\n"
+                "Numero   : " + w["number"] + "\n"
+                "Nom      : " + str(w["name"]) + "\n\n"
                 "Via @" + BOT_USERNAME + "\n"
                 "Rejoins et gagne toi aussi !")
             try:
-                send(w["user_id"], "Retrait approuve !\n\n" + str(w["amount"]) + "F envoye. Merci !")
+                send(w["user_id"],
+                    "Retrait approuve !\n\n"
+                    "Montant : " + str(w["amount"]) + "F\n"
+                    "Methode : " + method_full + "\n"
+                    "Numero  : " + masked + "\n\n"
+                    "Merci de ta confiance !")
             except:
                 pass
         else:
@@ -716,7 +788,10 @@ def handle_cb(uid, data, mid, cid):
             })
             edit(cid, mid, "RETRAIT REJETE #" + str(w_id))
             try:
-                send(w["user_id"], "Retrait refuse.\n\n" + str(w["amount"]) + "F rembourse.\nContacte le support.")
+                send(w["user_id"],
+                    "Retrait refuse.\n\n"
+                    "+" + str(w["amount"]) + "F rembourse sur ton solde.\n"
+                    "Contacte le support : https://wa.me/699663183")
             except:
                 pass
 
