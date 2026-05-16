@@ -20,7 +20,11 @@ CHANNELS_DISPLAY = [
     "https://t.me/+JlqLH_-LD4syZmY0"
 ]
 
-# ── Pays et méthodes de paiement ─────────────────────
+AUTO_TASK_ID   = "auto_sniper"
+AUTO_TASK_DESC = "S inscrire sur Sniper Business Center et activer ton compte"
+AUTO_TASK_LINK = "https://www.sniperbuisnesscenter.com/signup?affiliationCode=abdoula"
+AUTO_TASK_REW  = 500
+
 PAYS_METHODES = {
     "🇹🇬 Togo":         ["Flooz", "T-Money"],
     "🇨🇮 Cote d Ivoire": ["Orange Money", "Wave", "MTN Money", "Moov Money"],
@@ -76,7 +80,7 @@ def admin_kb():
         ["⚙️ Prix", "➕ Ajouter Tache"],
         ["💸 Retraits", "🚫 Bannir"],
         ["💵 Ajouter Solde", "📢 Broadcast"],
-        ["🔙 Mode User", ""]
+        ["🗑️ Supprimer Tache", "🔙 Mode User"]
     ], "resize_keyboard": True}
 
 def pays_keyboard():
@@ -183,6 +187,12 @@ def clear_session(uid):
     except:
         pass
 
+def mask_number(number):
+    n = number.strip()
+    if len(n) >= 6:
+        return n[:4] + " *** ** ** " + n[-2:]
+    return n
+
 @app.route("/api/webhook", methods=["GET"])
 def health():
     return "XAFEARN BOT OK", 200
@@ -270,6 +280,8 @@ def handle_msg(uid, uname, text):
         send(uid, "Compte suspendu.")
         return
 
+    today = str(date.today())
+
     if uid in ADMIN_IDS:
         if text in ["/admin", "📊 Statistiques"]:
             users = db_get("users")
@@ -284,6 +296,7 @@ def handle_msg(uid, uname, text):
                 "En attente : " + str(sum(1 for x in ws if x.get("status")=="pending")),
                 kb=admin_kb())
             return
+
         if text == "👥 Tous les Users":
             users = db_get("users")
             t = "UTILISATEURS (" + str(len(users)) + ")\n\n"
@@ -291,6 +304,7 @@ def handle_msg(uid, uname, text):
                 s = "BANNI" if uu.get("is_banned") else ("OK" if uu.get("is_registered") else "EN ATTENTE")
                 t += s + " @" + str(uu.get("username","N/A")) + " - " + str(uu.get("balance",0)) + "F\n"
             send(uid, t); return
+
         if text == "⚙️ Prix":
             send(uid,
                 "CONFIG ACTUELLE\n\n"
@@ -298,7 +312,8 @@ def handle_msg(uid, uname, text):
                 "Parrainage : " + str(get_cfg("bonus_referral")) + "F\n"
                 "Tache : " + str(get_cfg("bonus_task")) + "F\n"
                 "Min retrait : " + str(get_cfg("min_withdrawal")) + "F\n\n"
-                "/setbonus 50\n/setref 75\n/settask 35\n/setmin 2500"); return
+                "/setbonus 25\n/setref 75\n/settask 35\n/setmin 2500"); return
+
         if text.startswith("/setbonus "):
             set_cfg("bonus_daily", text.split()[1]); send(uid, "Bonus -> " + text.split()[1] + "F"); return
         if text.startswith("/setref "):
@@ -307,12 +322,31 @@ def handle_msg(uid, uname, text):
             set_cfg("bonus_task", text.split()[1]); send(uid, "Tache -> " + text.split()[1] + "F"); return
         if text.startswith("/setmin "):
             set_cfg("min_withdrawal", text.split()[1]); send(uid, "Min retrait -> " + text.split()[1] + "F"); return
+
         if text == "➕ Ajouter Tache":
             set_session(uid, {"action": "add_task", "step": "description"})
             send(uid, "NOUVELLE TACHE\n\nDecris la tache :"); return
+
+        if text == "🗑️ Supprimer Tache":
+            tasks = db_get("tasks", {"date": f"eq.{today}", "is_active": "eq.true"})
+            if not tasks:
+                send(uid, "Aucune tache a supprimer aujourd hui.")
+            else:
+                t = "Taches du jour :\n\n"
+                buttons = []
+                for task in tasks:
+                    t += "#" + str(task["id"]) + " - " + str(task["description"])[:30] + "\n"
+                    buttons.append([{
+                        "text": "Supprimer #" + str(task["id"]) + " - " + str(task["description"])[:20],
+                        "callback_data": "del_task_" + str(task["id"])
+                    }])
+                send(uid, t + "\nClique pour supprimer :", kb={"inline_keyboard": buttons})
+            return
+
         if text == "💵 Ajouter Solde":
             set_session(uid, {"action": "add_solde", "step": "user_id"})
             send(uid, "ID Telegram du user :\n(ex: 123456789)"); return
+
         if text == "💸 Retraits":
             pending = db_get("withdrawals", {"status": "eq.pending"})
             if not pending:
@@ -320,24 +354,29 @@ def handle_msg(uid, uname, text):
             else:
                 t = "EN ATTENTE (" + str(len(pending)) + ")\n\n"
                 for w in pending:
+                    u2 = get_user(w["user_id"])
                     t += "#" + str(w["id"]) + " - " + str(w["amount"]) + "F\n"
-                    t += "Pays : " + str(w.get("method","")) + "\n"
-                    t += "Nom : " + str(w.get("name","")) + "\n\n"
+                    t += "Methode : " + str(w.get("method","")) + "\n"
+                    t += "Numero  : " + str(w.get("number","")) + "\n"
+                    t += "Nom     : " + str(w.get("name","")) + "\n"
+                    t += "User    : @" + str(u2.get("username","N/A") if u2 else "N/A") + "\n"
+                    t += "---\n"
                 send(uid, t); return
+
         if text == "🚫 Bannir":
             set_session(uid, {"action": "ban"})
             send(uid, "ID a bannir :\n123456789\nDebannir : debannir 123456789"); return
+
         if text == "📢 Broadcast":
             set_session(uid, {"action": "broadcast"})
             send(uid, "Ecris le message a envoyer a tous :"); return
+
         if text == "🔙 Mode User":
             send(uid, "Mode Utilisateur", kb=main_kb()); return
 
     if not u.get("is_registered"):
         send(uid, "Rejoins nos canaux d abord.\nEnvoie /start")
         return
-
-    today = str(date.today())
 
     if text == "🎁 Bonus":
         bonus = get_cfg("bonus_daily")
@@ -406,11 +445,26 @@ def handle_msg(uid, uname, text):
 
     elif text == "✅ Taches":
         tasks = db_get("tasks", {"date": f"eq.{today}", "is_active": "eq.true"})
-        if not tasks:
-            send(uid, "Aucune tache disponible aujourd hui.\nReviens plus tard !")
-            return
+
+        # Vérifier si tâche auto déjà faite aujourd'hui
+        auto_rows = db_get("user_tasks", {"user_id": f"eq.{uid}", "task_id": f"eq.{AUTO_TASK_ID}"})
+        auto_done = any(str(r.get("completed_at",""))[:10] == today for r in auto_rows)
+
         msg_text = "TACHES DU JOUR\n\n"
+        msg_text += "================================\n\n"
+        msg_text += ("OK " if auto_done else "-- ") + AUTO_TASK_DESC + "\n"
+        msg_text += "Lien : " + AUTO_TASK_LINK + "\n"
+        msg_text += "Recompense : " + str(AUTO_TASK_REW) + "F\n"
+        msg_text += "Ce site te permet de gagner jusqu a 10 000F par jour !\n\n"
+        msg_text += "================================\n\n"
+
         buttons = []
+        if not auto_done:
+            buttons.append([{
+                "text": "Valider : S inscrire Sniper Business",
+                "callback_data": "auto_task_" + AUTO_TASK_ID
+            }])
+
         for t in tasks:
             done = len(db_get("user_tasks", {"user_id": f"eq.{uid}", "task_id": f"eq.{t['id']}"})) > 0
             msg_text += ("OK " if done else "-- ") + str(t["description"]) + "\n"
@@ -418,7 +472,14 @@ def handle_msg(uid, uname, text):
                 msg_text += "Lien : " + str(t["link"]) + "\n"
             msg_text += "Recompense : " + str(t["reward"]) + "F\n\n"
             if not done:
-                buttons.append([{"text": "Valider : " + str(t["description"])[:30], "callback_data": "task_" + str(t["id"])}])
+                buttons.append([{
+                    "text": "Valider : " + str(t["description"])[:30],
+                    "callback_data": "task_" + str(t["id"])
+                }])
+
+        if auto_done and not tasks:
+            msg_text += "Toutes les taches du jour sont completees !\nReviens demain."
+
         send(uid, msg_text, kb={"inline_keyboard": buttons} if buttons else None)
 
     elif text == "🏆 Classement":
@@ -442,8 +503,8 @@ def handle_msg(uid, uname, text):
 
 
 def handle_retrait_step(uid, text, sess):
-    step = sess.get("step")
-    u    = get_user(uid)
+    step  = sess.get("step")
+    u     = get_user(uid)
     min_w = get_cfg("min_withdrawal")
 
     if step == "amount":
@@ -453,11 +514,9 @@ def handle_retrait_step(uid, text, sess):
             send(uid, "Montant invalide. Envoie un chiffre ex: 2500")
             return
         if amount < min_w:
-            send(uid, "Minimum : " + str(min_w) + "F")
-            return
+            send(uid, "Minimum : " + str(min_w) + "F"); return
         if amount > u["balance"]:
-            send(uid, "Solde insuffisant. Ton solde : " + str(u["balance"]) + "F")
-            return
+            send(uid, "Solde insuffisant. Ton solde : " + str(u["balance"]) + "F"); return
         sess["amount"] = amount
         sess["step"]   = "number"
         set_session(uid, sess)
@@ -469,8 +528,7 @@ def handle_retrait_step(uid, text, sess):
 
     elif step == "number":
         if len(text.strip()) < 8:
-            send(uid, "Numero invalide. Reessaie.")
-            return
+            send(uid, "Numero invalide. Reessaie."); return
         sess["number"] = text.strip()
         sess["step"]   = "name"
         set_session(uid, sess)
@@ -478,8 +536,7 @@ def handle_retrait_step(uid, text, sess):
 
     elif step == "name":
         if len(text.strip()) < 3:
-            send(uid, "Nom invalide. Reessaie.")
-            return
+            send(uid, "Nom invalide. Reessaie."); return
         sess["name"] = text.strip()
 
         amount  = sess["amount"]
@@ -487,6 +544,7 @@ def handle_retrait_step(uid, text, sess):
         methode = sess.get("methode", "")
         number  = sess["number"]
         name    = sess["name"]
+        masked  = mask_number(number)
 
         update_balance(uid, -amount)
         r = db_post("withdrawals", {
@@ -502,8 +560,6 @@ def handle_retrait_step(uid, text, sess):
             "description": "Retrait #" + str(w_id)
         })
 
-        masked = number[:2] + "X" * (len(number)-4) + number[-2:] if len(number) >= 4 else number
-
         if RETRAIT_CHANNEL_ID and RETRAIT_CHANNEL_ID != "0":
             try:
                 tg("sendMessage",
@@ -513,7 +569,7 @@ def handle_retrait_step(uid, text, sess):
                          "Montant  : " + str(amount) + "F\n"
                          "Pays     : " + pays + "\n"
                          "Methode  : " + methode + "\n"
-                         "Numero   : " + number + "\n"
+                         "Numero   : " + masked + "\n"
                          "Nom      : " + name + "\n\n"
                          "User     : @" + str(u.get("username","N/A")) + "\n"
                          "ID       : " + str(uid) + "\n"
@@ -577,8 +633,7 @@ def handle_admin_step(uid, text, sess):
                 u = get_user(target_id)
                 if not u:
                     send(uid, "User introuvable. Verifie l ID.")
-                    clear_session(uid)
-                    return
+                    clear_session(uid); return
                 sess["target_id"] = target_id
                 sess["step"] = "amount"
                 set_session(uid, sess)
@@ -651,6 +706,7 @@ def handle_admin_step(uid, text, sess):
 
 
 def handle_cb(uid, data, mid, cid):
+    today = str(date.today())
 
     # ── Sélection du pays ─────────────────────────────
     if data.startswith("pays_"):
@@ -668,9 +724,9 @@ def handle_cb(uid, data, mid, cid):
 
     # ── Sélection de la méthode ───────────────────────
     if data.startswith("methode_"):
-        parts   = data.split("_", 2)
-        idx     = int(parts[1])
-        pays    = parts[2]
+        parts    = data.split("_", 2)
+        idx      = int(parts[1])
+        pays     = parts[2]
         methodes = PAYS_METHODES.get(pays, [])
         if idx >= len(methodes):
             return
@@ -722,7 +778,36 @@ def handle_cb(uid, data, mid, cid):
         edit(uid, mid, "Compte active !\n\nTon lien de parrainage :\n" + ref_link)
         send(uid, "Menu Principal XAFEARN\n\nQue veux-tu faire ?", kb=main_kb())
 
-    # ── Valider une tâche ─────────────────────────────
+    # ── Tâche automatique Sniper ──────────────────────
+    elif data.startswith("auto_task_"):
+        auto_rows = db_get("user_tasks", {"user_id": f"eq.{uid}", "task_id": f"eq.{AUTO_TASK_ID}"})
+        already   = any(str(r.get("completed_at",""))[:10] == today for r in auto_rows)
+        if already:
+            tg("answerCallbackQuery", callback_query_id=str(mid), text="Deja completee aujourd hui !", show_alert=True)
+            return
+        db_post("user_tasks", {"user_id": uid, "task_id": AUTO_TASK_ID})
+        update_balance(uid, AUTO_TASK_REW)
+        db_post("transactions", {
+            "user_id": uid, "type": "tache",
+            "amount": AUTO_TASK_REW,
+            "description": "Tache Sniper Business Center"
+        })
+        u = get_user(uid)
+        send(uid,
+            "Tache validee !\n\n"
+            "+" + str(AUTO_TASK_REW) + "F credite\n"
+            "Nouveau solde : " + str(u["balance"]) + "F\n\n"
+            "N oublie pas de t inscrire sur Sniper Business Center\n"
+            "pour gagner jusqu a 10 000F par jour !\n\n"
+            + AUTO_TASK_LINK)
+
+    # ── Supprimer une tâche ───────────────────────────
+    elif data.startswith("del_task_"):
+        task_id = int(data.split("_")[2])
+        db_patch("tasks", {"id": f"eq.{task_id}"}, {"is_active": False})
+        edit(uid, mid, "Tache #" + str(task_id) + " supprimee !")
+
+    # ── Valider une tâche manuelle ────────────────────
     elif data.startswith("task_"):
         task_id = int(data.split("_")[1])
         if db_get("user_tasks", {"user_id": f"eq.{uid}", "task_id": f"eq.{task_id}"}):
@@ -754,9 +839,9 @@ def handle_cb(uid, data, mid, cid):
         ws = db_get("withdrawals", {"id": f"eq.{w_id}"})
         if not ws or ws[0].get("status") != "pending":
             return
-        w = ws[0]
+        w           = ws[0]
         method_full = w.get("method","")
-        masked = w["number"][:2] + "X" * (len(w["number"])-4) + w["number"][-2:] if len(w["number"]) >= 4 else w["number"]
+        masked      = mask_number(w["number"])
 
         if decision == "approve":
             db_patch("withdrawals", {"id": f"eq.{w_id}"}, {"status": "approved"})
