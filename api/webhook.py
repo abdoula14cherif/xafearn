@@ -58,7 +58,8 @@ def admin_kb():
         ["👥 Tous les Users", "📊 Statistiques"],
         ["⚙️ Prix", "➕ Ajouter Tache"],
         ["💸 Retraits", "🚫 Bannir"],
-        ["📢 Broadcast", "🔙 Mode User"]
+        ["💵 Ajouter Solde", "📢 Broadcast"],
+        ["🔙 Mode User", ""]
     ], "resize_keyboard": True}
 
 def db_get(table, f={}):
@@ -186,7 +187,7 @@ def handle_msg(uid, uname, text):
     if sess.get("action") == "retrait":
         handle_retrait_step(uid, text, sess)
         return
-    if sess.get("action") in ["add_task","ban","broadcast"] and uid in ADMIN_IDS:
+    if sess.get("action") in ["add_task","ban","broadcast","add_solde"] and uid in ADMIN_IDS:
         handle_admin_step(uid, text, sess)
         return
 
@@ -256,6 +257,7 @@ def handle_msg(uid, uname, text):
                 "En attente : " + str(sum(1 for x in ws if x.get("status")=="pending")),
                 kb=admin_kb())
             return
+
         if text == "👥 Tous les Users":
             users = db_get("users")
             t = "UTILISATEURS (" + str(len(users)) + ")\n\n"
@@ -263,6 +265,7 @@ def handle_msg(uid, uname, text):
                 s = "BANNI" if uu.get("is_banned") else ("OK" if uu.get("is_registered") else "EN ATTENTE")
                 t += s + " @" + str(uu.get("username","N/A")) + " - " + str(uu.get("balance",0)) + "F\n"
             send(uid, t); return
+
         if text == "⚙️ Prix":
             send(uid,
                 "CONFIG ACTUELLE\n\n"
@@ -271,6 +274,7 @@ def handle_msg(uid, uname, text):
                 "Tache : " + str(get_cfg("bonus_task")) + "F\n"
                 "Min retrait : " + str(get_cfg("min_withdrawal")) + "F\n\n"
                 "/setbonus 50\n/setref 75\n/settask 35\n/setmin 2500"); return
+
         if text.startswith("/setbonus "):
             set_cfg("bonus_daily", text.split()[1]); send(uid, "Bonus -> " + text.split()[1] + "F"); return
         if text.startswith("/setref "):
@@ -279,9 +283,15 @@ def handle_msg(uid, uname, text):
             set_cfg("bonus_task", text.split()[1]); send(uid, "Tache -> " + text.split()[1] + "F"); return
         if text.startswith("/setmin "):
             set_cfg("min_withdrawal", text.split()[1]); send(uid, "Min retrait -> " + text.split()[1] + "F"); return
+
         if text == "➕ Ajouter Tache":
             set_session(uid, {"action": "add_task", "step": "description"})
             send(uid, "NOUVELLE TACHE\n\nDecris la tache :"); return
+
+        if text == "💵 Ajouter Solde":
+            set_session(uid, {"action": "add_solde", "step": "user_id"})
+            send(uid, "ID Telegram du user :\n(ex: 123456789)\n\nTrouve l ID en demandant au user d envoyer son ID via @userinfobot"); return
+
         if text == "💸 Retraits":
             pending = db_get("withdrawals", {"status": "eq.pending"})
             if not pending:
@@ -291,12 +301,15 @@ def handle_msg(uid, uname, text):
                 for w in pending:
                     t += "#" + str(w["id"]) + " - " + str(w["amount"]) + "F - " + str(w.get("name","")) + "\n"
                 send(uid, t); return
+
         if text == "🚫 Bannir":
             set_session(uid, {"action": "ban"})
             send(uid, "ID a bannir :\n123456789\nDebannir : debannir 123456789"); return
+
         if text == "📢 Broadcast":
             set_session(uid, {"action": "broadcast"})
             send(uid, "Ecris le message a envoyer a tous :"); return
+
         if text == "🔙 Mode User":
             send(uid, "Mode Utilisateur", kb=main_kb()); return
 
@@ -490,6 +503,7 @@ def handle_retrait_step(uid, text, sess):
 
 def handle_admin_step(uid, text, sess):
     action = sess.get("action")
+
     if action == "add_task":
         step = sess.get("step")
         if step == "description":
@@ -516,6 +530,56 @@ def handle_admin_step(uid, text, sess):
             })
             send(uid, "Tache ajoutee !\n\n" + str(sess["description"]) + "\nRecompense : " + str(reward) + "F")
             clear_session(uid)
+
+    elif action == "add_solde":
+        step = sess.get("step")
+        if step == "user_id":
+            try:
+                target_id = int(text.strip())
+                u = get_user(target_id)
+                if not u:
+                    send(uid, "User introuvable. Verifie l ID.")
+                    clear_session(uid)
+                    return
+                sess["target_id"] = target_id
+                sess["step"] = "amount"
+                set_session(uid, sess)
+                send(uid,
+                    "User trouve : @" + str(u.get("username","N/A")) + "\n"
+                    "Solde actuel : " + str(u["balance"]) + "F\n\n"
+                    "Combien veux-tu ajouter ? (en F)")
+            except:
+                send(uid, "ID invalide. Reessaie.")
+                clear_session(uid)
+        elif step == "amount":
+            try:
+                amount = int(text.strip())
+                target_id = sess["target_id"]
+                update_balance(target_id, amount)
+                db_post("transactions", {
+                    "user_id": target_id,
+                    "type": "credit_admin",
+                    "amount": amount,
+                    "description": "Credit manuel par admin"
+                })
+                new_u = get_user(target_id)
+                send(uid,
+                    "Solde ajoute avec succes !\n\n"
+                    "User : @" + str(new_u.get("username","N/A")) + "\n"
+                    "+" + str(amount) + "F credite\n"
+                    "Nouveau solde : " + str(new_u["balance"]) + "F")
+                try:
+                    send(target_id,
+                        "+" + str(amount) + "F credite sur ton compte !\n\n"
+                        "Nouveau solde : " + str(new_u["balance"]) + "F\n\n"
+                        "L equipe XAFEARN")
+                except:
+                    pass
+                clear_session(uid)
+            except:
+                send(uid, "Montant invalide. Reessaie.")
+                clear_session(uid)
+
     elif action == "ban":
         t = text.strip()
         if t.startswith("debannir "):
@@ -535,6 +599,7 @@ def handle_admin_step(uid, text, sess):
             except:
                 send(uid, "ID invalide.")
         clear_session(uid)
+
     elif action == "broadcast":
         users = db_get("users", {"is_registered": "eq.true"})
         sent = 0
