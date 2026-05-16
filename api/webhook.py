@@ -13,11 +13,13 @@ DB     = f"{SB_URL}/rest/v1"
 ADMIN_IDS = [int(x.strip()) for x in os.environ.get("ADMIN_IDS","").split(",") if x.strip().isdigit()]
 RETRAIT_CHANNEL_ID = os.environ.get("RETRAIT_CHANNEL_ID", "0")
 BOT_USERNAME = "xafearn_bot"
-CHANNELS = [
-    os.environ.get("CHANNEL_1", "@xafearn_money"),
-    os.environ.get("CHANNEL_2", "@xafearn_money"),
-    os.environ.get("CHANNEL_3", "@xafearn_money"),
+
+CHANNELS_CHECK = ["@xafearn_money"]
+CHANNELS_DISPLAY = [
+    "https://t.me/xafearn_money",
+    "https://t.me/+JlqLH_-LD4syZmY0"
 ]
+
 H = {
     "apikey": SB_KEY,
     "Authorization": f"Bearer {SB_KEY}",
@@ -112,7 +114,7 @@ def get_ref_count(uid):
     return len(db_get("users", {"referred_by": f"eq.{uid}", "is_registered": "eq.true"}))
 
 def check_joined(uid):
-    for ch in CHANNELS:
+    for ch in CHANNELS_CHECK:
         try:
             r = tg("getChatMember", chat_id=ch, user_id=uid)
             if r.get("result", {}).get("status") in ["left", "kicked"]:
@@ -188,7 +190,6 @@ def handle_msg(uid, uname, text):
         handle_admin_step(uid, text, sess)
         return
 
-    # ── /start ───────────────────────────────────────
     if text.startswith("/start"):
         parts = text.split(" ")
         referred_by = None
@@ -214,19 +215,14 @@ def handle_msg(uid, uname, text):
                 "is_registered": False
             })
 
-        ch1 = str(CHANNELS[0]) if len(CHANNELS) > 0 else ""
-        ch2 = str(CHANNELS[1]) if len(CHANNELS) > 1 else ""
-        ch3 = str(CHANNELS[2]) if len(CHANNELS) > 2 else ""
-
         msg = "Bienvenue sur XAFEARN " + str(uname) + "!\n\n"
         msg += "Gagne de l argent chaque jour :\n"
         msg += "- Bonus journalier\n"
         msg += "- Parrainage\n"
         msg += "- Taches quotidiennes\n\n"
         msg += "Rejoins nos canaux :\n"
-        msg += "1. " + ch1 + "\n"
-        msg += "2. " + ch2 + "\n"
-        msg += "3. " + ch3 + "\n\n"
+        msg += "1. " + CHANNELS_DISPLAY[0] + "\n"
+        msg += "2. " + CHANNELS_DISPLAY[1] + "\n\n"
         msg += "Puis clique le bouton ci-dessous"
 
         req.post(f"{API}/sendMessage", json={
@@ -238,7 +234,6 @@ def handle_msg(uid, uname, text):
         }, timeout=15)
         return
 
-    # ── Vérif user ───────────────────────────────────
     u = get_user(uid)
     if not u:
         send(uid, "Utilise /start pour t inscrire.")
@@ -247,7 +242,6 @@ def handle_msg(uid, uname, text):
         send(uid, "Compte suspendu.")
         return
 
-    # ── ADMIN ────────────────────────────────────────
     if uid in ADMIN_IDS:
         if text in ["/admin", "📊 Statistiques"]:
             users = db_get("users")
@@ -306,7 +300,6 @@ def handle_msg(uid, uname, text):
         if text == "🔙 Mode User":
             send(uid, "Mode Utilisateur", kb=main_kb()); return
 
-    # ── Vérif inscription ────────────────────────────
     if not u.get("is_registered"):
         send(uid, "Rejoins nos canaux d abord.\nEnvoie /start")
         return
@@ -413,7 +406,7 @@ def handle_msg(uid, uname, text):
             "Parrainage : " + str(get_cfg("bonus_referral")) + "F par ami\n"
             "Tache : " + str(get_cfg("bonus_task")) + "F par tache\n"
             "Retrait minimum : " + str(get_cfg("min_withdrawal")) + "F\n\n"
-            ""Support WhatsApp :\nhttps://wa.me/699663183")")
+            "Support WhatsApp :\nhttps://wa.me/699663183")
 
 
 def handle_retrait_step(uid, text, sess):
@@ -562,13 +555,9 @@ def handle_cb(uid, data, mid, cid):
         if not u:
             return
         if not check_joined(uid):
-            ch1 = str(CHANNELS[0]) if len(CHANNELS) > 0 else ""
-            ch2 = str(CHANNELS[1]) if len(CHANNELS) > 1 else ""
-            ch3 = str(CHANNELS[2]) if len(CHANNELS) > 2 else ""
             msg = "Tu n as pas encore tout rejoint.\n\n"
-            msg += "1. " + ch1 + "\n"
-            msg += "2. " + ch2 + "\n"
-            msg += "3. " + ch3 + "\n\n"
+            msg += "1. " + CHANNELS_DISPLAY[0] + "\n"
+            msg += "2. " + CHANNELS_DISPLAY[1] + "\n\n"
             msg += "Rejoins puis clique Verifier"
             edit(uid, mid, msg,
                 kb={"inline_keyboard": [[
