@@ -94,6 +94,7 @@ def admin_kb():
         ["💸 Retraits", "🚫 Bannir"],
         ["💵 Ajouter Solde", "📢 Broadcast"],
         ["🗑️ Supprimer Tache", "⛔ Pause Retraits"],
+        ["🔍 Verif Canaux", "📢 Rappel Bonus"],
         ["📋 Log Actions", "🔙 Mode User"]
     ], "resize_keyboard": True}
 
@@ -531,6 +532,25 @@ def handle_msg(uid, uname, text):
                 send(uid, t)
             return
 
+        if text == "🔍 Verif Canaux":
+            users = db_get("users", {"is_registered": "eq.true", "is_banned": "eq.false"})
+            send(uid, "Verification en cours sur " + str(len(users[:30])) + " users...")
+            not_in = []
+            for uu in users[:30]:
+                if not check_joined(uu["user_id"]):
+                    not_in.append(uu)
+                    # Désactiver le compte silencieusement
+                    db_patch("users", {"user_id": f"eq.{uu['user_id']}"}, {"is_registered": False})
+            if not not_in:
+                send(uid, "Tous les users actifs sont dans les canaux.")
+            else:
+                t = "USERS HORS CANAL (" + str(len(not_in)) + ")\nComptes desactives automatiquement :\n\n"
+                for uu in not_in:
+                    t += "@" + str(uu.get("username","N/A")) + " - " + str(uu.get("balance",0)) + "F\n"
+                send(uid, t)
+                log_action(uid, "VERIF_CANAUX", "desactives=" + str(len(not_in)))
+            return
+
         if text == "📢 Rappel Bonus":
             sent = notif_rappel_bonus()
             send(uid, "Rappel envoye a " + str(sent) + " utilisateurs.")
@@ -618,6 +638,16 @@ def handle_msg(uid, uname, text):
     # UTILISATEUR
     # ══════════════════════════════
     if text == "🎁 Bonus":
+        # Re-vérifier que l'user est toujours dans le canal
+        if not check_joined(uid):
+            db_patch("users", {"user_id": f"eq.{uid}"}, {"is_registered": False})
+            send(uid,
+                "Tu as quitte nos canaux !\n\n"
+                "Rejoins-les pour continuer a gagner :\n"
+                "1. " + CHANNELS_DISPLAY[0] + "\n"
+                "2. " + CHANNELS_DISPLAY[1] + "\n\n"
+                "Puis envoie /start")
+            return
         bonus = get_cfg("bonus_daily")
         if str(u.get("last_bonus","")) == today:
             send(uid, "Bonus deja recupere !\n\nSolde : "+str(u["balance"])+"F\nReviens demain pour +"+str(bonus)+"F"); return
@@ -626,7 +656,6 @@ def handle_msg(uid, uname, text):
         db_post("transactions",{"user_id":uid,"type":"bonus","amount":bonus,"description":"Bonus journalier"})
         new_u = get_user(uid)
         send(uid, "BONUS RECU !\n\n+"+str(bonus)+"F credite\nNouveau solde : "+str(new_u["balance"])+"F\n\nReviens demain !")
-        # Notification palier
         notif_palier(uid, new_u["balance"])
 
     elif text == "💰 Solde":
