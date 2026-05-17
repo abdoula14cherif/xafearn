@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <title>XAFEARN Annonces</title>
+<script src="https://leekpay.fr/js/leekpay.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -140,40 +141,103 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--txt
 <!-- ALERT BOX -->
 <div id="alertBox"></div>
 
-<!-- INSCRIPTION -->
-<div id="regPage">
-  <div class="reg-card">
-    <div class="rlogo">X<em>A</em>FEARN</div>
-    <div class="rsub">Plateforme d'annonces — Inscription gratuite</div>
-    <div class="fg">
-      <label class="fl">Prénom / Nom *</label>
-      <input class="fi" id="rNom" type="text" placeholder="Ex: Jean Dupont" autocomplete="name"/>
+<!-- AUTH PAGE (Connexion + Inscription) -->
+<div id="authPage" style="position:fixed;inset:0;background:linear-gradient(135deg,var(--bd),var(--b));display:none;align-items:flex-start;justify-content:center;padding:30px 20px;z-index:50;overflow-y:auto">
+  <div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:380px;margin-top:20px">
+
+    <!-- LOGO -->
+    <div style="font-family:'Outfit',sans-serif;font-weight:900;font-size:26px;color:var(--bd);text-align:center;margin-bottom:3px">X<em style="color:var(--o);font-style:normal">A</em>FEARN</div>
+    <div style="text-align:center;font-size:12px;color:var(--mu);margin-bottom:20px">Plateforme d'annonces</div>
+
+    <!-- TABS -->
+    <div style="display:flex;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:20px">
+      <button id="tabLogin" onclick="switchTab('login')" style="flex:1;padding:10px;border:none;border-radius:9px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:var(--b);color:#fff;transition:.2s">Se connecter</button>
+      <button id="tabReg" onclick="switchTab('reg')" style="flex:1;padding:10px;border:none;border-radius:9px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--mu);transition:.2s">S'inscrire</button>
     </div>
-    <div class="fg">
-      <label class="fl">Numéro WhatsApp *</label>
-      <input class="fi" id="rTel" type="tel" placeholder="Ex: 699123456" inputmode="numeric"/>
+
+    <!-- CONNEXION -->
+    <div id="loginForm">
+      <p style="font-size:12px;color:var(--mu);margin-bottom:14px;text-align:center">Entre ton numéro WhatsApp pour te connecter</p>
+      <!-- Numéro avec indicatif -->
+      <div class="fg">
+        <label class="fl">Numéro WhatsApp *</label>
+        <div style="display:flex;gap:8px">
+          <select id="lCode" style="width:110px;padding:11px 8px;border:2px solid var(--brd);border-radius:11px;font-size:12px;background:#fff;color:var(--txt);outline:none;flex-shrink:0">
+            <option value="+228">🇹🇬 +228</option>
+            <option value="+225">🇨🇮 +225</option>
+            <option value="+221">🇸🇳 +221</option>
+            <option value="+226">🇧🇫 +226</option>
+            <option value="+223">🇲🇱 +223</option>
+            <option value="+229">🇧🇯 +229</option>
+            <option value="+237" selected>🇨🇲 +237</option>
+            <option value="+224">🇬🇳 +224</option>
+            <option value="+227">🇳🇪 +227</option>
+            <option value="+242">🇨🇬 +242</option>
+            <option value="+241">🇬🇦 +241</option>
+            <option value="+235">🇹🇩 +235</option>
+            <option value="+243">🇨🇩 +243</option>
+            <option value="+234">🇳🇬 +234</option>
+            <option value="+233">🇬🇭 +233</option>
+            <option value="+212">🇲🇦 +212</option>
+          </select>
+          <input class="fi" id="lTel" type="tel" placeholder="699123456" inputmode="numeric" style="flex:1"/>
+        </div>
+      </div>
+      <button class="btn btn-b" id="loginBtn" onclick="doLogin()" style="margin-bottom:10px">🔑 Se connecter</button>
     </div>
-    <div class="fg">
-      <label class="fl">Pays *</label>
-      <select class="fi" id="rPays">
-        <option value="">-- Choisir --</option>
-        <option value="Togo">🇹🇬 Togo</option>
-        <option value="Côte d'Ivoire">🇨🇮 Côte d'Ivoire</option>
-        <option value="Sénégal">🇸🇳 Sénégal</option>
-        <option value="Burkina Faso">🇧🇫 Burkina Faso</option>
-        <option value="Mali">🇲🇱 Mali</option>
-        <option value="Bénin">🇧🇯 Bénin</option>
-        <option value="Cameroun">🇨🇲 Cameroun</option>
-        <option value="Guinée">🇬🇳 Guinée</option>
-        <option value="Niger">🇳🇪 Niger</option>
-        <option value="Congo">🇨🇬 Congo</option>
-        <option value="Gabon">🇬🇦 Gabon</option>
-        <option value="Tchad">🇹🇩 Tchad</option>
-        <option value="Autre">Autre</option>
-      </select>
+
+    <!-- INSCRIPTION -->
+    <div id="regForm" style="display:none">
+      <div class="fg">
+        <label class="fl">Prénom / Nom *</label>
+        <input class="fi" id="rNom" type="text" placeholder="Ex: Jean Dupont" autocomplete="name"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Numéro WhatsApp *</label>
+        <div style="display:flex;gap:8px">
+          <select id="rCode" style="width:110px;padding:11px 8px;border:2px solid var(--brd);border-radius:11px;font-size:12px;background:#fff;color:var(--txt);outline:none;flex-shrink:0">
+            <option value="+228">🇹🇬 +228</option>
+            <option value="+225">🇨🇮 +225</option>
+            <option value="+221">🇸🇳 +221</option>
+            <option value="+226">🇧🇫 +226</option>
+            <option value="+223">🇲🇱 +223</option>
+            <option value="+229">🇧🇯 +229</option>
+            <option value="+237" selected>🇨🇲 +237</option>
+            <option value="+224">🇬🇳 +224</option>
+            <option value="+227">🇳🇪 +227</option>
+            <option value="+242">🇨🇬 +242</option>
+            <option value="+241">🇬🇦 +241</option>
+            <option value="+235">🇹🇩 +235</option>
+            <option value="+243">🇨🇩 +243</option>
+            <option value="+234">🇳🇬 +234</option>
+            <option value="+233">🇬🇭 +233</option>
+            <option value="+212">🇲🇦 +212</option>
+          </select>
+          <input class="fi" id="rTel" type="tel" placeholder="699123456" inputmode="numeric" style="flex:1"/>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Pays *</label>
+        <select class="fi" id="rPays">
+          <option value="">-- Choisir --</option>
+          <option value="Togo">🇹🇬 Togo</option>
+          <option value="Côte d'Ivoire">🇨🇮 Côte d'Ivoire</option>
+          <option value="Sénégal">🇸🇳 Sénégal</option>
+          <option value="Burkina Faso">🇧🇫 Burkina Faso</option>
+          <option value="Mali">🇲🇱 Mali</option>
+          <option value="Bénin">🇧🇯 Bénin</option>
+          <option value="Cameroun">🇨🇲 Cameroun</option>
+          <option value="Guinée">🇬🇳 Guinée</option>
+          <option value="Niger">🇳🇪 Niger</option>
+          <option value="Congo">🇨🇬 Congo</option>
+          <option value="Gabon">🇬🇦 Gabon</option>
+          <option value="Tchad">🇹🇩 Tchad</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <button class="btn btn-o" id="regBtn" onclick="doRegister()">🚀 Créer mon compte</button>
+      <p style="text-align:center;font-size:10px;color:var(--mu);margin-top:10px">100% gratuit · Aucune carte requise</p>
     </div>
-    <button class="btn btn-o" id="regBtn" onclick="doRegister()">🚀 Créer mon compte</button>
-    <p style="text-align:center;font-size:10px;color:var(--mu);margin-top:10px">100% gratuit · Aucune carte requise</p>
   </div>
 </div>
 
@@ -220,6 +284,22 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--txt
       <!-- STEP 1 -->
       <div id="s1">
         <p style="font-size:11px;color:var(--mu);margin-bottom:11px">Étape 1 — Informations</p>
+
+        <!-- PHOTO UPLOAD -->
+        <div class="fg">
+          <label class="fl">📸 Photo de l'annonce (optionnel)</label>
+          <div id="photoWrap" onclick="document.getElementById('photoInput').click()" style="width:100%;height:140px;border:2px dashed var(--brd);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--bg);overflow:hidden;position:relative">
+            <div id="photoPlaceholder" style="text-align:center;color:var(--mu)">
+              <div style="font-size:32px;margin-bottom:6px">📷</div>
+              <div style="font-size:11px">Clique pour ajouter une photo</div>
+              <div style="font-size:10px;opacity:.6;margin-top:2px">JPG · PNG · max 2MB</div>
+            </div>
+            <img id="photoPreview" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>
+          </div>
+          <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(this)"/>
+          <button id="removePhoto" onclick="removePhotoFn()" style="display:none;width:100%;margin-top:6px;padding:7px;border:1px solid var(--r);border-radius:9px;background:#FEE2E2;color:var(--r);font-size:11px;font-weight:600;cursor:pointer">✕ Supprimer la photo</button>
+        </div>
+
         <div class="fg"><label class="fl">Titre *</label><input class="fi" id="pTit" type="text" placeholder="Ex: Vente iPhone 14 neuf"/></div>
         <div class="fg"><label class="fl">Description *</label><textarea class="fi" style="resize:none;height:75px" id="pDes" placeholder="Décris ton annonce..."></textarea></div>
         <div class="fg">
@@ -262,23 +342,30 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--txt
       </div>
       <!-- STEP 3 -->
       <div id="s3" style="display:none">
-        <p style="font-size:11px;color:var(--mu);margin-bottom:11px">Étape 3 — Paiement</p>
-        <div class="pay-box">
-          <p style="font-weight:700;font-size:12px;color:var(--o);margin-bottom:9px">💳 Comment payer</p>
-          <div class="pay-step"><div class="pn">1</div><div>Envoie <strong id="pAmt">500F</strong> sur :</div></div>
-          <div style="background:rgba(245,124,0,.08);border-radius:9px;padding:10px;margin:7px 0;text-align:center">
-            <div style="font-size:9px;color:var(--mu)">📱 Orange / MTN / Wave / Flooz</div>
-            <div class="pay-num">699 663 183</div>
-            <div style="font-size:9px;color:var(--mu)">Abdoula CHERIF</div>
-          </div>
-          <div class="pay-step"><div class="pn">2</div><div>Note la référence SMS reçue</div></div>
-          <div class="pay-step"><div class="pn">3</div><div>Entre-la ci-dessous et soumets</div></div>
+        <p style="font-size:11px;color:var(--mu);margin-bottom:11px">Étape 3 — Paiement sécurisé</p>
+
+        <!-- Récap annonce -->
+        <div id="pRecap" style="background:var(--bg);border-radius:12px;padding:13px;margin-bottom:14px;font-size:12px;border:1px solid var(--brd)"></div>
+
+        <!-- Bouton LeekPay -->
+        <div style="background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border:2px solid #FED7AA;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center">
+          <div style="font-size:13px;color:var(--o);font-weight:700;margin-bottom:4px">💳 Paiement sécurisé</div>
+          <div style="font-size:11px;color:var(--mu);margin-bottom:14px">Orange Money · MTN · Wave · Flooz · Carte bancaire</div>
+          <button class="btn btn-o" id="leekBtn" onclick="doLeekPay()" style="font-size:16px;padding:15px">
+            💳 Payer maintenant
+          </button>
+          <div style="font-size:10px;color:var(--mu);margin-top:10px">🔒 Paiement sécurisé via LeekPay · Activation automatique</div>
         </div>
-        <div id="pRecap" style="background:var(--bg);border-radius:10px;padding:10px;margin-bottom:12px;font-size:11px;border:1px solid var(--brd)"></div>
-        <div class="fg"><label class="fl">Référence de transaction *</label><input class="fi" id="pRef" type="text" placeholder="Ex: TXN123456789"/></div>
+
+        <!-- État paiement -->
+        <div id="payStatus" style="display:none;text-align:center;padding:20px;background:#F0FDF4;border-radius:12px;border:2px solid #BBF7D0;margin-bottom:14px">
+          <div style="font-size:32px;margin-bottom:8px">✅</div>
+          <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;color:#059669">Paiement confirmé !</div>
+          <div style="font-size:12px;color:var(--mu);margin-top:4px">Ton annonce est en cours d'activation...</div>
+        </div>
+
         <div class="btn-row">
           <button class="btn btn-gh btn-sm" onclick="goStep(2)" style="width:auto">← Retour</button>
-          <button class="btn btn-g" id="subBtn" onclick="doSubmit()">✅ Soumettre</button>
         </div>
       </div>
     </div>
@@ -316,7 +403,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--txt
 <script>
 // ── CONFIG ────────────────────────────────────────────────
 var SB  = "https://xtmmmrajknnadodgrrcu.supabase.co";
-var KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bW1tcmFqa25uYWRvZGdycmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5ODc5NjQsImV4cCI6MjA2MDU2Mzk2NH0.Ht_BdMdgwkiuB4VuMTdH2CKg4BLj1bKNzW_g8mENwn0";
+var KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bW1tcmFqa25uYWRvZGdycmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzM2NTEsImV4cCI6MjA5NDIwOTY1MX0.0r3JfPL2rgKGWO0iiapV7mb8fI8N3Cmz4M9L1L-zqVw";
 var HDR = {
   "apikey": KEY,
   "Authorization": "Bearer " + KEY,
@@ -334,6 +421,111 @@ var CU   = null;
 var TID  = null;
 var sCat = "";
 var sPak = "";
+var photoB64 = ""; // Photo en base64
+
+// ── TABS AUTH ─────────────────────────────────────────────
+function switchTab(tab) {
+  if (tab === "login") {
+    document.getElementById("loginForm").style.display = "block";
+    document.getElementById("regForm").style.display   = "none";
+    document.getElementById("tabLogin").style.background = "var(--b)";
+    document.getElementById("tabLogin").style.color = "#fff";
+    document.getElementById("tabReg").style.background = "transparent";
+    document.getElementById("tabReg").style.color = "var(--mu)";
+  } else {
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("regForm").style.display   = "block";
+    document.getElementById("tabLogin").style.background = "transparent";
+    document.getElementById("tabLogin").style.color = "var(--mu)";
+    document.getElementById("tabReg").style.background = "var(--o)";
+    document.getElementById("tabReg").style.color = "#fff";
+  }
+}
+
+// ── CONNEXION ─────────────────────────────────────────────
+function doLogin() {
+  var code = document.getElementById("lCode").value;
+  var num  = (document.getElementById("lTel").value || "").trim().replace(/\D/g,"");
+  if (!num || num.length < 6) { alert2("Entre ton numéro de téléphone","er"); return; }
+
+  var fullTel = code + num;
+  var btn = document.getElementById("loginBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Recherche...";
+
+  // Chercher par numéro complet ou numéro seul
+  dbQ("miniapp_users", {telephone:"eq."+fullTel, order:"id.desc", limit:"1"}, function(err, data) {
+    if (!err && data && data[0]) {
+      CU = data[0];
+      lsSet("xa_u", {id:CU.id, nom:CU.nom, telephone:CU.telephone, pays:CU.pays});
+      document.getElementById("authPage").style.display = "none";
+      showApp();
+      alert2("Bienvenue " + CU.nom + " ! 👋","ok");
+    } else {
+      // Essayer sans indicatif
+      dbQ("miniapp_users", {telephone:"eq."+num, order:"id.desc", limit:"1"}, function(err2, data2) {
+        if (!err2 && data2 && data2[0]) {
+          CU = data2[0];
+          // Mettre à jour le numéro avec indicatif
+          dbQ2("miniapp_users", {id:"eq."+CU.id}, {telephone: fullTel});
+          lsSet("xa_u", {id:CU.id, nom:CU.nom, telephone:CU.telephone, pays:CU.pays});
+          document.getElementById("authPage").style.display = "none";
+          showApp();
+          alert2("Bienvenue " + CU.nom + " ! 👋","ok");
+        } else {
+          alert2("Numéro introuvable — inscris-toi d'abord","er");
+          btn.disabled = false;
+          btn.textContent = "🔑 Se connecter";
+          setTimeout(function(){ switchTab("reg"); }, 1500);
+        }
+      });
+    }
+  });
+}
+
+// Patch helper
+function dbQ2(table, params, data) {
+  var qs = "?" + Object.entries(params).map(function(kv){ return kv[0]+"="+kv[1]; }).join("&");
+  var xhr = new XMLHttpRequest();
+  xhr.open("PATCH", SB + "/rest/v1/" + table + qs);
+  for (var h in HDR) xhr.setRequestHeader(h, HDR[h]);
+  xhr.send(JSON.stringify(data));
+}
+function handlePhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) { alert2("Photo trop grande (max 3MB)","er"); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    // Compresser via canvas
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement("canvas");
+      var max = 800;
+      var w = img.width, h = img.height;
+      if (w > max) { h = Math.round(h * max/w); w = max; }
+      if (h > max) { w = Math.round(w * max/h); h = max; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      photoB64 = canvas.toDataURL("image/jpeg", 0.75);
+      document.getElementById("photoPreview").src = photoB64;
+      document.getElementById("photoPreview").style.display = "block";
+      document.getElementById("photoPlaceholder").style.display = "none";
+      document.getElementById("removePhoto").style.display = "block";
+      document.getElementById("photoWrap").style.border = "2px solid var(--g)";
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function removePhotoFn() {
+  photoB64 = "";
+  document.getElementById("photoPreview").style.display = "none";
+  document.getElementById("photoPlaceholder").style.display = "flex";
+  document.getElementById("removePhoto").style.display = "none";
+  document.getElementById("photoWrap").style.border = "2px dashed var(--brd)";
+  document.getElementById("photoInput").value = "";
+}
 
 // ── ALERT VISIBLE ─────────────────────────────────────────
 function alert2(msg, type) {
@@ -371,54 +563,75 @@ function dbInsert(table, data, cb) {
   xhr.open("POST", SB + "/rest/v1/" + table);
   for (var h in HDR) xhr.setRequestHeader(h, HDR[h]);
   xhr.onload = function() {
-    try {
-      var res = JSON.parse(xhr.responseText);
-      if (res && res.code) { cb("Erreur DB: " + (res.message || res.code)); }
-      else { cb(null, res); }
-    } catch(e) { cb("Erreur de réponse"); }
+    // 201 = insertion réussie
+    if (xhr.status === 201) {
+      try {
+        var res = JSON.parse(xhr.responseText);
+        // Si tableau non vide → parfait
+        if (Array.isArray(res) && res.length > 0) { cb(null, res); return; }
+        if (res && res.id) { cb(null, [res]); return; }
+        // Tableau vide → succès quand même, on signale ok avec status
+        cb(null, {__ok: true});
+      } catch(e) { cb(null, {__ok: true}); }
+    } else {
+      try {
+        var err = JSON.parse(xhr.responseText);
+        cb("Erreur " + xhr.status + ": " + (err.message || err.code || xhr.responseText));
+      } catch(e) { cb("Erreur HTTP " + xhr.status); }
+    }
   };
-  xhr.onerror = function() { cb("Pas de connexion"); };
+  xhr.onerror = function() { cb("Pas de connexion internet"); };
   xhr.send(JSON.stringify(data));
 }
 
 // ── INSCRIPTION ───────────────────────────────────────────
 function doRegister() {
   var nom  = (document.getElementById("rNom").value || "").trim();
-  var tel  = (document.getElementById("rTel").value || "").trim();
+  var code = document.getElementById("rCode").value;
+  var num  = (document.getElementById("rTel").value || "").trim().replace(/\D/g,"");
   var pays = document.getElementById("rPays").value;
-  if (nom.length < 2)  { alert2("Entre ton prénom/nom","er"); return; }
-  if (tel.length < 8)  { alert2("Numéro WhatsApp invalide (min 8 chiffres)","er"); return; }
-  if (!pays)            { alert2("Choisis ton pays","er"); return; }
 
+  if (!nom || nom.length < 2) { alert2("Entre ton prénom/nom","er"); return; }
+  if (!num || num.length < 6) { alert2("Numéro WhatsApp invalide","er"); return; }
+  if (!pays)                   { alert2("Choisis ton pays","er"); return; }
+
+  var fullTel = code + num;
   var btn = document.getElementById("regBtn");
   btn.disabled = true;
-  btn.textContent = "⏳ Création en cours...";
+  btn.textContent = "⏳ Création...";
 
-  dbInsert("miniapp_users", {
-    telegram_id: TID || null,
-    username: nom,
-    nom: nom,
-    telephone: tel,
-    pays: pays
-  }, function(err, res) {
-    if (err) {
-      alert2(err, "er");
-      btn.disabled = false;
-      btn.textContent = "🚀 Créer mon compte";
+  // Vérifier si ce numéro existe déjà
+  dbQ("miniapp_users", {telephone:"eq."+fullTel, limit:"1"}, function(errC, existing) {
+    if (!errC && existing && existing[0]) {
+      CU = existing[0];
+      lsSet("xa_u", {id:CU.id, nom:CU.nom, telephone:CU.telephone, pays:CU.pays});
+      document.getElementById("authPage").style.display = "none";
+      showApp();
+      alert2("Compte trouvé — connecté ! 👋","ok");
       return;
     }
-    var user = Array.isArray(res) ? res[0] : res;
-    if (user && user.id) {
-      CU = user;
-      lsSet("xa_u", {id:user.id, nom:user.nom, telephone:user.telephone, pays:user.pays});
-      document.getElementById("regPage").style.display = "none";
-      showApp();
-      alert2("Bienvenue ! Compte créé 🎉","ok");
-    } else {
-      alert2("Réponse inattendue — réessaie","er");
-      btn.disabled = false;
-      btn.textContent = "🚀 Créer mon compte";
-    }
+    dbInsert("miniapp_users", {
+      telegram_id: TID || null, username: nom, nom: nom,
+      telephone: fullTel, pays: pays
+    }, function(err, res) {
+      if (err) {
+        alert2(err, "er");
+        btn.disabled = false; btn.textContent = "🚀 Créer mon compte"; return;
+      }
+      var user = Array.isArray(res) ? res[0] : (res && res.id ? res : null);
+      var hideAuth = function(u) {
+        CU = u;
+        lsSet("xa_u", {id:u.id, nom:u.nom, telephone:u.telephone, pays:u.pays});
+        document.getElementById("authPage").style.display = "none";
+        showApp();
+        alert2("Bienvenue " + u.nom + " ! 🎉","ok");
+      };
+      if (user && user.id) { hideAuth(user); return; }
+      dbQ("miniapp_users", {telephone:"eq."+fullTel, order:"id.desc", limit:"1"}, function(e2, d2) {
+        if (!e2 && d2 && d2[0]) { hideAuth(d2[0]); }
+        else { alert2("Erreur — réessaie","er"); btn.disabled=false; btn.textContent="🚀 Créer mon compte"; }
+      });
+    });
   });
 }
 
@@ -463,16 +676,25 @@ function loadAnns(cat) {
     data.forEach(function(a) {
       if (new Date(a.expires_at) < now) return;
       var pr = a.pack === "premium";
+      var hasPhoto = a.photo_data && a.photo_data.length > 0;
       html += '<div class="ann">' +
-        '<div class="ann-img">' + catIco(a.categorie) + '</div>' +
+        // IMAGE
+        (hasPhoto
+          ? '<img src="' + a.photo_data + '" style="width:100%;height:160px;object-fit:cover"/>'
+          : '<div class="ann-img">' + catIco(a.categorie) + '</div>'
+        ) +
         '<div class="ann-body">' +
-          '<span class="ann-cat' + (pr?" prem":"") + '">' + (pr?"👑 PREMIUM":"📌") + " " + esc(a.categorie||"Autre") + '</span>' +
+          // Badges
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px">' +
+            '<span class="ann-cat' + (pr?" prem":"") + '">' + (pr?"👑 PREMIUM":"📌") + " " + esc(a.categorie||"Autre") + '</span>' +
+            (a.prix_annonce ? '<span style="background:#FFF7ED;color:var(--o);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #FED7AA">' + esc(a.prix_annonce) + '</span>' : '') +
+          '</div>' +
           '<div class="ann-title">' + esc(a.titre) + '</div>' +
           '<div class="ann-desc">' + esc(a.description) + '</div>' +
-          '<div class="ann-foot">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px">' +
             '<div>' +
-              (a.prix_annonce ? '<div class="ann-price">' + esc(a.prix_annonce) + '</div>' : '') +
               '<div class="ann-meta">📍 ' + esc(a.pays) + ' · ' + ago(a.created_at) + '</div>' +
+              '<div class="ann-meta" style="margin-top:2px">👤 ' + esc(a.nom_user||"Anonyme") + '</div>' +
             '</div>' +
             '<button class="cbtn" data-tel="' + esc(a.contact) + '" data-tit="' + esc(a.titre) + '" onclick="doContact(this)">💬 Contacter</button>' +
           '</div>' +
@@ -510,13 +732,15 @@ function goStep(n) {
   if (n===3) {
     if (!sPak) { alert2("Choisis un pack","er"); return; }
     var pk = PACKS[sPak];
-    document.getElementById("pAmt").textContent = pk.p + "F";
     document.getElementById("pRecap").innerHTML =
       "<strong>📋 Récapitulatif</strong><br>" +
       "Titre : " + esc(document.getElementById("pTit").value) + "<br>" +
-      "Catégorie : " + sCat + "<br>" +
-      "Pack : " + pk.n + " — <strong style='color:var(--o)'>" + pk.p + "F</strong><br>" +
+      "Catégorie : <strong>" + sCat + "</strong><br>" +
+      "Pack : <strong>" + pk.n + "</strong> — <strong style='color:var(--o)'>" + pk.p + "F</strong><br>" +
       "Durée : " + pk.d + " jour(s)";
+    document.getElementById("payStatus").style.display = "none";
+    document.getElementById("leekBtn").disabled = false;
+    document.getElementById("leekBtn").textContent = "💳 Payer maintenant";
   }
   setDot(n);
 }
@@ -533,35 +757,69 @@ function pickPack(p, el) {
   el.classList.add("on");
 }
 
-function doSubmit() {
-  var ref = (document.getElementById("pRef").value || "").trim();
-  if (ref.length < 4) { alert2("Entre la référence de transaction","er"); return; }
-  var btn = document.getElementById("subBtn");
-  btn.disabled = true; btn.textContent = "⏳ Envoi...";
+function doLeekPay() {
+  if (!sPak) { alert2("Pack non sélectionné","er"); return; }
+  var pk    = PACKS[sPak];
+  var titre = (document.getElementById("pTit").value||"").trim();
+  var btn   = document.getElementById("leekBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Ouverture du paiement...";
+
+  try {
+    LeekPay.checkout({
+      amount:      pk.p,
+      currency:    "XOF",
+      apiKey:      "pk_live_h0RQu365IhnhdXkW2YeWZiDmKQGo7Pn1",
+      description: "Annonce XAFEARN — Pack " + pk.n + " — " + titre,
+      onSuccess: function(data) {
+        // Paiement confirmé — activer l'annonce automatiquement
+        document.getElementById("payStatus").style.display = "block";
+        btn.style.display = "none";
+        saveAnnonce(data.payment_id || "LP-" + Date.now(), "approved");
+      },
+      onCancel: function() {
+        btn.disabled = false;
+        btn.textContent = "💳 Payer maintenant";
+        alert2("Paiement annulé — réessaie quand tu veux","in");
+      }
+    });
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = "💳 Payer maintenant";
+    alert2("Erreur LeekPay — vérifie ta connexion","er");
+  }
+}
+
+function saveAnnonce(payRef, status) {
   var pk  = PACKS[sPak];
-  var exp = new Date(); exp.setDate(exp.getDate() + pk.d);
+  var exp = new Date();
+  exp.setDate(exp.getDate() + pk.d);
   dbInsert("miniapp_annonces", {
     user_id: CU.id, nom_user: CU.nom, telegram_id: TID||null,
-    titre: document.getElementById("pTit").value.trim(),
-    description: document.getElementById("pDes").value.trim(),
-    categorie: sCat, prix_annonce: (document.getElementById("pPx").value||"").trim(),
-    contact: document.getElementById("pCt").value.trim(),
-    pays: CU.pays||"", pack: sPak, montant_paye: pk.p,
-    ref_paiement: ref, status: "pending", expires_at: exp.toISOString()
+    titre:        document.getElementById("pTit").value.trim(),
+    description:  document.getElementById("pDes").value.trim(),
+    categorie:    sCat,
+    prix_annonce: (document.getElementById("pPx").value||"").trim(),
+    contact:      document.getElementById("pCt").value.trim(),
+    pays:         CU.pays||"",
+    pack:         sPak,
+    montant_paye: pk.p,
+    ref_paiement: payRef,
+    photo_data:   photoB64 || null,
+    status:       status,
+    expires_at:   exp.toISOString()
   }, function(err, res) {
-    if (err) { alert2(err,"er"); btn.disabled=false; btn.textContent="✅ Soumettre"; return; }
-    var ann = Array.isArray(res)?res[0]:res;
-    if (ann && ann.id) {
-      alert2("Annonce soumise ! En attente de validation ✅","ok");
-      ["pTit","pDes","pPx","pCt","pRef"].forEach(function(id){ document.getElementById(id).value=""; });
-      sCat=""; sPak="";
-      document.querySelectorAll(".cb,.pack").forEach(function(b){ b.classList.remove("on"); });
-      setDot(1);
+    if (err) { alert2("Paiement reçu mais erreur sauvegarde — contacte le support","er"); return; }
+    alert2("Annonce publiée automatiquement ! 🎉","ok");
+    // Reset complet
+    ["pTit","pDes","pPx","pCt"].forEach(function(id){ document.getElementById(id).value=""; });
+    removePhotoFn();
+    sCat=""; sPak="";
+    document.querySelectorAll(".cb,.pack").forEach(function(b){ b.classList.remove("on"); });
+    setDot(1);
+    setTimeout(function(){
       goP("mes", document.querySelector(".nb:nth-child(3)"));
-    } else {
-      alert2("Réponse inattendue — réessaie","er");
-      btn.disabled=false; btn.textContent="✅ Soumettre";
-    }
+    }, 2000);
   });
 }
 
@@ -615,6 +873,12 @@ function loadPro() {
 
 function doLogout() {
   if (confirm("Se déconnecter ?")) { lsDel("xa_u"); location.reload(); }
+}
+
+function showReg() {
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("authPage").style.display = "flex";
+  switchTab("login"); // Montrer connexion par défaut
 }
 
 // ── NAVIGATION ───────────────────────────────────────────
@@ -681,11 +945,6 @@ function tryByTelegram() {
       } else { showReg(); }
     });
   } else { showReg(); }
-}
-
-function showReg() {
-  document.getElementById("loader").style.display = "none";
-  document.getElementById("regPage").style.display = "flex";
 }
 
 window.onload = function() { init(); };
