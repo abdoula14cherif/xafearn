@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>XAFEARN</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --blue: #1565C0;
+    --blue-light: #1E88E5;
+    --blue-dark: #0D47A1;
+    --orange: #F57C00;
+    --orange-light: #FF9800;
+    --orange-bright: #FFB300;
+    --white: #FFFFFF;
+    --bg: #F0F4FF;
+    --card: #FFFFFF;
+    --text: #0D1B3E;
+    --text-muted: #6B7DB3;
+    --border: #E0E8FF;
+    --shadow: 0 4px 24px rgba(21,101,192,0.12);
+    --shadow-orange: 0 4px 24px rgba(245,124,0,0.25);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 60%, var(--blue-light) 100%);
+    padding: 20px 20px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: rgba(255,152,0,0.15);
+    border-radius: 50%;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -20px;
+    width: 150px; height: 150px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    position: relative; z-index:1;
+  }
+  .logo {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    color: white;
+    letter-spacing: 2px;
+  }
+  .logo span { color: var(--orange-bright); }
+  .vip-badge {
+    background: linear-gradient(135deg, var(--orange), var(--orange-bright));
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: none;
+  }
+  .vip-badge.show { display: block; }
+
+  .balance-card {
+    position: relative; z-index:1;
+    text-align: center;
+  }
+  .balance-label {
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .balance-amount {
+    font-family: 'Outfit', sans-serif;
+    font-size: 52px;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+  }
+  .balance-amount span { color: var(--orange-bright); font-size: 28px; }
+  .balance-sub {
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .progress-wrap {
+    margin-top: 16px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--orange), var(--orange-bright));
+    border-radius: 10px;
+    transition: width 1s ease;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* ── NAV ── */
+  .nav {
+    display: flex;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    margin-top: -20px;
+    position: relative; z-index: 2;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    padding: 0 10px;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 16px 8px 12px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    position: relative;
+  }
+  .nav-btn .icon { font-size: 22px; }
+  .nav-btn.active { color: var(--blue); }
+  .nav-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 20%; right: 20%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--blue), var(--orange));
+    border-radius: 3px 3px 0 0;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; padding: 20px 16px 100px; }
+  .page.active { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .card-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .stat-icon { font-size: 24px; margin-bottom: 6px; }
+  .stat-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--blue-dark);
+  }
+  .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+  /* ── BOUTONS ── */
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-blue {
+    background: linear-gradient(135deg, var(--blue), var(--blue-light));
+    color: white;
+    box-shadow: 0 4px 16px rgba(21,101,192,0.35);
+  }
+  .btn-orange {
+    background: linear-gradient(135deg, var(--orange), var(--orange-bright));
+    color: white;
+    box-shadow: var(--shadow-orange);
+  }
+  .btn-outline {
+    background: transparent;
+    color: var(--blue);
+    border: 2px solid var(--blue);
+  }
+  .btn-ghost {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-sm {
+    padding: 10px 16px;
+    font-size: 13px;
+    border-radius: 12px;
+    width: auto;
+  }
+
+  /* ── WHEEL ── */
+  .wheel-container {
+    text-align: center;
+    padding: 10px 0;
+  }
+  .wheel-wrap {
+    position: relative;
+    display: inline-block;
+    margin: 10px auto 20px;
+  }
+  .wheel-pointer {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 32px;
+    z-index: 10;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+  #wheel {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    border: 6px solid white;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2), 0 0 0 3px var(--orange);
+    transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+    display: block;
+  }
+  .spin-info {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .spin-free-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: 6px;
+  }
+  .spin-result {
+    display: none;
+    background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+    color: white;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    margin-top: 16px;
+    animation: slideUp 0.4s ease;
+  }
+  .spin-result.show { display: block; }
+  .spin-result-amount {
+    font-family: 'Outfit', sans-serif;
+    font-size: 40px;
+    font-weight: 900;
+    color: var(--orange-bright);
+  }
+
+  /* ── VIP ── */
+  .vip-plans {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .vip-plan {
+    border-radius: 20px;
+    padding: 20px;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .vip-plan:active { transform: scale(0.98); }
+  .vip-plan.starter {
+    background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+    border-color: #93C5FD;
+  }
+  .vip-plan.pro {
+    background: linear-gradient(135deg, #FFF7ED, #FFEDD5);
+    border-color: var(--orange-light);
+  }
+  .vip-plan.premium {
+    background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+    border-color: var(--orange-bright);
+    color: white;
+  }
+  .vip-plan-badge {
+    position: absolute;
+    top: 12px; right: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--orange);
+    color: white;
+  }
+  .vip-plan-badge.popular { background: var(--orange-bright); }
+  .vip-plan-icon { font-size: 36px; margin-bottom: 8px; }
+  .vip-plan-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 4px;
+  }
+  .vip-plan-price {
+    font-size: 14px;
+    opacity: 0.7;
+    margin-bottom: 14px;
+  }
+  .vip-plan-price strong {
+    font-size: 24px;
+    opacity: 1;
+    color: var(--orange);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+  }
+  .vip-plan.premium .vip-plan-price strong { color: var(--orange-bright); }
+  .vip-feature {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    margin-bottom: 6px;
+    opacity: 0.9;
+  }
+  .vip-feature::before { content: '✓'; color: #10B981; font-weight: 700; }
+  .vip-plan.premium .vip-feature::before { color: var(--orange-bright); }
+  .vip-plan-btn {
+    margin-top: 16px;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .vip-plan.starter .vip-plan-btn { background: var(--blue); color: white; }
+  .vip-plan.pro .vip-plan-btn { background: var(--orange); color: white; }
+  .vip-plan.premium .vip-plan-btn { background: var(--orange-bright); color: var(--blue-dark); }
+
+  /* ── TRANSACTION LIST ── */
+  .tx-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tx-item:last-child { border-bottom: none; }
+  .tx-left { display: flex; align-items: center; gap: 12px; }
+  .tx-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    background: var(--bg);
+  }
+  .tx-name { font-weight: 600; font-size: 14px; }
+  .tx-date { font-size: 11px; color: var(--text-muted); }
+  .tx-amount { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; }
+  .tx-amount.plus { color: #10B981; }
+  .tx-amount.minus { color: #EF4444; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 90px; left: 16px; right: 16px;
+    background: var(--text);
+    color: white;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    transform: translateY(120%);
+    transition: transform 0.3s ease;
+    z-index: 999;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .toast.show { transform: translateY(0); }
+  .toast.success { background: linear-gradient(135deg, #10B981, #059669); }
+  .toast.error { background: linear-gradient(135deg, #EF4444, #DC2626); }
+
+  /* ── LOADER ── */
+  .loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    flex-direction: column;
+    gap: 16px;
+    background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+  }
+  .loader-logo {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 36px;
+    color: white;
+    letter-spacing: 3px;
+  }
+  .loader-logo span { color: var(--orange-bright); }
+  .loader-spin {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: var(--orange-bright);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: flex-end;
+    z-index: 100;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 40px;
+    width: 100%;
+    animation: slideUp 0.3s ease;
+  }
+  .modal-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .modal-close {
+    float: right;
+    background: var(--bg);
+    border: none;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes slideUp { from { transform: translateY(40px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+  .pulse { animation: pulse 2s infinite; }
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader" id="loader">
+  <div class="loader-logo">X<span>A</span>FEARN</div>
+  <div class="loader-spin"></div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">X<span>A</span>FEARN</div>
+      <div class="vip-badge" id="vipBadge">💎 VIP</div>
+    </div>
+    <div class="balance-card">
+      <div class="balance-label">Ton solde</div>
+      <div class="balance-amount" id="balanceDisplay">0<span>F</span></div>
+      <div class="balance-sub" id="balanceSub">Chargement...</div>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar" style="width:0%"></div>
+      </div>
+      <div class="progress-label">
+        <span>0F</span>
+        <span id="progressLabel">Objectif retrait</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('dashboard',this)">
+      <span class="icon">🏠</span>Accueil
+    </button>
+    <button class="nav-btn" onclick="showPage('wheel',this)">
+      <span class="icon">🎰</span>Fortune
+    </button>
+    <button class="nav-btn" onclick="showPage('vip',this)">
+      <span class="icon">💎</span>VIP
+    </button>
+    <button class="nav-btn" onclick="showPage('history',this)">
+      <span class="icon">📋</span>Historique
+    </button>
+  </nav>
+
+  <!-- PAGE DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value" id="refCount">0</div>
+        <div class="stat-label">Filleuls actifs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value" id="refGain">0F</div>
+        <div class="stat-label">Gains parrainage</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎁 Bonus Journalier</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Récupère ton bonus quotidien directement dans le bot !</p>
+      <button class="btn btn-orange pulse" onclick="openBot('bonus')">
+        🎁 Réclamer mon Bonus
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔗 Mon Lien de Parrainage</div>
+      <div style="background:var(--bg);border-radius:12px;padding:12px;font-size:12px;color:var(--text-muted);word-break:break-all;margin-bottom:12px" id="refLink">
+        Chargement...
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-blue btn-sm" onclick="copyRef()" style="flex:1">📋 Copier</button>
+        <button class="btn btn-orange btn-sm" onclick="shareRef()" style="flex:1">📤 Partager</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✅ Tâches du Jour</div>
+      <div id="taskList">
+        <div style="text-align:center;padding:20px;color:var(--text-muted)">
+          <div style="font-size:32px;margin-bottom:8px">✅</div>
+          <div>Ouvre le bot pour voir les tâches</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="openBot('tasks')" style="margin-top:12px">
+        Voir toutes les tâches →
+      </button>
+    </div>
+  </div>
+
+  <!-- PAGE ROUE -->
+  <div class="page" id="page-wheel">
+    <div class="card">
+      <div class="card-title">🎰 Roue de la Fortune</div>
+      <div class="spin-info">
+        <span id="spinStatus">1 spin gratuit disponible !</span>
+        <span class="spin-free-badge" id="freeBadge">GRATUIT</span>
+      </div>
+
+      <div class="wheel-container">
+        <div class="wheel-wrap">
+          <div class="wheel-pointer">▼</div>
+          <canvas id="wheel" width="280" height="280"></canvas>
+        </div>
+      </div>
+
+      <button class="btn btn-orange pulse" id="spinBtn" onclick="spinWheel()">
+        🎰 TOURNER LA ROUE
+      </button>
+      <p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:10px">
+        Spin supplémentaire : <strong>200F</strong>
+      </p>
+
+      <div class="spin-result" id="spinResult">
+        <div style="font-size:24px;margin-bottom:8px">🎉</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:4px">Tu as gagné</div>
+        <div class="spin-result-amount" id="spinResultAmount">500F</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px">Crédité sur ton compte !</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏆 Tableau des gains</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:#F0FDF4;border-radius:12px;padding:12px;text-align:center;border:1px solid #BBF7D0">
+          <div style="font-size:20px;font-weight:700;color:#059669;font-family:'Outfit',sans-serif">50F</div>
+          <div style="font-size:11px;color:#059669">40% chance</div>
+        </div>
+        <div style="background:#F0FDF4;border-radius:12px;padding:12px;text-align:center;border:1px solid #BBF7D0">
+          <div style="font-size:20px;font-weight:700;color:#059669;font-family:'Outfit',sans-serif">100F</div>
+          <div style="font-size:11px;color:#059669">25% chance</div>
+        </div>
+        <div style="background:#FFF7ED;border-radius:12px;padding:12px;text-align:center;border:1px solid #FED7AA">
+          <div style="font-size:20px;font-weight:700;color:var(--orange);font-family:'Outfit',sans-serif">200F</div>
+          <div style="font-size:11px;color:var(--orange)">15% chance</div>
+        </div>
+        <div style="background:#FFF7ED;border-radius:12px;padding:12px;text-align:center;border:1px solid #FED7AA">
+          <div style="font-size:20px;font-weight:700;color:var(--orange);font-family:'Outfit',sans-serif">500F</div>
+          <div style="font-size:11px;color:var(--orange)">10% chance</div>
+        </div>
+        <div style="background:#EFF6FF;border-radius:12px;padding:12px;text-align:center;border:1px solid #BFDBFE">
+          <div style="font-size:20px;font-weight:700;color:var(--blue);font-family:'Outfit',sans-serif">1000F</div>
+          <div style="font-size:11px;color:var(--blue)">5% chance</div>
+        </div>
+        <div style="background:#FFF1F2;border-radius:12px;padding:12px;text-align:center;border:1px solid #FECDD3">
+          <div style="font-size:20px;font-weight:700;color:#EF4444;font-family:'Outfit',sans-serif">Perdu</div>
+          <div style="font-size:11px;color:#EF4444">5% chance</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE VIP -->
+  <div class="page" id="page-vip">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:900;color:var(--text)">
+        Passe au niveau supérieur 💎
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:4px">
+        Multiplie tes gains avec un abonnement VIP
+      </div>
+    </div>
+
+    <div class="vip-plans">
+      <div class="vip-plan starter">
+        <span class="vip-plan-badge">STARTER</span>
+        <div class="vip-plan-icon">🥉</div>
+        <div class="vip-plan-name">Starter</div>
+        <div class="vip-plan-price"><strong>500F</strong>/mois</div>
+        <div class="vip-feature">Bonus 75F/jour au lieu de 50F</div>
+        <div class="vip-feature">1 spin bonus sur la roue/jour</div>
+        <div class="vip-feature">Badge VIP visible</div>
+        <div class="vip-feature">Support prioritaire</div>
+        <button class="vip-plan-btn" onclick="activateVIP('starter',500)">
+          Activer Starter — 500F
+        </button>
+      </div>
+
+      <div class="vip-plan pro">
+        <span class="vip-plan-badge popular">POPULAIRE ⭐</span>
+        <div class="vip-plan-icon">🥈</div>
+        <div class="vip-plan-name">Pro</div>
+        <div class="vip-plan-price"><strong>1000F</strong>/mois</div>
+        <div class="vip-feature">Bonus 100F/jour</div>
+        <div class="vip-feature">3 spins bonus/jour</div>
+        <div class="vip-feature">Tâches exclusives Pro</div>
+        <div class="vip-feature">Boost parrainage x1.5</div>
+        <div class="vip-feature">Badge Pro Orange</div>
+        <button class="vip-plan-btn" onclick="activateVIP('pro',1000)">
+          Activer Pro — 1000F
+        </button>
+      </div>
+
+      <div class="vip-plan premium">
+        <span class="vip-plan-badge" style="background:var(--orange-bright);color:var(--blue-dark)">PREMIUM 👑</span>
+        <div class="vip-plan-icon">💎</div>
+        <div class="vip-plan-name" style="color:white">Premium</div>
+        <div class="vip-plan-price" style="color:rgba(255,255,255,0.7)"><strong>2000F</strong>/mois</div>
+        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Bonus 150F/jour</div>
+        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Spins illimités/jour</div>
+        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Tâches exclusives 500F-1000F</div>
+        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Retrait prioritaire 24h</div>
+        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Boost parrainage x2</div>
+        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Badge Premium Doré 👑</div>
+        <button class="vip-plan-btn" onclick="activateVIP('premium',2000)">
+          👑 Activer Premium — 2000F
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE HISTORIQUE -->
+  <div class="page" id="page-history">
+    <div class="card">
+      <div class="card-title">📋 Historique des transactions</div>
+      <div id="historyList">
+        <div style="text-align:center;padding:20px;color:var(--text-muted)">
+          <div style="font-size:32px;margin-bottom:8px">📋</div>
+          <div>Aucune transaction</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL CONFIRM -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle">Confirmer</div>
+    <div id="modalBody"></div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal()" style="flex:1">Annuler</button>
+      <button class="btn btn-orange" id="modalConfirm" style="flex:1">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = "https://xtmmmrajknnadodgrrcu.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bW1tcmFqa25uYWRvZGdycmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5ODc5NjQsImV4cCI6MjA2MDU2Mzk2NH0.Ht_BdMdgwkiuB4VuMTdH2CKg4BLj1bKNzW_g8mENwn0";
+const BOT = "xafearn_bot";
+const MIN_W = 1000;
+const H = {
+  "apikey": SB_KEY,
+  "Authorization": "Bearer " + SB_KEY,
+  "Content-Type": "application/json",
+  "Prefer": "return=representation"
+};
+
+let userData = null;
+let tgUser = null;
+let spunToday = false;
+let currentRotation = 0;
+
+const SEGMENTS = [
+  { label:"50F",   color:"#10B981", gain:50  },
+  { label:"100F",  color:"#F59E0B", gain:100 },
+  { label:"PERDU", color:"#EF4444", gain:0   },
+  { label:"200F",  color:"#1E88E5", gain:200 },
+  { label:"500F",  color:"#F97316", gain:500 },
+  { label:"1000F", color:"#1565C0", gain:1000},
+  { label:"50F",   color:"#10B981", gain:50  },
+  { label:"100F",  color:"#F59E0B", gain:100 },
+];
+
+async function dbGet(table, params={}) {
+  const q = Object.entries(params).map(([k,v])=>k+"="+v).join("&");
+  const r = await fetch(SB_URL+"/rest/v1/"+table+(q?"?"+q:""), {headers:H});
+  return await r.json();
+}
+
+async function dbPatch(table, params, data) {
+  const q = Object.entries(params).map(([k,v])=>k+"="+v).join("&");
+  await fetch(SB_URL+"/rest/v1/"+table+"?"+q, {
+    method:"PATCH", headers:H, body:JSON.stringify(data)
+  });
+}
+
+async function dbPost(table, data) {
+  const r = await fetch(SB_URL+"/rest/v1/"+table, {
+    method:"POST", headers:H, body:JSON.stringify(data)
+  });
+  return await r.json();
+}
+
+function toast(msg, type="") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show " + type;
+  setTimeout(()=>t.className="toast", 2500);
+}
+
+function showPage(name, btn) {
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("page-"+name).classList.add("active");
+  btn.classList.add("active");
+}
+
+function openBot(action) {
+  Telegram.WebApp.openTelegramLink("https://t.me/"+BOT+"?start="+action);
+}
+
+function copyRef() {
+  const link = "https://t.me/"+BOT+"?start="+tgUser.id;
+  navigator.clipboard.writeText(link).then(()=>toast("Lien copié !","success"));
+}
+
+function shareRef() {
+  const link = "https://t.me/"+BOT+"?start="+tgUser.id;
+  const msg = "Rejoins XAFEARN et gagne de l argent chaque jour ! " + link;
+  Telegram.WebApp.openTelegramLink("https://t.me/share/url?url="+encodeURIComponent(link)+"&text="+encodeURIComponent(msg));
+}
+
+function drawWheel() {
+  const canvas = document.getElementById("wheel");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const R = W/2 - 4;
+  const cx = W/2, cy = H/2;
+  const N = SEGMENTS.length;
+  const arc = (2*Math.PI)/N;
+
+  ctx.clearRect(0,0,W,H);
+  SEGMENTS.forEach((seg,i)=>{
+    const start = i*arc - Math.PI/2;
+    const end = start + arc;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,R,start,end);
+    ctx.closePath();
+    ctx.fillStyle = seg.color;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.3)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(start + arc/2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "white";
+    ctx.font = "bold 14px 'Outfit',sans-serif";
+    ctx.shadowColor = "rgba(0,0,0,0.3)";
+    ctx.shadowBlur = 4;
+    ctx.fillText(seg.label, R-12, 5);
+    ctx.restore();
+  });
+
+  // Centre
+  ctx.beginPath();
+  ctx.arc(cx,cy,22,0,2*Math.PI);
+  ctx.fillStyle = "white";
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx,cy,16,0,2*Math.PI);
+  ctx.fillStyle = "#1565C0";
+  ctx.fill();
+  ctx.fillStyle = "white";
+  ctx.font = "bold 10px 'Outfit',sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("X", cx, cy);
+}
+
+async function spinWheel() {
+  if (!userData) return;
+  const btn = document.getElementById("spinBtn");
+  if (btn.disabled) return;
+
+  const today = new Date().toISOString().slice(0,10);
+  let isFree = !spunToday;
+  let cost = isFree ? 0 : 200;
+
+  if (!isFree && userData.balance < 200) {
+    toast("Solde insuffisant ! Spin = 200F","error"); return;
+  }
+
+  if (!isFree) {
+    showModal(
+      "Spin Payant",
+      "<p style='text-align:center;color:var(--text-muted);font-size:14px;margin:10px 0'>Un spin coûte <strong style='color:var(--orange);font-size:20px'>200F</strong><br>de ton solde actuel.</p><p style='text-align:center;font-size:13px;color:var(--text-muted)'>Tu peux gagner jusqu à <strong>1000F</strong> !</p>",
+      async ()=>{
+        closeModal();
+        await doSpin(false, 200);
+      }
+    );
+    return;
+  }
+
+  await doSpin(true, 0);
+}
+
+async function doSpin(isFree, cost) {
+  const btn = document.getElementById("spinBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ En cours...";
+
+  // Déduire le coût
+  if (cost > 0) {
+    await dbPatch("users", {"user_id":"eq."+tgUser.id}, {"balance": userData.balance - cost});
+    userData.balance -= cost;
+    updateBalanceDisplay();
+  }
+
+  // Résultat pondéré
+  const rand = Math.random() * 100;
+  let segIndex, gain;
+  if (rand < 40)       { segIndex=0; gain=50; }
+  else if (rand < 65)  { segIndex=1; gain=100; }
+  else if (rand < 80)  { segIndex=3; gain=200; }
+  else if (rand < 90)  { segIndex=4; gain=500; }
+  else if (rand < 95)  { segIndex=5; gain=1000; }
+  else                 { segIndex=2; gain=0; }
+
+  // Rotation calculée
+  const N = SEGMENTS.length;
+  const arc = 360/N;
+  const targetAngle = segIndex * arc + arc/2;
+  const extra = 360*8;
+  const finalAngle = extra + (360 - targetAngle);
+  currentRotation += finalAngle;
+
+  const canvas = document.getElementById("wheel");
+  canvas.style.transform = "rotate("+currentRotation+"deg)";
+
+  await new Promise(r=>setTimeout(r, 5200));
+
+  // Créditer
+  if (gain > 0) {
+    await dbPatch("users",{"user_id":"eq."+tgUser.id},{"balance":userData.balance + gain});
+    await dbPost("transactions",{"user_id":tgUser.id,"type":"roue","amount":gain,"description":"Roue de la Fortune"});
+    userData.balance += gain;
+    updateBalanceDisplay();
+    document.getElementById("spinResultAmount").textContent = "+"+gain+"F";
+    document.getElementById("spinResult").className = "spin-result show";
+    toast("Félicitations ! +"+gain+"F gagné !","success");
+  } else {
+    document.getElementById("spinResultAmount").textContent = "Perdu !";
+    document.getElementById("spinResult").className = "spin-result show";
+    document.getElementById("spinResult").style.background = "linear-gradient(135deg,#EF4444,#DC2626)";
+    toast("Pas de chance ! Réessaie !","error");
+  }
+
+  spunToday = true;
+  document.getElementById("spinStatus").textContent = "Spin gratuit utilisé";
+  document.getElementById("freeBadge").style.display = "none";
+  btn.disabled = false;
+  btn.textContent = "🎰 TOURNER ENCORE (200F)";
+  btn.classList.remove("pulse");
+}
+
+function showModal(title, body, onConfirm) {
+  document.getElementById("modalTitle").textContent = title;
+  document.getElementById("modalBody").innerHTML = body;
+  document.getElementById("modalConfirm").onclick = onConfirm;
+  document.getElementById("modalOverlay").classList.add("show");
+}
+
+function closeModal() {
+  document.getElementById("modalOverlay").classList.remove("show");
+}
+
+async function activateVIP(plan, cost) {
+  if (!userData) return;
+  if (userData.balance < cost) {
+    toast("Solde insuffisant ! Il te faut "+cost+"F","error"); return;
+  }
+  const names = {starter:"Starter 🥉",pro:"Pro 🥈",premium:"Premium 💎"};
+  showModal(
+    "Activer "+names[plan],
+    "<p style='text-align:center;color:var(--text-muted);font-size:14px;margin:10px 0'>Abonnement mensuel :<br><strong style='color:var(--orange);font-size:28px;font-family:Outfit,sans-serif'>"+cost+"F</strong><br>sera déduit de ton solde.</p>",
+    async ()=>{
+      closeModal();
+      await dbPatch("users",{"user_id":"eq."+tgUser.id},{
+        "balance": userData.balance - cost,
+        "vip_plan": plan
+      });
+      await dbPost("transactions",{"user_id":tgUser.id,"type":"vip","amount":-cost,"description":"Abonnement VIP "+plan});
+      userData.balance -= cost;
+      userData.vip_plan = plan;
+      updateBalanceDisplay();
+      document.getElementById("vipBadge").classList.add("show");
+      toast("VIP "+plan+" activé ! Bénéfices dès maintenant 🎉","success");
+    }
+  );
+}
+
+function updateBalanceDisplay() {
+  document.getElementById("balanceDisplay").innerHTML = userData.balance + "<span>F</span>";
+  const pct = Math.min(100, (userData.balance/MIN_W)*100);
+  document.getElementById("progressBar").style.width = pct+"%";
+  const reste = Math.max(0, MIN_W - userData.balance);
+  if (reste <= 0) {
+    document.getElementById("balanceSub").textContent = "✅ Tu peux retirer maintenant !";
+    document.getElementById("progressLabel").textContent = "Objectif atteint !";
+  } else {
+    document.getElementById("balanceSub").textContent = "Plus que "+reste+"F pour retirer";
+    document.getElementById("progressLabel").textContent = "Objectif : "+MIN_W+"F";
+  }
+}
+
+async function loadHistory() {
+  const txs = await dbGet("transactions",{"user_id":"eq."+tgUser.id,"order":"created_at.desc","limit":"15"});
+  const list = document.getElementById("historyList");
+  if (!txs || !txs.length) return;
+  const icons = {bonus:"🎁",parrainage:"👥",retrait:"💸",roue:"🎰",tache:"✅",vip:"💎",credit_admin:"💰",remboursement:"🔄"};
+  list.innerHTML = txs.map(tx=>`
+    <div class="tx-item">
+      <div class="tx-left">
+        <div class="tx-icon">${icons[tx.type]||"💰"}</div>
+        <div>
+          <div class="tx-name">${tx.description}</div>
+          <div class="tx-date">${tx.created_at?tx.created_at.slice(0,10):""}</div>
+        </div>
+      </div>
+      <div class="tx-amount ${tx.amount>0?"plus":"minus"}">${tx.amount>0?"+":""}${tx.amount}F</div>
+    </div>
+  `).join("");
+}
+
+async function init() {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+
+  tgUser = Telegram.WebApp.initDataUnsafe?.user || {id:8268831517,first_name:"Test",username:"abdoulacherif2"};
+
+  try {
+    const users = await dbGet("users",{"user_id":"eq."+tgUser.id});
+    userData = users && users[0] ? users[0] : {balance:0,vip_plan:null};
+
+    const today = new Date().toISOString().slice(0,10);
+    const txs = await dbGet("transactions",{"user_id":"eq."+tgUser.id,"type":"eq.roue","order":"created_at.desc","limit":"1"});
+    if (txs && txs[0] && txs[0].created_at?.slice(0,10)===today) spunToday=true;
+
+    const refs = await dbGet("users",{"referred_by":"eq."+tgUser.id,"is_registered":"eq.true"});
+    const refCount = refs ? refs.length : 0;
+
+    document.getElementById("balanceDisplay").innerHTML = userData.balance+"<span>F</span>";
+    document.getElementById("refCount").textContent = refCount;
+    document.getElementById("refGain").textContent = (refCount*75)+"F";
+    document.getElementById("refLink").textContent = "https://t.me/"+BOT+"?start="+tgUser.id;
+
+    if (userData.vip_plan) document.getElementById("vipBadge").classList.add("show");
+
+    updateBalanceDisplay();
+    await loadHistory();
+
+    // Wheel
+    drawWheel();
+    if (spunToday) {
+      document.getElementById("spinStatus").textContent = "Spin gratuit déjà utilisé";
+      document.getElementById("freeBadge").style.display = "none";
+      document.getElementById("spinBtn").textContent = "🎰 TOURNER (200F)";
+      document.getElementById("spinBtn").classList.remove("pulse");
+    }
+  } catch(e) {
+    console.error(e);
+    toast("Erreur de chargement","error");
+  }
+
+  document.getElementById("loader").style.display="none";
+  document.getElementById("app").style.display="block";
+}
+
+init();
+</script>
+</body>
+</html>
