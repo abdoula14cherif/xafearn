@@ -4,389 +4,308 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <title>XAFEARN Annonces</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{
-  --b:#1565C0;--bl:#1E88E5;--bd:#0D47A1;
-  --o:#F57C00;--ol:#FF9800;--ob:#FFB300;
-  --g:#10B981;--r:#EF4444;
-  --bg:#F0F4FF;--txt:#0D1B3E;--mu:#6B7DB3;--brd:#E0E8FF;
-}
+:root{--b:#1565C0;--bl:#1E88E5;--bd:#0D47A1;--o:#F57C00;--ob:#FFB300;--g:#10B981;--r:#EF4444;--bg:#F0F4FF;--txt:#0D1B3E;--mu:#6B7DB3;--brd:#E0E8FF}
 body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
 
 /* LOADER */
-#loader{position:fixed;inset:0;background:linear-gradient(135deg,var(--bd),var(--b));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:9999}
-.llogo{font-family:'Outfit',sans-serif;font-weight:900;font-size:38px;color:#fff;letter-spacing:2px}
-.llogo em{color:var(--ob);font-style:normal}
-.spin{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--ob);border-radius:50%;animation:doSpin .8s linear infinite}
+#loader{position:fixed;inset:0;background:linear-gradient(135deg,var(--bd),var(--b));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:100}
+.spin{width:36px;height:36px;border:3px solid rgba(255,255,255,.25);border-top-color:var(--ob);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* PAGE INSCRIPTION */
-#regPage{position:fixed;inset:0;background:linear-gradient(135deg,var(--bd),var(--b));display:none;align-items:center;justify-content:center;padding:20px;z-index:9998;overflow-y:auto}
-.reg-card{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:380px}
-.reg-logo{font-family:'Outfit',sans-serif;font-weight:900;font-size:26px;color:var(--bd);text-align:center;margin-bottom:3px}
-.reg-logo em{color:var(--o);font-style:normal}
-.reg-sub{text-align:center;font-size:12px;color:var(--mu);margin-bottom:20px}
+/* ALERT BOX — toujours visible */
+#alertBox{position:fixed;top:16px;left:12px;right:12px;z-index:9999;display:none}
+.alert{padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:6px}
+.alert-ok{background:#059669;color:#fff}
+.alert-er{background:#DC2626;color:#fff}
+.alert-in{background:var(--bd);color:#fff}
+
+/* INSCRIPTION */
+#regPage{position:fixed;inset:0;background:linear-gradient(135deg,var(--bd),var(--b));display:none;align-items:flex-start;justify-content:center;padding:30px 20px;z-index:50;overflow-y:auto}
+.reg-card{background:#fff;border-radius:20px;padding:26px;width:100%;max-width:380px;margin-top:20px}
+.rlogo{font-family:'Outfit',sans-serif;font-weight:900;font-size:26px;color:var(--bd);text-align:center;margin-bottom:3px}
+.rlogo em{color:var(--o);font-style:normal}
+.rsub{text-align:center;font-size:12px;color:var(--mu);margin-bottom:20px}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:11px;font-weight:600;color:var(--mu);margin-bottom:5px}
+.fi{width:100%;padding:12px 14px;border:2px solid var(--brd);border-radius:12px;font-family:'Space Grotesk',sans-serif;font-size:14px;background:#fff;color:var(--txt);outline:none}
+.fi:focus{border-color:var(--bl)}
+
+/* BOUTONS */
+.btn{width:100%;padding:14px;border:none;border-radius:13px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;display:block;text-align:center}
+.btn:active{opacity:.85}
+.btn-o{background:linear-gradient(135deg,var(--o),var(--ob));color:#fff}
+.btn-b{background:linear-gradient(135deg,var(--b),var(--bl));color:#fff}
+.btn-g{background:linear-gradient(135deg,#059669,var(--g));color:#fff}
+.btn-gh{background:var(--bg);color:var(--txt);border:1px solid var(--brd)}
+.btn-sm{padding:9px 14px;font-size:12px;border-radius:10px;width:auto;display:inline-block}
+.btn-row{display:flex;gap:8px}
+.btn-row .btn{flex:1}
+.mb{margin-bottom:10px}
 
 /* APP */
 #app{display:none}
-
-/* HEADER */
 .hd{background:linear-gradient(135deg,var(--bd),var(--b));padding:14px 14px 52px;position:relative;overflow:hidden}
-.hd::before{content:'';position:absolute;top:-25px;right:-25px;width:150px;height:150px;background:rgba(255,152,0,.1);border-radius:50%}
+.hd::before{content:'';position:absolute;top:-20px;right:-20px;width:140px;height:140px;background:rgba(255,152,0,.1);border-radius:50%}
 .hdt{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
-.logo{font-family:'Outfit',sans-serif;font-weight:900;font-size:18px;color:#fff;letter-spacing:1px}
+.logo{font-family:'Outfit',sans-serif;font-weight:900;font-size:18px;color:#fff}
 .logo em{color:var(--ob);font-style:normal}
-.user-pill{display:flex;align-items:center;gap:8px}
-.avatar{width:34px;height:34px;border-radius:50%;background:var(--ob);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--bd);flex-shrink:0}
-.hd-sub{color:rgba(255,255,255,.6);font-size:11px;margin-top:10px;position:relative;z-index:1}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--ob);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--bd)}
 
 /* NAV */
-.nav{display:flex;background:#fff;border-radius:18px 18px 0 0;margin-top:-16px;position:relative;z-index:2;box-shadow:0 -4px 14px rgba(0,0,0,.08);padding:0 6px}
-.nav-btn{flex:1;padding:12px 3px 8px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:600;color:var(--mu);transition:.2s;position:relative}
-.nav-btn .ic{font-size:19px}
-.nav-btn.active{color:var(--b)}
-.nav-btn.active::after{content:'';position:absolute;bottom:0;left:15%;right:15%;height:3px;background:linear-gradient(90deg,var(--b),var(--o));border-radius:3px 3px 0 0}
+.nav{display:flex;background:#fff;border-radius:18px 18px 0 0;margin-top:-16px;position:relative;z-index:2;box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+.nb{flex:1;padding:12px 3px 8px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:600;color:var(--mu);position:relative}
+.nb em{font-size:19px;font-style:normal}
+.nb.on{color:var(--b)}
+.nb.on::after{content:'';position:absolute;bottom:0;left:15%;right:15%;height:3px;background:linear-gradient(90deg,var(--b),var(--o));border-radius:3px 3px 0 0}
 
 /* PAGES */
-.page{display:none;padding:14px 12px 90px}
-.page.active{display:block}
-
-/* CARDS */
+.pg{display:none;padding:14px 12px 90px}
+.pg.on{display:block}
 .card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 12px rgba(21,101,192,.08);margin-bottom:12px;border:1px solid var(--brd)}
 
 /* ANNONCE */
 .ann{background:#fff;border-radius:14px;border:1px solid var(--brd);overflow:hidden;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
-.ann-img{width:100%;height:130px;background:linear-gradient(135deg,var(--bg),#dce8ff);display:flex;align-items:center;justify-content:center;font-size:46px}
+.ann-img{width:100%;height:120px;background:linear-gradient(135deg,var(--bg),#dce8ff);display:flex;align-items:center;justify-content:center;font-size:44px}
 .ann-body{padding:12px}
-.ann-cat{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;background:#EFF6FF;color:var(--b);margin-bottom:7px}
+.ann-cat{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;background:#EFF6FF;color:var(--b);margin-bottom:6px}
 .ann-cat.prem{background:linear-gradient(135deg,var(--o),var(--ob));color:#fff}
-.ann-title{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;margin-bottom:5px}
+.ann-title{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px}
 .ann-desc{font-size:11px;color:var(--mu);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .ann-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.ann-price{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--o)}
+.ann-price{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;color:var(--o)}
 .ann-meta{font-size:10px;color:var(--mu)}
-.contact-btn{background:linear-gradient(135deg,var(--g),#059669);color:#fff;border:none;padding:9px 14px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.contact-btn:active{transform:scale(.95)}
+.cbtn{background:linear-gradient(135deg,var(--g),#059669);color:#fff;border:none;padding:9px 14px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0}
 
 /* FILTER */
-.filter-bar{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:none}
-.filter-bar::-webkit-scrollbar{display:none}
-.f-btn{flex-shrink:0;padding:7px 13px;border:2px solid var(--brd);border-radius:20px;background:#fff;cursor:pointer;font-size:11px;font-weight:600;color:var(--mu);transition:.18s}
-.f-btn.active{border-color:var(--b);background:var(--b);color:#fff}
+.fbar{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:none}
+.fbar::-webkit-scrollbar{display:none}
+.fbtn{flex-shrink:0;padding:7px 13px;border:2px solid var(--brd);border-radius:20px;background:#fff;cursor:pointer;font-size:11px;font-weight:600;color:var(--mu)}
+.fbtn.on{border-color:var(--b);background:var(--b);color:#fff}
 
-/* FORM */
-.form-group{margin-bottom:12px}
-.form-label{display:block;font-size:11px;font-weight:600;color:var(--mu);margin-bottom:4px}
-.form-input{width:100%;padding:11px 13px;border:2px solid var(--brd);border-radius:11px;font-family:'Space Grotesk',sans-serif;font-size:13px;background:#fff;color:var(--txt);outline:none;transition:.18s}
-.form-input:focus{border-color:var(--bl)}
-textarea.form-input{resize:none;height:78px}
-
-/* CATEGORIES */
-.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
-.cat-btn{padding:10px 7px;border:2px solid var(--brd);border-radius:10px;background:#fff;cursor:pointer;text-align:center;font-size:11px;font-weight:600;transition:.18s}
-.cat-btn.active{border-color:var(--b);background:#EFF6FF;color:var(--b)}
-.cat-btn:active{transform:scale(.95)}
-.cat-ico{font-size:18px;display:block;margin-bottom:2px}
+/* FORM PUBLISH */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.cb{padding:10px 7px;border:2px solid var(--brd);border-radius:10px;background:#fff;cursor:pointer;text-align:center;font-size:11px;font-weight:600}
+.cb.on{border-color:var(--b);background:#EFF6FF;color:var(--b)}
+.cb em{font-size:18px;display:block;margin-bottom:2px;font-style:normal}
 
 /* PACKS */
-.pack-list{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
-.pack-item{border-radius:13px;padding:13px;border:2px solid var(--brd);background:#fff;cursor:pointer;transition:.2s;position:relative}
-.pack-item.active{border-color:var(--b);background:#EFF6FF}
-.pack-item.gold{background:linear-gradient(135deg,var(--bd),var(--b));border-color:var(--ob);color:#fff}
-.pack-item.gold.active{box-shadow:0 0 0 3px var(--ob)}
-.pack-item:active{transform:scale(.98)}
-.pack-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.packs{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+.pack{border-radius:13px;padding:13px;border:2px solid var(--brd);background:#fff;cursor:pointer;position:relative}
+.pack.on{border-color:var(--b);background:#EFF6FF}
+.pack.gold{background:linear-gradient(135deg,var(--bd),var(--b));border-color:var(--ob)}
+.pack.gold.on{box-shadow:0 0 0 3px var(--ob)}
+.pack-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
 .pack-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:13px}
 .pack-price{font-family:'Outfit',sans-serif;font-weight:900;font-size:17px;color:var(--o)}
-.pack-item.gold .pack-price{color:var(--ob)}
-.pack-dur{font-size:10px;color:var(--mu);margin-bottom:4px}
-.pack-item.gold .pack-dur{color:rgba(255,255,255,.6)}
-.pack-feats{font-size:10px;color:var(--mu)}
-.pack-item.gold .pack-feats{color:rgba(255,255,255,.7)}
-.hot-badge{position:absolute;top:9px;right:9px;font-size:8px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--ob);color:var(--bd)}
+.pack.gold .pack-price{color:var(--ob)}
+.pack-info{font-size:10px;color:var(--mu)}
+.pack.gold .pack-info{color:rgba(255,255,255,.7)}
+.hot{position:absolute;top:9px;right:9px;font-size:8px;font-weight:700;padding:2px 6px;border-radius:20px;background:var(--ob);color:var(--bd)}
 
-/* PAYMENT */
-.pay-box{background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border:2px solid #FED7AA;border-radius:12px;padding:13px;margin-bottom:12px}
-.pay-step{display:flex;align-items:flex-start;gap:7px;margin-bottom:7px;font-size:11px;color:var(--txt)}
-.step-num{width:19px;height:19px;border-radius:50%;background:var(--b);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.pay-number{font-family:'Outfit',sans-serif;font-size:20px;font-weight:900;color:var(--o);letter-spacing:2px;margin:6px 0}
+/* PAIEMENT */
+.pay-box{background:#FFF7ED;border:2px solid #FED7AA;border-radius:12px;padding:13px;margin-bottom:12px}
+.pay-step{display:flex;align-items:flex-start;gap:7px;margin-bottom:7px;font-size:12px}
+.pn{width:20px;height:20px;border-radius:50%;background:var(--b);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.pay-num{font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:var(--o);letter-spacing:2px;margin:6px 0;text-align:center}
 
-/* STEPS */
-.step-dots{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:16px}
+/* DOTS */
+.dots{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:16px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--brd);transition:.3s}
-.dot.active{background:var(--b);width:22px;border-radius:4px}
-.dot.done{background:var(--g)}
+.dot.on{background:var(--b);width:22px;border-radius:4px}
+.dot.ok{background:var(--g)}
 
 /* STATUS */
-.status-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px}
-.status-pending{background:#FEF3C7;color:#92400E}
-.status-approved{background:#D1FAE5;color:#065F46}
-.status-rejected{background:#FEE2E2;color:#991B1B}
-
-/* BTN */
-.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;border:none;border-radius:12px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:.18s}
-.btn:active{transform:scale(.97)}
-.btn-blue{background:linear-gradient(135deg,var(--b),var(--bl));color:#fff;box-shadow:0 4px 12px rgba(21,101,192,.3)}
-.btn-orange{background:linear-gradient(135deg,var(--o),var(--ob));color:#fff;box-shadow:0 4px 12px rgba(245,124,0,.3)}
-.btn-green{background:linear-gradient(135deg,#059669,var(--g));color:#fff}
-.btn-ghost{background:var(--bg);color:var(--txt);border:1px solid var(--brd)}
-.btn-sm{padding:9px 13px;font-size:12px;border-radius:10px;width:auto}
-.btn-row{display:flex;gap:7px}
-.btn-row .btn{flex:1}
-.mb{margin-bottom:10px}
-.pulse{animation:pulse 2s infinite}
-
-/* TOAST */
-.toast{position:fixed;bottom:82px;left:10px;right:10px;padding:12px 16px;border-radius:12px;font-size:12px;font-weight:600;text-align:center;transform:translateY(140%);transition:transform .3s ease;z-index:9997;pointer-events:none}
-.toast.show{transform:translateY(0)}
-.toast-ok{background:linear-gradient(135deg,#059669,var(--g));color:#fff;box-shadow:0 4px 12px rgba(16,185,129,.3)}
-.toast-er{background:linear-gradient(135deg,#DC2626,var(--r));color:#fff}
-.toast-in{background:linear-gradient(135deg,var(--bd),var(--b));color:#fff}
+.sbdg{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px}
+.sbdg-p{background:#FEF3C7;color:#92400E}
+.sbdg-ok{background:#D1FAE5;color:#065F46}
+.sbdg-r{background:#FEE2E2;color:#991B1B}
 
 /* EMPTY */
-.empty{text-align:center;padding:40px 16px;color:var(--mu)}
-.empty-ico{font-size:48px;margin-bottom:10px}
-.empty-txt{font-size:13px}
-
-@keyframes doSpin{to{transform:rotate(360deg)}}
-@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+.empty{text-align:center;padding:36px 16px;color:var(--mu)}
+.empty em{font-size:46px;display:block;margin-bottom:10px;font-style:normal}
 </style>
 </head>
 <body>
 
 <!-- LOADER -->
 <div id="loader">
-  <div class="llogo">X<em>A</em>FEARN</div>
+  <div style="font-family:'Outfit',sans-serif;font-weight:900;font-size:36px;color:#fff;letter-spacing:2px">X<span style="color:var(--ob)">A</span>FEARN</div>
   <div class="spin"></div>
-  <div style="color:rgba(255,255,255,.4);font-size:11px">Chargement...</div>
+  <div style="color:rgba(255,255,255,.4);font-size:11px" id="loaderTxt">Chargement...</div>
 </div>
 
-<!-- PAGE INSCRIPTION -->
+<!-- ALERT BOX -->
+<div id="alertBox"></div>
+
+<!-- INSCRIPTION -->
 <div id="regPage">
   <div class="reg-card">
-    <div class="reg-logo">X<em>A</em>FEARN</div>
-    <div class="reg-sub">Plateforme d'annonces — Inscription gratuite</div>
-
-    <div class="form-group">
-      <label class="form-label">Prénom / Nom *</label>
-      <input class="form-input" id="rNom" type="text" placeholder="Ex: Jean Dupont" autocomplete="name"/>
+    <div class="rlogo">X<em>A</em>FEARN</div>
+    <div class="rsub">Plateforme d'annonces — Inscription gratuite</div>
+    <div class="fg">
+      <label class="fl">Prénom / Nom *</label>
+      <input class="fi" id="rNom" type="text" placeholder="Ex: Jean Dupont" autocomplete="name"/>
     </div>
-    <div class="form-group">
-      <label class="form-label">Numéro WhatsApp *</label>
-      <input class="form-input" id="rTel" type="tel" placeholder="Ex: 699123456" inputmode="numeric"/>
+    <div class="fg">
+      <label class="fl">Numéro WhatsApp *</label>
+      <input class="fi" id="rTel" type="tel" placeholder="Ex: 699123456" inputmode="numeric"/>
     </div>
-    <div class="form-group">
-      <label class="form-label">Pays *</label>
-      <select class="form-input" id="rPays">
-        <option value="">-- Choisir ton pays --</option>
-        <option value="🇹🇬 Togo">🇹🇬 Togo</option>
-        <option value="🇨🇮 Côte d'Ivoire">🇨🇮 Côte d'Ivoire</option>
-        <option value="🇸🇳 Sénégal">🇸🇳 Sénégal</option>
-        <option value="🇧🇫 Burkina Faso">🇧🇫 Burkina Faso</option>
-        <option value="🇲🇱 Mali">🇲🇱 Mali</option>
-        <option value="🇧🇯 Bénin">🇧🇯 Bénin</option>
-        <option value="🇨🇲 Cameroun">🇨🇲 Cameroun</option>
-        <option value="🇬🇳 Guinée">🇬🇳 Guinée</option>
-        <option value="🇳🇪 Niger">🇳🇪 Niger</option>
-        <option value="🇨🇬 Congo">🇨🇬 Congo</option>
-        <option value="🇬🇦 Gabon">🇬🇦 Gabon</option>
-        <option value="🇹🇩 Tchad">🇹🇩 Tchad</option>
+    <div class="fg">
+      <label class="fl">Pays *</label>
+      <select class="fi" id="rPays">
+        <option value="">-- Choisir --</option>
+        <option value="Togo">🇹🇬 Togo</option>
+        <option value="Côte d'Ivoire">🇨🇮 Côte d'Ivoire</option>
+        <option value="Sénégal">🇸🇳 Sénégal</option>
+        <option value="Burkina Faso">🇧🇫 Burkina Faso</option>
+        <option value="Mali">🇲🇱 Mali</option>
+        <option value="Bénin">🇧🇯 Bénin</option>
+        <option value="Cameroun">🇨🇲 Cameroun</option>
+        <option value="Guinée">🇬🇳 Guinée</option>
+        <option value="Niger">🇳🇪 Niger</option>
+        <option value="Congo">🇨🇬 Congo</option>
+        <option value="Gabon">🇬🇦 Gabon</option>
+        <option value="Tchad">🇹🇩 Tchad</option>
         <option value="Autre">Autre</option>
       </select>
     </div>
-    <button class="btn btn-orange pulse" id="regBtn" onclick="register()">🚀 Créer mon compte</button>
+    <button class="btn btn-o" id="regBtn" onclick="doRegister()">🚀 Créer mon compte</button>
     <p style="text-align:center;font-size:10px;color:var(--mu);margin-top:10px">100% gratuit · Aucune carte requise</p>
   </div>
 </div>
 
-<!-- APPLICATION -->
+<!-- APP -->
 <div id="app">
-  <!-- HEADER -->
   <div class="hd">
     <div class="hdt">
       <div class="logo">X<em>A</em>FEARN <span style="font-size:10px;opacity:.6;font-weight:400">Annonces</span></div>
-      <div class="user-pill">
-        <div class="avatar" id="headerAvatar">?</div>
-        <span style="color:rgba(255,255,255,.8);font-size:11px" id="headerName"></span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="avatar" id="hAvatar">?</div>
+        <span style="color:rgba(255,255,255,.8);font-size:11px" id="hName"></span>
       </div>
     </div>
-    <div class="hd-sub">Publie ton annonce — Atteins des milliers de personnes</div>
+    <div style="color:rgba(255,255,255,.6);font-size:11px;margin-top:10px;position:relative;z-index:1">Publie et trouve des annonces près de toi</div>
+  </div>
+  <div class="nav">
+    <button class="nb on" onclick="goP('home',this)"><em>🏠</em>Accueil</button>
+    <button class="nb" onclick="goP('pub',this)"><em>➕</em>Publier</button>
+    <button class="nb" onclick="goP('mes',this)"><em>📋</em>Mes annonces</button>
+    <button class="nb" onclick="goP('pro',this)"><em>👤</em>Profil</button>
   </div>
 
-  <!-- NAV -->
-  <nav class="nav">
-    <button class="nav-btn active" onclick="goPage('home',this)"><span class="ic">🏠</span>Accueil</button>
-    <button class="nav-btn" onclick="goPage('publish',this)"><span class="ic">➕</span>Publier</button>
-    <button class="nav-btn" onclick="goPage('myads',this)"><span class="ic">📋</span>Mes annonces</button>
-    <button class="nav-btn" onclick="goPage('profile',this)"><span class="ic">👤</span>Profil</button>
-  </nav>
-
-  <!-- PAGE ACCUEIL -->
-  <div class="page active" id="page-home">
-    <div class="filter-bar" id="filterBar">
-      <button class="f-btn active" onclick="filterBy('',this)">🌍 Tout</button>
-      <button class="f-btn" onclick="filterBy('Vente',this)">🛒 Vente</button>
-      <button class="f-btn" onclick="filterBy('Services',this)">🔧 Services</button>
-      <button class="f-btn" onclick="filterBy('Emploi',this)">💼 Emploi</button>
-      <button class="f-btn" onclick="filterBy('Immobilier',this)">🏠 Immobilier</button>
-      <button class="f-btn" onclick="filterBy('Véhicules',this)">🚗 Véhicules</button>
-      <button class="f-btn" onclick="filterBy('Autre',this)">📦 Autre</button>
+  <!-- ACCUEIL -->
+  <div class="pg on" id="pg-home">
+    <div class="fbar">
+      <button class="fbtn on" onclick="doFilter('',this)">🌍 Tout</button>
+      <button class="fbtn" onclick="doFilter('Vente',this)">🛒 Vente</button>
+      <button class="fbtn" onclick="doFilter('Services',this)">🔧 Services</button>
+      <button class="fbtn" onclick="doFilter('Emploi',this)">💼 Emploi</button>
+      <button class="fbtn" onclick="doFilter('Immobilier',this)">🏠 Immobilier</button>
+      <button class="fbtn" onclick="doFilter('Véhicules',this)">🚗 Véhicules</button>
+      <button class="fbtn" onclick="doFilter('Autre',this)">📦 Autre</button>
     </div>
-    <div id="annsList">
-      <div class="empty"><div class="spin" style="border-top-color:var(--b);margin:0 auto 10px"></div>Chargement...</div>
-    </div>
+    <div id="annList"><div class="empty"><div class="spin" style="border-top-color:var(--b);margin:0 auto 10px"></div>Chargement...</div></div>
   </div>
 
-  <!-- PAGE PUBLIER -->
-  <div class="page" id="page-publish">
+  <!-- PUBLIER -->
+  <div class="pg" id="pg-pub">
     <div class="card">
       <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;margin-bottom:12px">📢 Publier une annonce</div>
-      <div class="step-dots">
-        <div class="dot active" id="dot1"></div>
-        <div class="dot" id="dot2"></div>
-        <div class="dot" id="dot3"></div>
+      <div class="dots">
+        <div class="dot on" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div>
       </div>
-
       <!-- STEP 1 -->
-      <div id="step1">
-        <p style="font-size:11px;color:var(--mu);margin-bottom:12px">Étape 1 — Informations de l'annonce</p>
-        <div class="form-group">
-          <label class="form-label">Titre *</label>
-          <input class="form-input" id="pTitle" type="text" placeholder="Ex: Vente iPhone 14 Pro neuf"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Description *</label>
-          <textarea class="form-input" id="pDesc" placeholder="Décris ton annonce avec tous les détails..."></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Catégorie *</label>
-          <div class="cat-grid">
-            <button class="cat-btn" onclick="selectCat('Vente',this)"><span class="cat-ico">🛒</span>Vente</button>
-            <button class="cat-btn" onclick="selectCat('Services',this)"><span class="cat-ico">🔧</span>Services</button>
-            <button class="cat-btn" onclick="selectCat('Emploi',this)"><span class="cat-ico">💼</span>Emploi</button>
-            <button class="cat-btn" onclick="selectCat('Immobilier',this)"><span class="cat-ico">🏠</span>Immobilier</button>
-            <button class="cat-btn" onclick="selectCat('Véhicules',this)"><span class="cat-ico">🚗</span>Véhicules</button>
-            <button class="cat-btn" onclick="selectCat('Autre',this)"><span class="cat-ico">📦</span>Autre</button>
+      <div id="s1">
+        <p style="font-size:11px;color:var(--mu);margin-bottom:11px">Étape 1 — Informations</p>
+        <div class="fg"><label class="fl">Titre *</label><input class="fi" id="pTit" type="text" placeholder="Ex: Vente iPhone 14 neuf"/></div>
+        <div class="fg"><label class="fl">Description *</label><textarea class="fi" style="resize:none;height:75px" id="pDes" placeholder="Décris ton annonce..."></textarea></div>
+        <div class="fg">
+          <label class="fl">Catégorie *</label>
+          <div class="cg">
+            <button class="cb" onclick="pickCat('Vente',this)"><em>🛒</em>Vente</button>
+            <button class="cb" onclick="pickCat('Services',this)"><em>🔧</em>Services</button>
+            <button class="cb" onclick="pickCat('Emploi',this)"><em>💼</em>Emploi</button>
+            <button class="cb" onclick="pickCat('Immobilier',this)"><em>🏠</em>Immobilier</button>
+            <button class="cb" onclick="pickCat('Véhicules',this)"><em>🚗</em>Véhicules</button>
+            <button class="cb" onclick="pickCat('Autre',this)"><em>📦</em>Autre</button>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Prix affiché</label>
-          <input class="form-input" id="pPrice" type="text" placeholder="Ex: 25 000F ou Gratuit ou Négociable"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Contact WhatsApp *</label>
-          <input class="form-input" id="pContact" type="tel" placeholder="Ex: 699123456" inputmode="numeric"/>
-        </div>
-        <button class="btn btn-blue" onclick="nextStep(2)">Suivant →</button>
+        <div class="fg"><label class="fl">Prix affiché</label><input class="fi" id="pPx" type="text" placeholder="Ex: 25 000F ou Gratuit"/></div>
+        <div class="fg"><label class="fl">Contact WhatsApp *</label><input class="fi" id="pCt" type="tel" placeholder="Ex: 699123456" inputmode="numeric"/></div>
+        <button class="btn btn-b" onclick="goStep(2)">Suivant →</button>
       </div>
-
       <!-- STEP 2 -->
-      <div id="step2" style="display:none">
-        <p style="font-size:11px;color:var(--mu);margin-bottom:12px">Étape 2 — Choisir un pack de visibilité</p>
-        <div class="pack-list">
-          <div class="pack-item" id="pack-basic" onclick="selectPack('basic',this)">
-            <div class="pack-top">
-              <span class="pack-name">🥉 Basique</span>
-              <span class="pack-price">500F</span>
-            </div>
-            <div class="pack-dur">Visibilité 24 heures</div>
-            <div class="pack-feats">✓ Annonce publiée &nbsp;·&nbsp; ✓ Visible dans le feed</div>
+      <div id="s2" style="display:none">
+        <p style="font-size:11px;color:var(--mu);margin-bottom:11px">Étape 2 — Pack de visibilité</p>
+        <div class="packs">
+          <div class="pack" id="pk1" onclick="pickPack('basic',this)">
+            <div class="pack-row"><span class="pack-name">🥉 Basique</span><span class="pack-price">500F</span></div>
+            <div class="pack-info">Visibilité 24h · Visible dans le feed</div>
           </div>
-          <div class="pack-item" id="pack-standard" onclick="selectPack('standard',this)">
-            <span class="hot-badge">⭐ POPULAIRE</span>
-            <div class="pack-top">
-              <span class="pack-name">🥈 Standard</span>
-              <span class="pack-price">1 000F</span>
-            </div>
-            <div class="pack-dur">Visibilité 3 jours</div>
-            <div class="pack-feats">✓ Annonce publiée &nbsp;·&nbsp; ✓ Partagée dans le canal</div>
+          <div class="pack" id="pk2" onclick="pickPack('standard',this)">
+            <span class="hot">⭐ POPULAIRE</span>
+            <div class="pack-row"><span class="pack-name">🥈 Standard</span><span class="pack-price">1 000F</span></div>
+            <div class="pack-info">Visibilité 3 jours · Partagée dans le canal</div>
           </div>
-          <div class="pack-item gold" id="pack-premium" onclick="selectPack('premium',this)">
-            <div class="pack-top">
-              <span class="pack-name" style="color:#fff">👑 Premium</span>
-              <span class="pack-price">2 000F</span>
-            </div>
-            <div class="pack-dur">Visibilité 7 jours</div>
-            <div class="pack-feats">✓ Mise en avant &nbsp;·&nbsp; ✓ Bot + Canal &nbsp;·&nbsp; ✓ Badge Premium</div>
+          <div class="pack gold" id="pk3" onclick="pickPack('premium',this)">
+            <div class="pack-row"><span class="pack-name" style="color:#fff">👑 Premium</span><span class="pack-price">2 000F</span></div>
+            <div class="pack-info">Visibilité 7 jours · Mise en avant · Bot + Canal</div>
           </div>
         </div>
         <div class="btn-row">
-          <button class="btn btn-ghost btn-sm" onclick="backStep(1)" style="width:auto">← Retour</button>
-          <button class="btn btn-blue" onclick="nextStep(3)">Payer →</button>
+          <button class="btn btn-gh btn-sm" onclick="goStep(1)" style="width:auto">← Retour</button>
+          <button class="btn btn-b" onclick="goStep(3)">Payer →</button>
         </div>
       </div>
-
       <!-- STEP 3 -->
-      <div id="step3" style="display:none">
-        <p style="font-size:11px;color:var(--mu);margin-bottom:12px">Étape 3 — Paiement</p>
+      <div id="s3" style="display:none">
+        <p style="font-size:11px;color:var(--mu);margin-bottom:11px">Étape 3 — Paiement</p>
         <div class="pay-box">
-          <p style="font-family:'Outfit',sans-serif;font-weight:700;font-size:12px;color:var(--o);margin-bottom:9px">💳 Comment payer ?</p>
-          <div class="pay-step">
-            <div class="step-num">1</div>
-            <div>Envoie <strong id="payAmount">500F</strong> via Mobile Money :</div>
-          </div>
-          <div style="background:rgba(245,124,0,.08);border-radius:9px;padding:10px;margin:8px 0;text-align:center">
+          <p style="font-weight:700;font-size:12px;color:var(--o);margin-bottom:9px">💳 Comment payer</p>
+          <div class="pay-step"><div class="pn">1</div><div>Envoie <strong id="pAmt">500F</strong> sur :</div></div>
+          <div style="background:rgba(245,124,0,.08);border-radius:9px;padding:10px;margin:7px 0;text-align:center">
             <div style="font-size:9px;color:var(--mu)">📱 Orange / MTN / Wave / Flooz</div>
-            <div class="pay-number">699 663 183</div>
-            <div style="font-size:9px;color:var(--mu)">Nom : Abdoula CHERIF</div>
+            <div class="pay-num">699 663 183</div>
+            <div style="font-size:9px;color:var(--mu)">Abdoula CHERIF</div>
           </div>
-          <div class="pay-step">
-            <div class="step-num">2</div>
-            <div>Note le numéro de transaction reçu par SMS</div>
-          </div>
-          <div class="pay-step">
-            <div class="step-num">3</div>
-            <div>Entre-le ci-dessous et soumets ton annonce</div>
-          </div>
+          <div class="pay-step"><div class="pn">2</div><div>Note la référence SMS reçue</div></div>
+          <div class="pay-step"><div class="pn">3</div><div>Entre-la ci-dessous et soumets</div></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Référence de transaction *</label>
-          <input class="form-input" id="pRef" type="text" placeholder="Ex: TXN123456789 ou MP123456"/>
-        </div>
-        <div id="payRecap" style="background:var(--bg);border-radius:10px;padding:10px;margin-bottom:12px;font-size:11px;display:none"></div>
+        <div id="pRecap" style="background:var(--bg);border-radius:10px;padding:10px;margin-bottom:12px;font-size:11px;border:1px solid var(--brd)"></div>
+        <div class="fg"><label class="fl">Référence de transaction *</label><input class="fi" id="pRef" type="text" placeholder="Ex: TXN123456789"/></div>
         <div class="btn-row">
-          <button class="btn btn-ghost btn-sm" onclick="backStep(2)" style="width:auto">← Retour</button>
-          <button class="btn btn-green" id="submitBtn" onclick="submitAnn()">✅ Soumettre</button>
+          <button class="btn btn-gh btn-sm" onclick="goStep(2)" style="width:auto">← Retour</button>
+          <button class="btn btn-g" id="subBtn" onclick="doSubmit()">✅ Soumettre</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- PAGE MES ANNONCES -->
-  <div class="page" id="page-myads">
-    <div id="myAdsList">
-      <div class="empty"><div class="spin" style="border-top-color:var(--b);margin:0 auto 10px"></div></div>
-    </div>
+  <!-- MES ANNONCES -->
+  <div class="pg" id="pg-mes">
+    <div id="mesList"><div class="empty"><div class="spin" style="border-top-color:var(--b);margin:0 auto 10px"></div></div></div>
   </div>
 
-  <!-- PAGE PROFIL -->
-  <div class="page" id="page-profile">
+  <!-- PROFIL -->
+  <div class="pg" id="pg-pro">
     <div class="card">
-      <div style="text-align:center;padding:8px 0 16px">
-        <div id="profileAvatar" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--b),var(--bl));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin:0 auto 10px">?</div>
-        <div style="font-family:'Outfit',sans-serif;font-size:18px;font-weight:700" id="profileName">...</div>
-        <div style="font-size:12px;color:var(--mu);margin-top:3px" id="profileTel">...</div>
-        <div style="font-size:12px;color:var(--mu)" id="profilePays">...</div>
+      <div style="text-align:center;padding:8px 0 14px">
+        <div id="proAv" style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--b),var(--bl));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;margin:0 auto 9px">?</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:17px;font-weight:700" id="proNom">...</div>
+        <div style="font-size:12px;color:var(--mu);margin-top:3px" id="proTel">...</div>
+        <div style="font-size:12px;color:var(--mu)" id="proPays">...</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="background:var(--bg);border-radius:11px;padding:12px;text-align:center;border:1px solid var(--brd)">
-          <div style="font-family:'Outfit',sans-serif;font-size:22px;font-weight:700;color:var(--bd)" id="profileTotal">0</div>
-          <div style="font-size:10px;color:var(--mu)">Annonces publiées</div>
-        </div>
-        <div style="background:var(--bg);border-radius:11px;padding:12px;text-align:center;border:1px solid var(--brd)">
-          <div style="font-family:'Outfit',sans-serif;font-size:22px;font-weight:700;color:var(--g)" id="profileActive">0</div>
-          <div style="font-size:10px;color:var(--mu)">Actives</div>
-        </div>
+        <div style="background:var(--bg);border-radius:11px;padding:12px;text-align:center;border:1px solid var(--brd)"><div style="font-family:'Outfit',sans-serif;font-size:21px;font-weight:700;color:var(--bd)" id="proTotal">0</div><div style="font-size:10px;color:var(--mu)">Publiées</div></div>
+        <div style="background:var(--bg);border-radius:11px;padding:12px;text-align:center;border:1px solid var(--brd)"><div style="font-family:'Outfit',sans-serif;font-size:21px;font-weight:700;color:var(--g)" id="proAct">0</div><div style="font-size:10px;color:var(--mu)">Actives</div></div>
       </div>
     </div>
     <div class="card">
-      <p style="font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;margin-bottom:10px">📞 Support</p>
-      <a href="https://wa.me/699663183" style="text-decoration:none" target="_blank">
-        <button class="btn btn-green">💬 Contacter le support WhatsApp</button>
-      </a>
+      <p style="font-family:'Outfit',sans-serif;font-weight:700;margin-bottom:10px">📞 Support</p>
+      <a href="https://wa.me/699663183" target="_blank" style="text-decoration:none"><button class="btn btn-g">💬 WhatsApp Support</button></a>
     </div>
     <div class="card">
       <button class="btn" style="background:#FEE2E2;color:var(--r);border:1px solid #FECDD3" onclick="doLogout()">🚪 Se déconnecter</button>
@@ -394,414 +313,382 @@ textarea.form-input{resize:none;height:78px}
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" id="toastEl"></div>
-
 <script>
-// ─── CONFIG ───────────────────────────────────────────────
-const SB_URL  = "https://xtmmmrajknnadodgrrcu.supabase.co";
-const SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bW1tcmFqa25uYWRvZGdycmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5ODc5NjQsImV4cCI6MjA2MDU2Mzk2NH0.Ht_BdMdgwkiuB4VuMTdH2CKg4BLj1bKNzW_g8mENwn0";
-const HEADERS = {
-  "apikey": SB_KEY,
-  "Authorization": "Bearer " + SB_KEY,
+// ── CONFIG ────────────────────────────────────────────────
+var SB  = "https://xtmmmrajknnadodgrrcu.supabase.co";
+var KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bW1tcmFqa25uYWRvZGdycmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5ODc5NjQsImV4cCI6MjA2MDU2Mzk2NH0.Ht_BdMdgwkiuB4VuMTdH2CKg4BLj1bKNzW_g8mENwn0";
+var HDR = {
+  "apikey": KEY,
+  "Authorization": "Bearer " + KEY,
   "Content-Type": "application/json",
   "Prefer": "return=representation"
 };
-const PACKS = {
-  basic:    { name:"Basique",  price:500,  days:1 },
-  standard: { name:"Standard", price:1000, days:3 },
-  premium:  { name:"Premium",  price:2000, days:7 }
+var PACKS = {
+  basic:    {n:"Basique",  p:500,  d:1},
+  standard: {n:"Standard", p:1000, d:3},
+  premium:  {n:"Premium",  p:2000, d:7}
 };
 
-// ─── STATE ────────────────────────────────────────────────
-var currentUser = null;
-var telegramId  = null;
-var selCat      = "";
-var selPack     = "";
+// ── STATE ─────────────────────────────────────────────────
+var CU   = null;
+var TID  = null;
+var sCat = "";
+var sPak = "";
 
-// ─── DATABASE ─────────────────────────────────────────────
-async function dbGet(table, params) {
+// ── ALERT VISIBLE ─────────────────────────────────────────
+function alert2(msg, type) {
+  var box = document.getElementById("alertBox");
+  box.style.display = "block";
+  var cls = type === "ok" ? "alert-ok" : type === "er" ? "alert-er" : "alert-in";
+  box.innerHTML = '<div class="alert ' + cls + '">' + msg + '</div>';
+  setTimeout(function() {
+    box.style.display = "none";
+    box.innerHTML = "";
+  }, 4000);
+}
+
+// ── DB ────────────────────────────────────────────────────
+function dbQ(table, params, cb) {
   var qs = "";
   if (params) {
-    qs = "?" + Object.entries(params).map(function(kv){ return kv[0]+"="+kv[1]; }).join("&");
+    var parts = [];
+    for (var k in params) parts.push(k + "=" + params[k]);
+    qs = "?" + parts.join("&");
   }
-  try {
-    var res = await fetch(SB_URL + "/rest/v1/" + table + qs, { headers: HEADERS });
-    var data = await res.json();
-    return Array.isArray(data) ? data : [];
-  } catch(e) { return []; }
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", SB + "/rest/v1/" + table + qs);
+  for (var h in HDR) xhr.setRequestHeader(h, HDR[h]);
+  xhr.onload = function() {
+    try { cb(null, JSON.parse(xhr.responseText)); }
+    catch(e) { cb("Parse error"); }
+  };
+  xhr.onerror = function() { cb("Network error"); };
+  xhr.send();
 }
 
-async function dbInsert(table, data) {
-  try {
-    var res = await fetch(SB_URL + "/rest/v1/" + table, {
-      method: "POST",
-      headers: HEADERS,
-      body: JSON.stringify(data)
-    });
-    return await res.json();
-  } catch(e) { return null; }
+function dbInsert(table, data, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", SB + "/rest/v1/" + table);
+  for (var h in HDR) xhr.setRequestHeader(h, HDR[h]);
+  xhr.onload = function() {
+    try {
+      var res = JSON.parse(xhr.responseText);
+      if (res && res.code) { cb("Erreur DB: " + (res.message || res.code)); }
+      else { cb(null, res); }
+    } catch(e) { cb("Erreur de réponse"); }
+  };
+  xhr.onerror = function() { cb("Pas de connexion"); };
+  xhr.send(JSON.stringify(data));
 }
 
-// ─── UI UTILS ─────────────────────────────────────────────
-function showToast(msg, type) {
-  var el = document.getElementById("toastEl");
-  el.textContent = msg;
-  el.className = "toast show toast-" + (type || "in");
-  setTimeout(function(){ el.className = "toast"; }, 2800);
-}
-
-function goPage(name, btn) {
-  document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
-  document.querySelectorAll(".nav-btn").forEach(function(b){ b.classList.remove("active"); });
-  document.getElementById("page-" + name).classList.add("active");
-  if (btn) btn.classList.add("active");
-  if (name === "home")    loadAnns("");
-  if (name === "myads")   loadMyAds();
-  if (name === "profile") loadProfile();
-}
-
-function showLoader(msg) {
-  document.getElementById("loader").innerHTML =
-    '<div class="llogo">X<em>A</em>FEARN</div>' +
-    '<div class="spin"></div>' +
-    '<div style="color:rgba(255,255,255,.4);font-size:10px">' + (msg||"Chargement...") + '</div>';
-  document.getElementById("loader").style.display = "flex";
-}
-
-function hideLoader() {
-  document.getElementById("loader").style.display = "none";
-}
-
-function catIcon(cat) {
-  var icons = { "Vente":"🛒", "Services":"🔧", "Emploi":"💼", "Immobilier":"🏠", "Véhicules":"🚗" };
-  return icons[cat] || "📢";
-}
-
-function timeAgo(dateStr) {
-  var h = Math.floor((Date.now() - new Date(dateStr).getTime()) / 3600000);
-  if (h < 1)  return "À l'instant";
-  if (h < 24) return "Il y a " + h + "h";
-  var d = Math.floor(h / 24);
-  return d < 7 ? "Il y a " + d + "j" : new Date(dateStr).toLocaleDateString("fr");
-}
-
-// ─── INSCRIPTION ──────────────────────────────────────────
-async function register() {
-  var nom  = document.getElementById("rNom").value.trim();
-  var tel  = document.getElementById("rTel").value.trim();
+// ── INSCRIPTION ───────────────────────────────────────────
+function doRegister() {
+  var nom  = (document.getElementById("rNom").value || "").trim();
+  var tel  = (document.getElementById("rTel").value || "").trim();
   var pays = document.getElementById("rPays").value;
-  if (!nom || nom.length < 2)  { showToast("Entre ton prénom/nom","er"); return; }
-  if (!tel || tel.length < 8)  { showToast("Numéro WhatsApp invalide","er"); return; }
-  if (!pays)                    { showToast("Choisis ton pays","er"); return; }
+  if (nom.length < 2)  { alert2("Entre ton prénom/nom","er"); return; }
+  if (tel.length < 8)  { alert2("Numéro WhatsApp invalide (min 8 chiffres)","er"); return; }
+  if (!pays)            { alert2("Choisis ton pays","er"); return; }
 
   var btn = document.getElementById("regBtn");
   btn.disabled = true;
-  btn.textContent = "⏳ Création...";
+  btn.textContent = "⏳ Création en cours...";
 
-  var r = await dbInsert("miniapp_users", {
-    telegram_id: telegramId || null,
+  dbInsert("miniapp_users", {
+    telegram_id: TID || null,
     username: nom,
     nom: nom,
     telephone: tel,
     pays: pays
+  }, function(err, res) {
+    if (err) {
+      alert2(err, "er");
+      btn.disabled = false;
+      btn.textContent = "🚀 Créer mon compte";
+      return;
+    }
+    var user = Array.isArray(res) ? res[0] : res;
+    if (user && user.id) {
+      CU = user;
+      lsSet("xa_u", {id:user.id, nom:user.nom, telephone:user.telephone, pays:user.pays});
+      document.getElementById("regPage").style.display = "none";
+      showApp();
+      alert2("Bienvenue ! Compte créé 🎉","ok");
+    } else {
+      alert2("Réponse inattendue — réessaie","er");
+      btn.disabled = false;
+      btn.textContent = "🚀 Créer mon compte";
+    }
   });
-
-  if (r && (r[0] || r.id)) {
-    currentUser = r[0] || r;
-    saveUser(currentUser);
-    document.getElementById("regPage").style.display = "none";
-    showApp();
-    showToast("Bienvenue ! Compte créé 🎉","ok");
-  } else {
-    showToast("Erreur — réessaie","er");
-    btn.disabled = false;
-    btn.textContent = "🚀 Créer mon compte";
-  }
 }
 
-function saveUser(u) {
-  try {
-    localStorage.setItem("xa_miniapp_user", JSON.stringify({
-      id: u.id, nom: u.nom, telephone: u.telephone, pays: u.pays
-    }));
-  } catch(e) {}
+// ── LOCAL STORAGE ─────────────────────────────────────────
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+function lsGet(k)    { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } }
+function lsDel(k)    { try { localStorage.removeItem(k); } catch(e) {} }
+
+// ── ANNONCES ─────────────────────────────────────────────
+function catIco(c) {
+  var m = {Vente:"🛒", Services:"🔧", Emploi:"💼", Immobilier:"🏠", "Véhicules":"🚗"};
+  return m[c] || "📢";
+}
+function ago(s) {
+  var h = Math.floor((Date.now() - new Date(s).getTime()) / 3600000);
+  if (h < 1) return "À l'instant";
+  if (h < 24) return h + "h";
+  var d = Math.floor(h/24); return d < 7 ? d + "j" : new Date(s).toLocaleDateString("fr");
+}
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-// ─── ANNONCES ─────────────────────────────────────────────
-function filterBy(cat, btn) {
-  document.querySelectorAll(".f-btn").forEach(function(b){ b.classList.remove("active"); });
-  btn.classList.add("active");
+function doFilter(cat, btn) {
+  document.querySelectorAll(".fbtn").forEach(function(b){ b.classList.remove("on"); });
+  btn.classList.add("on");
   loadAnns(cat);
 }
 
-async function loadAnns(cat) {
-  var list = document.getElementById("annsList");
+function loadAnns(cat) {
+  var list = document.getElementById("annList");
   list.innerHTML = '<div class="empty"><div class="spin" style="border-top-color:var(--b);margin:0 auto 10px"></div>Chargement...</div>';
-
-  var params = { status:"eq.approved", order:"created_at.desc", limit:"60" };
-  if (cat) params["categorie"] = "eq." + cat;
-
-  var anns = await dbGet("miniapp_annonces", params);
-  var now = new Date();
-  var valid = (anns || []).filter(function(a){ return new Date(a.expires_at) > now; });
-
-  if (!valid.length) {
-    list.innerHTML = '<div class="empty"><div class="empty-ico">📢</div><div class="empty-txt">Aucune annonce pour le moment.<br>Sois le premier à publier !</div></div>';
-    return;
-  }
-
-  var html = "";
-  valid.forEach(function(a) {
-    var isPremium = a.pack === "premium";
-    html += '<div class="ann">' +
-      '<div class="ann-img">' + catIcon(a.categorie) + '</div>' +
-      '<div class="ann-body">' +
-        '<span class="ann-cat ' + (isPremium ? "prem" : "") + '">' + (isPremium ? "👑 PREMIUM" : "📌") + " " + (a.categorie || "Autre") + '</span>' +
-        '<div class="ann-title">' + escHtml(a.titre || "") + '</div>' +
-        '<div class="ann-desc">' + escHtml(a.description || "") + '</div>' +
-        '<div class="ann-foot">' +
-          '<div>' +
-            (a.prix_annonce ? '<div class="ann-price">' + escHtml(a.prix_annonce) + '</div>' : '') +
-            '<div class="ann-meta">📍 ' + escHtml(a.pays || "") + ' · ' + timeAgo(a.created_at) + '</div>' +
-          '</div>' +
-          '<button class="contact-btn" data-tel="' + escAttr(a.contact || "") + '" data-titre="' + escAttr(a.titre || "") + '" onclick="contactAnn(this)">💬 Contacter</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  });
-  list.innerHTML = html;
-}
-
-function contactAnn(btn) {
-  var tel   = btn.getAttribute("data-tel");
-  var titre = btn.getAttribute("data-titre");
-  if (!tel) { showToast("Aucun contact disponible","er"); return; }
-  var msg = "Bonjour, j'ai vu votre annonce \"" + titre + "\" sur XAFEARN. Je suis intéressé(e).";
-  window.open("https://wa.me/" + tel.replace(/\D/g,"") + "?text=" + encodeURIComponent(msg), "_blank");
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-function escAttr(s) {
-  return String(s).replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-}
-
-// ─── PUBLICATION ──────────────────────────────────────────
-function setStep(n) {
-  [1,2,3].forEach(function(i){
-    document.getElementById("step"+i).style.display = i === n ? "block" : "none";
-    var dot = document.getElementById("dot"+i);
-    dot.className = "dot" + (i < n ? " done" : i === n ? " active" : "");
-  });
-}
-
-function nextStep(n) {
-  if (n === 2) {
-    if (!document.getElementById("pTitle").value.trim())   { showToast("Entre le titre","er"); return; }
-    if (!document.getElementById("pDesc").value.trim())    { showToast("Entre la description","er"); return; }
-    if (!selCat)                                            { showToast("Choisis une catégorie","er"); return; }
-    if (!document.getElementById("pContact").value.trim()) { showToast("Entre ton contact WhatsApp","er"); return; }
-  }
-  if (n === 3) {
-    if (!selPack) { showToast("Choisis un pack","er"); return; }
-    var pk = PACKS[selPack];
-    document.getElementById("payAmount").textContent = pk.price + "F";
-    var recap = document.getElementById("payRecap");
-    recap.innerHTML =
-      '<strong>📋 Récapitulatif</strong><br>' +
-      'Titre : <strong>' + escHtml(document.getElementById("pTitle").value) + '</strong><br>' +
-      'Catégorie : <strong>' + selCat + '</strong><br>' +
-      'Pack : <strong>' + pk.name + '</strong> — <strong style="color:var(--o)">' + pk.price + 'F</strong><br>' +
-      'Durée : <strong>' + pk.days + ' jour(s)</strong>';
-    recap.style.display = "block";
-  }
-  setStep(n);
-}
-
-function backStep(n) { setStep(n); }
-
-function selectCat(cat, el) {
-  selCat = cat;
-  document.querySelectorAll(".cat-btn").forEach(function(b){ b.classList.remove("active"); });
-  el.classList.add("active");
-}
-
-function selectPack(pack, el) {
-  selPack = pack;
-  document.querySelectorAll(".pack-item").forEach(function(b){ b.classList.remove("active"); });
-  el.classList.add("active");
-}
-
-async function submitAnn() {
-  var ref = document.getElementById("pRef").value.trim();
-  if (!ref || ref.length < 4) { showToast("Référence de transaction invalide","er"); return; }
-
-  var btn = document.getElementById("submitBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ Envoi...";
-
-  var pk  = PACKS[selPack];
-  var exp = new Date();
-  exp.setDate(exp.getDate() + pk.days);
-
-  var r = await dbInsert("miniapp_annonces", {
-    user_id:       currentUser.id,
-    nom_user:      currentUser.nom,
-    telegram_id:   telegramId || null,
-    titre:         document.getElementById("pTitle").value.trim(),
-    description:   document.getElementById("pDesc").value.trim(),
-    categorie:     selCat,
-    prix_annonce:  document.getElementById("pPrice").value.trim() || "",
-    contact:       document.getElementById("pContact").value.trim(),
-    pays:          currentUser.pays || "",
-    pack:          selPack,
-    montant_paye:  pk.price,
-    ref_paiement:  ref,
-    status:        "pending",
-    expires_at:    exp.toISOString()
-  });
-
-  if (r && (r[0] || r.id)) {
-    showToast("Annonce soumise ! En attente de validation ✅","ok");
-    // Reset
-    ["pTitle","pDesc","pPrice","pContact","pRef"].forEach(function(id){ document.getElementById(id).value = ""; });
-    document.getElementById("payRecap").style.display = "none";
-    selCat = ""; selPack = "";
-    document.querySelectorAll(".cat-btn,.pack-item").forEach(function(b){ b.classList.remove("active"); });
-    setStep(1);
-    goPage("myads", document.querySelector(".nav-btn:nth-child(3)"));
-  } else {
-    showToast("Erreur — réessaie","er");
-    btn.disabled = false;
-    btn.textContent = "✅ Soumettre";
-  }
-}
-
-// ─── MES ANNONCES ─────────────────────────────────────────
-async function loadMyAds() {
-  var list = document.getElementById("myAdsList");
-  list.innerHTML = '<div class="empty"><div class="spin" style="border-top-color:var(--b);margin:0 auto 10px"></div></div>';
-
-  var anns = await dbGet("miniapp_annonces", { user_id:"eq."+currentUser.id, order:"created_at.desc" });
-
-  if (!anns || !anns.length) {
-    list.innerHTML =
-      '<div class="empty"><div class="empty-ico">📋</div><div class="empty-txt">Tu n\'as pas encore d\'annonce.</div></div>' +
-      '<button class="btn btn-orange pulse" onclick="goPage(\'publish\',document.querySelector(\'.nav-btn:nth-child(2)\'))">➕ Publier une annonce</button>';
-    return;
-  }
-
-  var statusLabel = { pending:"⏳ En attente", approved:"✅ Active", rejected:"❌ Refusée" };
-  var statusClass = { pending:"status-pending", approved:"status-approved", rejected:"status-rejected" };
-  var html = "";
-  anns.forEach(function(a) {
-    var pk = PACKS[a.pack] || { name: a.pack, price: "?" };
-    html +=
-      '<div class="ann">' +
-        '<div class="ann-img">' + catIcon(a.categorie) + '</div>' +
+  var p = {status:"eq.approved", order:"created_at.desc", limit:"60"};
+  if (cat) p["categorie"] = "eq." + cat;
+  dbQ("miniapp_annonces", p, function(err, data) {
+    if (err || !data || !data.length) {
+      list.innerHTML = '<div class="empty"><em>📢</em>Aucune annonce pour le moment.</div>';
+      return;
+    }
+    var now = new Date();
+    var html = "";
+    data.forEach(function(a) {
+      if (new Date(a.expires_at) < now) return;
+      var pr = a.pack === "premium";
+      html += '<div class="ann">' +
+        '<div class="ann-img">' + catIco(a.categorie) + '</div>' +
         '<div class="ann-body">' +
-          '<span class="ann-cat">' + (a.categorie || "Autre") + '</span>' +
-          ' <span class="status-badge ' + (statusClass[a.status] || "status-pending") + '">' + (statusLabel[a.status] || a.status) + '</span>' +
-          '<div class="ann-title" style="margin-top:6px">' + escHtml(a.titre || "") + '</div>' +
-          '<div class="ann-desc">' + escHtml(a.description || "") + '</div>' +
-          '<div style="font-size:10px;color:var(--mu);margin-top:6px">' +
-            'Pack : <strong>' + pk.name + '</strong> — ' + pk.price + 'F &nbsp;·&nbsp; Réf : ' + escHtml(a.ref_paiement || "—") + '<br>' +
-            'Expire : ' + (a.expires_at ? new Date(a.expires_at).toLocaleDateString("fr") : "—") +
+          '<span class="ann-cat' + (pr?" prem":"") + '">' + (pr?"👑 PREMIUM":"📌") + " " + esc(a.categorie||"Autre") + '</span>' +
+          '<div class="ann-title">' + esc(a.titre) + '</div>' +
+          '<div class="ann-desc">' + esc(a.description) + '</div>' +
+          '<div class="ann-foot">' +
+            '<div>' +
+              (a.prix_annonce ? '<div class="ann-price">' + esc(a.prix_annonce) + '</div>' : '') +
+              '<div class="ann-meta">📍 ' + esc(a.pays) + ' · ' + ago(a.created_at) + '</div>' +
+            '</div>' +
+            '<button class="cbtn" data-tel="' + esc(a.contact) + '" data-tit="' + esc(a.titre) + '" onclick="doContact(this)">💬 Contacter</button>' +
           '</div>' +
         '</div>' +
       '</div>';
+    });
+    list.innerHTML = html || '<div class="empty"><em>📢</em>Aucune annonce active.</div>';
   });
-  list.innerHTML = html;
 }
 
-// ─── PROFIL ───────────────────────────────────────────────
-async function loadProfile() {
-  if (!currentUser) return;
-  var init = (currentUser.nom || "?").charAt(0).toUpperCase();
-  document.getElementById("profileAvatar").textContent = init;
-  document.getElementById("profileName").textContent   = currentUser.nom || "";
-  document.getElementById("profileTel").textContent    = "📱 " + (currentUser.telephone || "");
-  document.getElementById("profilePays").textContent   = "📍 " + (currentUser.pays || "");
+function doContact(btn) {
+  var tel = btn.getAttribute("data-tel");
+  var tit = btn.getAttribute("data-tit");
+  if (!tel) { alert2("Aucun contact disponible","er"); return; }
+  var msg = "Bonjour, j'ai vu votre annonce \"" + tit + "\" sur XAFEARN.";
+  window.open("https://wa.me/" + tel.replace(/\D/g,"") + "?text=" + encodeURIComponent(msg), "_blank");
+}
 
-  var all = await dbGet("miniapp_annonces", { user_id:"eq."+currentUser.id });
-  var now = new Date();
-  var active = (all || []).filter(function(a){ return a.status === "approved" && new Date(a.expires_at) > now; });
-  document.getElementById("profileTotal").textContent  = all ? all.length : 0;
-  document.getElementById("profileActive").textContent = active.length;
+// ── PUBLICATION ───────────────────────────────────────────
+function setDot(n) {
+  [1,2,3].forEach(function(i) {
+    document.getElementById("s"+i).style.display = i===n?"block":"none";
+    var d = document.getElementById("d"+i);
+    d.className = "dot" + (i<n?" ok":i===n?" on":"");
+  });
+}
+
+function goStep(n) {
+  if (n===2) {
+    if (!(document.getElementById("pTit").value||"").trim()) { alert2("Entre le titre","er"); return; }
+    if (!(document.getElementById("pDes").value||"").trim()) { alert2("Entre la description","er"); return; }
+    if (!sCat) { alert2("Choisis une catégorie","er"); return; }
+    if (!(document.getElementById("pCt").value||"").trim())  { alert2("Entre ton contact WhatsApp","er"); return; }
+  }
+  if (n===3) {
+    if (!sPak) { alert2("Choisis un pack","er"); return; }
+    var pk = PACKS[sPak];
+    document.getElementById("pAmt").textContent = pk.p + "F";
+    document.getElementById("pRecap").innerHTML =
+      "<strong>📋 Récapitulatif</strong><br>" +
+      "Titre : " + esc(document.getElementById("pTit").value) + "<br>" +
+      "Catégorie : " + sCat + "<br>" +
+      "Pack : " + pk.n + " — <strong style='color:var(--o)'>" + pk.p + "F</strong><br>" +
+      "Durée : " + pk.d + " jour(s)";
+  }
+  setDot(n);
+}
+
+function pickCat(c, el) {
+  sCat = c;
+  document.querySelectorAll(".cb").forEach(function(b){ b.classList.remove("on"); });
+  el.classList.add("on");
+}
+
+function pickPack(p, el) {
+  sPak = p;
+  document.querySelectorAll(".pack").forEach(function(b){ b.classList.remove("on"); });
+  el.classList.add("on");
+}
+
+function doSubmit() {
+  var ref = (document.getElementById("pRef").value || "").trim();
+  if (ref.length < 4) { alert2("Entre la référence de transaction","er"); return; }
+  var btn = document.getElementById("subBtn");
+  btn.disabled = true; btn.textContent = "⏳ Envoi...";
+  var pk  = PACKS[sPak];
+  var exp = new Date(); exp.setDate(exp.getDate() + pk.d);
+  dbInsert("miniapp_annonces", {
+    user_id: CU.id, nom_user: CU.nom, telegram_id: TID||null,
+    titre: document.getElementById("pTit").value.trim(),
+    description: document.getElementById("pDes").value.trim(),
+    categorie: sCat, prix_annonce: (document.getElementById("pPx").value||"").trim(),
+    contact: document.getElementById("pCt").value.trim(),
+    pays: CU.pays||"", pack: sPak, montant_paye: pk.p,
+    ref_paiement: ref, status: "pending", expires_at: exp.toISOString()
+  }, function(err, res) {
+    if (err) { alert2(err,"er"); btn.disabled=false; btn.textContent="✅ Soumettre"; return; }
+    var ann = Array.isArray(res)?res[0]:res;
+    if (ann && ann.id) {
+      alert2("Annonce soumise ! En attente de validation ✅","ok");
+      ["pTit","pDes","pPx","pCt","pRef"].forEach(function(id){ document.getElementById(id).value=""; });
+      sCat=""; sPak="";
+      document.querySelectorAll(".cb,.pack").forEach(function(b){ b.classList.remove("on"); });
+      setDot(1);
+      goP("mes", document.querySelector(".nb:nth-child(3)"));
+    } else {
+      alert2("Réponse inattendue — réessaie","er");
+      btn.disabled=false; btn.textContent="✅ Soumettre";
+    }
+  });
+}
+
+// ── MES ANNONCES ─────────────────────────────────────────
+function loadMes() {
+  var list = document.getElementById("mesList");
+  list.innerHTML = '<div class="empty"><div class="spin" style="border-top-color:var(--b);margin:0 auto 10px"></div></div>';
+  dbQ("miniapp_annonces", {user_id:"eq."+CU.id, order:"created_at.desc"}, function(err, data) {
+    if (!data||!data.length) {
+      list.innerHTML = '<div class="empty"><em>📋</em>Aucune annonce encore.</div>' +
+        '<button class="btn btn-o" style="margin:0 12px" onclick="goP(\'pub\',document.querySelector(\'.nb:nth-child(2)\'))">➕ Publier</button>';
+      return;
+    }
+    var sl = {pending:"⏳ En attente",approved:"✅ Active",rejected:"❌ Refusée"};
+    var sc = {pending:"sbdg-p",approved:"sbdg-ok",rejected:"sbdg-r"};
+    var html = "";
+    data.forEach(function(a) {
+      var pk = PACKS[a.pack]||{n:a.pack,p:"?"};
+      html += '<div class="ann"><div class="ann-img">' + catIco(a.categorie) + '</div>' +
+        '<div class="ann-body">' +
+          '<span class="ann-cat">' + esc(a.categorie||"Autre") + '</span>' +
+          ' <span class="sbdg ' + (sc[a.status]||"sbdg-p") + '">' + (sl[a.status]||a.status) + '</span>' +
+          '<div class="ann-title" style="margin-top:6px">' + esc(a.titre) + '</div>' +
+          '<div class="ann-desc">' + esc(a.description) + '</div>' +
+          '<div style="font-size:10px;color:var(--mu);margin-top:6px">' +
+            'Pack : <strong>' + pk.n + '</strong> — ' + pk.p + 'F<br>' +
+            'Réf : ' + esc(a.ref_paiement||"—") + ' · Expire : ' +
+            (a.expires_at?new Date(a.expires_at).toLocaleDateString("fr"):"—") +
+          '</div>' +
+        '</div></div>';
+    });
+    list.innerHTML = html;
+  });
+}
+
+// ── PROFIL ───────────────────────────────────────────────
+function loadPro() {
+  if (!CU) return;
+  var ini = (CU.nom||"?")[0].toUpperCase();
+  document.getElementById("proAv").textContent  = ini;
+  document.getElementById("proNom").textContent = CU.nom||"";
+  document.getElementById("proTel").textContent = "📱 " + (CU.telephone||"");
+  document.getElementById("proPays").textContent= "📍 " + (CU.pays||"");
+  dbQ("miniapp_annonces",{user_id:"eq."+CU.id},function(err,data){
+    var now = new Date();
+    var act = (data||[]).filter(function(a){return a.status==="approved"&&new Date(a.expires_at)>now;});
+    document.getElementById("proTotal").textContent = data?data.length:0;
+    document.getElementById("proAct").textContent   = act.length;
+  });
 }
 
 function doLogout() {
-  if (confirm("Se déconnecter ?")) {
-    try { localStorage.removeItem("xa_miniapp_user"); } catch(e) {}
-    location.reload();
-  }
+  if (confirm("Se déconnecter ?")) { lsDel("xa_u"); location.reload(); }
 }
 
-// ─── AFFICHER L'APP ───────────────────────────────────────
+// ── NAVIGATION ───────────────────────────────────────────
+function goP(n, btn) {
+  document.querySelectorAll(".pg").forEach(function(p){p.classList.remove("on");});
+  document.querySelectorAll(".nb").forEach(function(b){b.classList.remove("on");});
+  document.getElementById("pg-"+n).classList.add("on");
+  if (btn) btn.classList.add("on");
+  if (n==="home") loadAnns("");
+  if (n==="mes")  loadMes();
+  if (n==="pro")  loadPro();
+}
+
+// ── AFFICHER APP ─────────────────────────────────────────
 function showApp() {
-  if (!currentUser) return;
-  var init = (currentUser.nom || "?").charAt(0).toUpperCase();
-  document.getElementById("headerAvatar").textContent = init;
-  document.getElementById("headerName").textContent   = (currentUser.nom || "").split(" ")[0];
-  document.getElementById("app").style.display = "block";
+  if (!CU) return;
+  var ini = (CU.nom||"?")[0].toUpperCase();
+  document.getElementById("hAvatar").textContent = ini;
+  document.getElementById("hName").textContent   = (CU.nom||"").split(" ")[0];
+  document.getElementById("app").style.display   = "block";
   loadAnns("");
 }
 
-// ─── INIT ─────────────────────────────────────────────────
-async function init() {
-  showLoader("Chargement...");
-
-  // Telegram WebApp (optionnel — ne bloque pas si absent)
+// ── INIT ─────────────────────────────────────────────────
+function init() {
+  // Telegram (optionnel)
   try {
-    if (typeof Telegram !== "undefined" && Telegram.WebApp) {
+    if (typeof Telegram !== "undefined" && Telegram.WebApp && Telegram.WebApp.initDataUnsafe) {
+      var tg = Telegram.WebApp.initDataUnsafe.user;
+      if (tg && tg.id) TID = tg.id;
       Telegram.WebApp.ready();
       Telegram.WebApp.expand();
-      await new Promise(function(res){ setTimeout(res, 400); });
-      var tgUser = Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user;
-      if (tgUser && tgUser.id) telegramId = tgUser.id;
-    }
-  } catch(e) { /* pas dans Telegram — on continue */ }
-
-  // 1. Vérifier localStorage
-  try {
-    var saved = localStorage.getItem("xa_miniapp_user");
-    if (saved) {
-      var parsed = JSON.parse(saved);
-      if (parsed && parsed.id) {
-        var fresh = await dbGet("miniapp_users", { id:"eq."+parsed.id });
-        if (fresh && fresh[0]) {
-          currentUser = fresh[0];
-          saveUser(currentUser);
-          hideLoader();
-          showApp();
-          return;
-        }
-      }
     }
   } catch(e) {}
 
-  // 2. Chercher par Telegram ID
-  if (telegramId) {
-    try {
-      var byTg = await dbGet("miniapp_users", { telegram_id:"eq."+telegramId });
-      if (byTg && byTg[0]) {
-        currentUser = byTg[0];
-        saveUser(currentUser);
-        hideLoader();
-        showApp();
-        return;
-      }
-    } catch(e) {}
-  }
+  document.getElementById("loaderTxt").textContent = "Vérification...";
 
-  // 3. Pas encore inscrit → formulaire
-  hideLoader();
+  // 1. localStorage
+  var saved = lsGet("xa_u");
+  if (saved && saved.id) {
+    dbQ("miniapp_users", {id:"eq."+saved.id}, function(err, data) {
+      if (!err && data && data[0]) {
+        CU = data[0];
+        lsSet("xa_u", {id:CU.id,nom:CU.nom,telephone:CU.telephone,pays:CU.pays});
+        document.getElementById("loader").style.display = "none";
+        showApp();
+      } else {
+        tryByTelegram();
+      }
+    });
+    return;
+  }
+  tryByTelegram();
+}
+
+function tryByTelegram() {
+  if (TID) {
+    dbQ("miniapp_users", {telegram_id:"eq."+TID}, function(err, data) {
+      if (!err && data && data[0]) {
+        CU = data[0];
+        lsSet("xa_u", {id:CU.id,nom:CU.nom,telephone:CU.telephone,pays:CU.pays});
+        document.getElementById("loader").style.display = "none";
+        showApp();
+      } else { showReg(); }
+    });
+  } else { showReg(); }
+}
+
+function showReg() {
+  document.getElementById("loader").style.display = "none";
   document.getElementById("regPage").style.display = "flex";
 }
 
-init();
+window.onload = function() { init(); };
 </script>
 </body>
 </html>
