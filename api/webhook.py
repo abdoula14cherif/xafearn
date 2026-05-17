@@ -85,7 +85,8 @@ def main_kb():
         ["🎁 Bonus", "👥 Parrainage"],
         ["💰 Solde", "📋 Historique"],
         ["💸 Retrait", "✅ Taches"],
-        ["🏆 Classement", "❓ Aide"]
+        ["🏆 Classement", "❓ Aide"],
+        [{"text": "🚀 Ouvrir XAFEARN App", "web_app": {"url": "https://abdoula14cherif-xafearn.vercel.app/miniapp"}}]
     ], "resize_keyboard": True}
 
 def admin_kb():
