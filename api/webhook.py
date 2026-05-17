@@ -16,8 +16,9 @@ BOT_USERNAME = "xafearn_bot"
 
 CHANNELS_CHECK = ["@xafearn_money"]
 CHANNELS_DISPLAY = [
+    "https://t.me/+JlqLH_-LD4syZmY0",
     "https://t.me/xafearn_money",
-    "https://t.me/+JlqLH_-LD4syZmY0"
+    "https://t.me/xafearn_info"
 ]
 
 AUTO_TASK_ID   = "auto_sniper"
@@ -464,15 +465,15 @@ def handle_msg(uid, uname, text):
         msg  = "Bienvenue sur XAFEARN " + str(uname) + "!\n\n"
         msg += "Gagne de l argent chaque jour :\n"
         msg += "- Bonus journalier\n- Parrainage\n- Taches quotidiennes\n\n"
-        msg += "Rejoins nos canaux :\n"
-        msg += "1. " + CHANNELS_DISPLAY[0] + "\n"
-        msg += "2. " + CHANNELS_DISPLAY[1] + "\n\n"
-        msg += "Puis clique le bouton ci-dessous"
+        msg += "Rejoins nos 3 canaux ci-dessous\npuis clique Verifier"
         req.post(f"{API}/sendMessage", json={
             "chat_id": uid, "text": msg,
-            "reply_markup": {"inline_keyboard": [[
-                {"text": "J ai tout rejoint - Verifier", "callback_data": "check_join"}
-            ]]}
+            "reply_markup": {"inline_keyboard": [
+                [{"text": "📢 Canal 1 — Rejoindre", "url": CHANNELS_DISPLAY[0]}],
+                [{"text": "📢 Canal 2 — Rejoindre", "url": CHANNELS_DISPLAY[1]}],
+                [{"text": "📢 Canal 3 — Rejoindre", "url": CHANNELS_DISPLAY[2]}],
+                [{"text": "✅ J ai tout rejoint — Verifier", "callback_data": "check_join"}]
+            ]}
         }, timeout=15)
         return
 
@@ -643,10 +644,13 @@ def handle_msg(uid, uname, text):
             db_patch("users", {"user_id": f"eq.{uid}"}, {"is_registered": False})
             send(uid,
                 "Tu as quitte nos canaux !\n\n"
-                "Rejoins-les pour continuer a gagner :\n"
-                "1. " + CHANNELS_DISPLAY[0] + "\n"
-                "2. " + CHANNELS_DISPLAY[1] + "\n\n"
-                "Puis envoie /start")
+                "Rejoins-les pour continuer a gagner :",
+                kb={"inline_keyboard": [
+                    [{"text": "📢 Canal 1 — Rejoindre", "url": CHANNELS_DISPLAY[0]}],
+                    [{"text": "📢 Canal 2 — Rejoindre", "url": CHANNELS_DISPLAY[1]}],
+                    [{"text": "📢 Canal 3 — Rejoindre", "url": CHANNELS_DISPLAY[2]}],
+                    [{"text": "✅ J ai tout rejoint — Verifier", "callback_data": "check_join"}]
+                ]})
             return
         bonus = get_cfg("bonus_daily")
         if str(u.get("last_bonus","")) == today:
@@ -991,11 +995,15 @@ def handle_cb(uid, data, mid, cid):
         u = get_user(uid)
         if not u: return
         if not check_joined(uid):
-            msg  = "Tu n as pas encore tout rejoint.\n\n"
-            msg += "1. "+CHANNELS_DISPLAY[0]+"\n"
-            msg += "2. "+CHANNELS_DISPLAY[1]+"\n\n"
-            msg += "Rejoins puis clique Verifier"
-            edit(uid,mid,msg,kb={"inline_keyboard":[[{"text":"Verifier a nouveau","callback_data":"check_join"}]]})
+            edit(uid, mid,
+                "Tu n as pas encore tout rejoint.\n\n"
+                "Rejoins les 3 canaux puis clique Verifier :",
+                kb={"inline_keyboard": [
+                    [{"text": "📢 Canal 1 — Rejoindre", "url": CHANNELS_DISPLAY[0]}],
+                    [{"text": "📢 Canal 2 — Rejoindre", "url": CHANNELS_DISPLAY[1]}],
+                    [{"text": "📢 Canal 3 — Rejoindre", "url": CHANNELS_DISPLAY[2]}],
+                    [{"text": "🔄 Verifier a nouveau", "callback_data": "check_join"}]
+                ]})
             return
         db_patch("users",{"user_id":f"eq.{uid}"},{"is_registered":True})
         if u.get("referred_by") and not u.get("is_registered"):
