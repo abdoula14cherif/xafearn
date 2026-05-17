@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>XAFEARN Admin — Annonces</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--b:#1565C0;--bl:#1E88E5;--bd:#0D47A1;--o:#F57C00;--ob:#FFB300;--g:#10B981;--r:#EF4444;--bg:#F0F4FF;--txt:#0D1B3E;--mu:#6B7DB3;--brd:#E0E8FF}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+.login-page{position:fixed;inset:0;background:linear-gradient(135deg,var(--bd),var(--b));display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:360px}
+.logo{font-family:'Outfit',sans-serif;font-weight:900;font-size:24px;color:var(--bd);text-align:center;margin-bottom:4px}
+.logo s{color:var(--o);text-decoration:none}
+.sub{text-align:center;font-size:12px;color:var(--mu);margin-bottom:20px}
+.fg{margin-bottom:12px}
+.fl{font-size:11px;font-weight:600;color:var(--mu);margin-bottom:4px;display:block}
+.fi{width:100%;padding:11px 13px;border:2px solid var(--brd);border-radius:11px;font-family:'Space Grotesk',sans-serif;font-size:13px;background:#fff;color:var(--txt);outline:none;transition:.18s}
+.fi:focus{border-color:var(--bl)}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;border:none;border-radius:12px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:.18s}
+.btn:active{transform:scale(.97)}
+.bb{background:linear-gradient(135deg,var(--b),var(--bl));color:#fff}
+.bo{background:linear-gradient(135deg,var(--o),var(--ob));color:#fff}
+.bg2{background:linear-gradient(135deg,#059669,var(--g));color:#fff}
+.br2{background:linear-gradient(135deg,#DC2626,var(--r));color:#fff}
+.bgh{background:var(--bg);color:var(--txt);border:1px solid var(--brd)}
+.bs{padding:8px 14px;font-size:12px;border-radius:10px;width:auto}
+#app{display:none}
+.hd{background:linear-gradient(135deg,var(--bd),var(--b));padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
+.hlogo{font-family:'Outfit',sans-serif;font-weight:900;font-size:17px;color:#fff}
+.hlogo s{color:var(--ob);text-decoration:none}
+.logout-btn{background:rgba(255,255,255,.15);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer}
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--brd);position:sticky;top:0;z-index:10}
+.tab{flex:1;padding:12px 6px;border:none;background:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:var(--mu);position:relative;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tab .ic{font-size:17px}
+.tab.on{color:var(--b)}
+.tab.on::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:3px;background:linear-gradient(90deg,var(--b),var(--o));border-radius:3px 3px 0 0}
+.tab-badge{position:absolute;top:6px;right:6px;background:var(--r);color:#fff;font-size:8px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.content{padding:14px 14px 80px}
+.card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(21,101,192,.08);margin-bottom:12px;border:1px solid var(--brd)}
+.ann-row{background:#fff;border:1px solid var(--brd);border-radius:13px;padding:13px;margin-bottom:10px}
+.ann-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.ann-titre{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;flex:1;margin-right:8px}
+.ann-pack{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.pack-basic{background:#EFF6FF;color:var(--b)}
+.pack-standard{background:#FFF7ED;color:var(--o)}
+.pack-premium{background:linear-gradient(135deg,var(--o),var(--ob));color:#fff}
+.ann-info{font-size:11px;color:var(--mu);line-height:1.7;margin-bottom:10px}
+.ann-info strong{color:var(--txt)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.sbdg{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px}
+.sbdg.p{background:#FEF3C7;color:#92400E}
+.sbdg.ok{background:#D1FAE5;color:#065F46}
+.sbdg.r{background:#FEE2E2;color:#991B1B}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.stat{background:#fff;border-radius:13px;padding:13px;border:1px solid var(--brd);text-align:center}
+.sv{font-family:'Outfit',sans-serif;font-size:22px;font-weight:700;color:var(--bd)}
+.sl{font-size:10px;color:var(--mu)}
+.user-row{display:flex;align-items:center;justify-content:space-between;padding:10px;background:#fff;border-radius:11px;margin-bottom:8px;border:1px solid var(--brd)}
+.user-info{flex:1}
+.user-nom{font-weight:600;font-size:13px}
+.user-sub{font-size:10px;color:var(--mu)}
+.msg-box{width:100%;padding:10px 12px;border:2px solid var(--brd);border-radius:11px;font-family:'Space Grotesk',sans-serif;font-size:13px;resize:none;outline:none;margin-bottom:10px;height:80px}
+.msg-box:focus{border-color:var(--bl)}
+.toast{position:fixed;bottom:20px;left:12px;right:12px;padding:12px 16px;border-radius:12px;font-size:12px;font-weight:600;text-align:center;transform:translateY(130%);transition:transform .3s;z-index:999}
+.toast.on{transform:translateY(0)}
+.toast.ok{background:linear-gradient(135deg,#059669,var(--g));color:#fff}
+.toast.er{background:linear-gradient(135deg,#DC2626,var(--r));color:#fff}
+.toast.in{background:linear-gradient(135deg,var(--bd),var(--b));color:#fff}
+.pg{display:none}
+.pg.on{display:block}
+.empty{text-align:center;padding:32px 16px;color:var(--mu)}
+.spin{width:28px;height:28px;border:3px solid var(--brd);border-top-color:var(--b);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-page" id="loginPage">
+  <div class="login-card">
+    <div class="logo">X<s>A</s>FEARN</div>
+    <div class="sub">Panel Admin — Annonces</div>
+    <div class="fg">
+      <label class="fl">Code admin</label>
+      <input class="fi" type="password" id="adminCode" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"/>
+    </div>
+    <button class="btn bb" onclick="login()">🔐 Connexion</button>
+  </div>
+</div>
+
+<!-- APP ADMIN -->
+<div id="app">
+  <div class="hd">
+    <div class="hlogo">X<s>A</s>FEARN <span style="font-size:10px;opacity:.6;font-weight:400">Admin</span></div>
+    <button class="logout-btn" onclick="logout()">🚪 Déco</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" onclick="goTab('pend',this)"><span class="ic">⏳</span>En attente<div class="tab-badge" id="pendBadge">0</div></button>
+    <button class="tab" onclick="goTab('all',this)"><span class="ic">📋</span>Toutes</button>
+    <button class="tab" onclick="goTab('users',this)"><span class="ic">👥</span>Utilisateurs</button>
+    <button class="tab" onclick="goTab('stats',this)"><span class="ic">📊</span>Stats</button>
+    <button class="tab" onclick="goTab('broad',this)"><span class="ic">📢</span>Broadcast</button>
+  </div>
+
+  <div class="content">
+
+    <!-- EN ATTENTE -->
+    <div class="pg on" id="tab-pend">
+      <div id="pendList"><div class="empty"><div class="spin"></div>Chargement...</div></div>
+    </div>
+
+    <!-- TOUTES -->
+    <div class="pg" id="tab-all">
+      <div style="display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="btn bgh bs" onclick="loadAll('')" style="width:auto">🌍 Tout</button>
+        <button class="btn bgh bs" onclick="loadAll('pending')" style="width:auto">⏳ Attente</button>
+        <button class="btn bgh bs" onclick="loadAll('approved')" style="width:auto">✅ Approuvées</button>
+        <button class="btn bgh bs" onclick="loadAll('rejected')" style="width:auto">❌ Rejetées</button>
+      </div>
+      <div id="allList"><div class="empty"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- UTILISATEURS -->
+    <div class="pg" id="tab-users">
+      <div id="usersList"><div class="empty"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="pg" id="tab-stats">
+      <div id="statsContent"><div class="empty"><div class="spin"></div></div></div>
+    </div>
+
+    <!-- BROADCAST -->
+    <div class="pg" id="tab-broad">
+      <div class="card">
+        <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;margin-bottom:12px">📢 Envoyer un message à tous</div>
+        <textarea class="msg-box" id="broadMsg" placeholder="Écris ton message pour tous les utilisateurs de la Mini App..."></textarea>
+        <div style="font-size:10px;color:var(--mu);margin-bottom:10px">Ce message sera envoyé à tous les utilisateurs inscrits dans la Mini App via WhatsApp (tu devras les contacter manuellement).</div>
+        <button class="btn bo" onclick="loadBroadUsers()">📋 Voir les numéros</button>
+      </div>
+      <div id="broadList"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="t2"></div>
+
+<script>
+const SB="https://xtmmmrajknnadodgrrcu.supabase.co";
+const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bW1tcmFqa25uYWRvZGdycmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5ODc5NjQsImV4cCI6MjA2MDU2Mzk2NH0.Ht_BdMdgwkiuB4VuMTdH2CKg4BLj1bKNzW_g8mENwn0";
+const H={"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json","Prefer":"return=representation"};
+const ADMIN_CODE="XAFEARN2025";
+const BOT_TOKEN="8773996867:AAFkp0NorNeFEigJX3bB-D2S4dY-LuEVrdc";
+const CHANNEL="@xafearn_money";
+
+async function dbG(t,p={}){const q=Object.entries(p).map(([k,v])=>k+"="+v).join("&");try{const r=await fetch(SB+"/rest/v1/"+t+(q?"?"+q:""),{headers:H});return await r.json()}catch{return[]}}
+async function dbPa(t,p,d){const q=Object.entries(p).map(([k,v])=>k+"="+v).join("&");try{await fetch(SB+"/rest/v1/"+t+"?"+q,{method:"PATCH",headers:H,body:JSON.stringify(d)})}catch{}}
+
+function toast(m,t="in"){const e=document.getElementById("t2");e.textContent=m;e.className="toast on "+t;setTimeout(()=>e.className="toast",2800)}
+
+function login(){
+  const code=document.getElementById("adminCode").value;
+  if(code===ADMIN_CODE){
+    localStorage.setItem("xa_admin","1");
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("app").style.display="block";
+    loadPend();
+  }else{
+    toast("Code incorrect","er");
+  }
+}
+
+function logout(){localStorage.removeItem("xa_admin");location.reload()}
+
+function goTab(n,btn){
+  document.querySelectorAll(".pg").forEach(p=>p.classList.remove("on"));
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("on"));
+  document.getElementById("tab-"+n).classList.add("on");
+  btn.classList.add("on");
+  if(n==="pend")loadPend();
+  if(n==="all")loadAll("");
+  if(n==="users")loadUsers();
+  if(n==="stats")loadStats();
+}
+
+function packBadge(p){const m={basic:"pack-basic",standard:"pack-standard",premium:"pack-premium"};const n={basic:"Basique",standard:"Standard",premium:"👑 Premium"};return`<span class="ann-pack ${m[p]||"pack-basic"}">${n[p]||p}</span>`}
+
+function annCard(a,showActions=true){
+  const se={pending:"p",approved:"ok",rejected:"r"};
+  const sl={pending:"⏳ En attente",approved:"✅ Approuvée",rejected:"❌ Rejetée"};
+  const exp=a.expires_at?new Date(a.expires_at).toLocaleDateString("fr"):"—";
+  let actions="";
+  if(showActions){
+    if(a.status==="pending"){
+      actions=`<button class="btn bg2 bs" onclick="approve(${a.id})">✅ Approuver</button>
+               <button class="btn br2 bs" onclick="reject(${a.id})">❌ Rejeter</button>
+               <button class="btn bo bs" onclick="shareToBot(${a.id},'${(a.titre||"").replace(/'/g,"\\'")}','${(a.description||"").replace(/'/g,"\\'")}','${a.categorie||""}','${a.prix_annonce||""}','${a.contact||""}','${a.pays||""}','${a.pack||""}')">📤 Partager</button>`;
+    }else if(a.status==="approved"){
+      actions=`<button class="btn bb bs" onclick="shareToBot(${a.id},'${(a.titre||"").replace(/'/g,"\\'")}','${(a.description||"").replace(/'/g,"\\'")}','${a.categorie||""}','${a.prix_annonce||""}','${a.contact||""}','${a.pays||""}','${a.pack||""}')">📤 Repartager au canal</button>
+               <button class="btn br2 bs" onclick="reject(${a.id})">❌ Désactiver</button>`;
+    }
+  }
+  return `<div class="ann-row">
+    <div class="ann-top">
+      <div class="ann-titre">${a.titre||"(sans titre)"}</div>
+      ${packBadge(a.pack)}
+    </div>
+    <div class="ann-info">
+      <span class="sbdg ${se[a.status]||"p"}">${sl[a.status]||a.status}</span><br>
+      📝 ${a.description||""}<br>
+      📂 <strong>${a.categorie||"—"}</strong> · 💰 ${a.prix_annonce||"N/A"} · 📍 ${a.pays||"—"}<br>
+      👤 <strong>${a.nom_user||"—"}</strong> · 📱 ${a.contact||"—"}<br>
+      💳 Réf: <strong>${a.ref_paiement||"—"}</strong> · ${a.montant_paye||"?"}F payés<br>
+      📅 Expire: ${exp}
+    </div>
+    <div class="btn-row">${actions}</div>
+  </div>`;
+}
+
+async function loadPend(){
+  const list=document.getElementById("pendList");
+  list.innerHTML=`<div class="empty"><div class="spin"></div></div>`;
+  const anns=await dbG("miniapp_annonces",{"status":"eq.pending","order":"created_at.asc"});
+  document.getElementById("pendBadge").textContent=anns?anns.length:0;
+  if(!anns||!anns.length){list.innerHTML=`<div class="empty"><div style="font-size:36px;margin-bottom:8px">✅</div>Aucune annonce en attente !</div>`;return}
+  list.innerHTML=anns.map(a=>annCard(a)).join("");
+}
+
+async function loadAll(status=""){
+  const list=document.getElementById("allList");
+  list.innerHTML=`<div class="empty"><div class="spin"></div></div>`;
+  const p={"order":"created_at.desc","limit":"100"};
+  if(status)p["status"]="eq."+status;
+  const anns=await dbG("miniapp_annonces",p);
+  if(!anns||!anns.length){list.innerHTML=`<div class="empty">Aucune annonce trouvée</div>`;return}
+  list.innerHTML=`<div style="font-size:12px;color:var(--mu);margin-bottom:10px">${anns.length} annonce(s)</div>`+anns.map(a=>annCard(a)).join("");
+}
+
+async function approve(id){
+  await dbPa("miniapp_annonces",{"id":"eq."+id},{"status":"approved"});
+  toast("Annonce approuvée ✅","ok");
+  loadPend();
+}
+
+async function reject(id){
+  await dbPa("miniapp_annonces",{"id":"eq."+id},{"status":"rejected"});
+  toast("Annonce rejetée","er");
+  loadPend();
+}
+
+async function shareToBot(id,titre,desc,cat,prix,contact,pays,pack){
+  const isPremium=pack==="premium";
+  const msg="📢 NOUVELLE ANNONCE"+(isPremium?" 👑 PREMIUM":"")+"\n"
+    +"================================\n\n"
+    +"📌 "+titre+"\n\n"
+    +"📂 Catégorie : "+cat+"\n"
+    +(prix?"💰 Prix : "+prix+"\n":"")
+    +(pays?"📍 "+pays+"\n":"")
+    +"\n📝 "+desc+"\n\n"
+    +"📱 Contact WhatsApp : "+contact+"\n"
+    +"================================\n"
+    +"🌐 Publie ta propre annonce :\nt.me/xafearn_bot";
+
+  try{
+    const r=await fetch("https://api.telegram.org/bot"+BOT_TOKEN+"/sendMessage",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({chat_id:CHANNEL,text:msg})
+    });
+    const res=await r.json();
+    if(res.ok){
+      if(pack==="pending")await dbPa("miniapp_annonces",{"id":"eq."+id},{"status":"approved"});
+      toast("Partagé dans "+CHANNEL+" ✅","ok");
+      loadPend();
+    }else{
+      toast("Erreur Telegram : "+res.description,"er");
+    }
+  }catch(e){
+    toast("Erreur de connexion","er");
+  }
+}
+
+async function loadUsers(){
+  const list=document.getElementById("usersList");
+  list.innerHTML=`<div class="empty"><div class="spin"></div></div>`;
+  const users=await dbG("miniapp_users",{"order":"created_at.desc"});
+  if(!users||!users.length){list.innerHTML=`<div class="empty">Aucun utilisateur</div>`;return}
+  list.innerHTML=`<div style="font-size:12px;color:var(--mu);margin-bottom:10px">${users.length} utilisateur(s) inscrits</div>`
+    +users.map(u=>`<div class="user-row">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--b),var(--bl));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;margin-right:10px;flex-shrink:0">${u.nom?.charAt(0).toUpperCase()||"?"}</div>
+      <div class="user-info">
+        <div class="user-nom">${u.nom||"—"}</div>
+        <div class="user-sub">📱 ${u.telephone||"—"} · 📍 ${u.pays||"—"}</div>
+        <div class="user-sub">Inscrit le ${new Date(u.created_at).toLocaleDateString("fr")}</div>
+      </div>
+      <a href="https://wa.me/${(u.telephone||"").replace(/\D/g,"")}" target="_blank"><button class="btn bg2 bs">💬</button></a>
+    </div>`).join("");
+}
+
+async function loadStats(){
+  const c=document.getElementById("statsContent");
+  c.innerHTML=`<div class="empty"><div class="spin"></div></div>`;
+  const[anns,users]=await Promise.all([dbG("miniapp_annonces",{}),dbG("miniapp_users",{})]);
+  const total=anns?anns.length:0;
+  const pending=(anns||[]).filter(a=>a.status==="pending").length;
+  const approved=(anns||[]).filter(a=>a.status==="approved").length;
+  const rejected=(anns||[]).filter(a=>a.status==="rejected").length;
+  const revenue=(anns||[]).filter(a=>a.status==="approved"||a.status==="rejected").reduce((s,a)=>s+(a.montant_paye||0),0);
+  const basic=(anns||[]).filter(a=>a.pack==="basic").length;
+  const standard=(anns||[]).filter(a=>a.pack==="standard").length;
+  const premium=(anns||[]).filter(a=>a.pack==="premium").length;
+  c.innerHTML=`
+    <div class="stats-grid">
+      <div class="stat"><div class="sv">${users?users.length:0}</div><div class="sl">Utilisateurs</div></div>
+      <div class="stat"><div class="sv">${total}</div><div class="sl">Annonces totales</div></div>
+      <div class="stat"><div class="sv" style="color:var(--g)">${approved}</div><div class="sl">Approuvées</div></div>
+      <div class="stat"><div class="sv" style="color:var(--o)">${pending}</div><div class="sl">En attente</div></div>
+      <div class="stat"><div class="sv" style="color:var(--r)">${rejected}</div><div class="sl">Rejetées</div></div>
+      <div class="stat"><div class="sv" style="color:var(--g)">${revenue}F</div><div class="sl">Revenus totaux</div></div>
+    </div>
+    <div class="card">
+      <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;margin-bottom:12px">📊 Répartition des packs</div>
+      <div style="font-size:13px;line-height:2">
+        🥉 Basique (500F) : <strong>${basic}</strong> annonces = <strong style="color:var(--g)">${basic*500}F</strong><br>
+        🥈 Standard (1000F) : <strong>${standard}</strong> annonces = <strong style="color:var(--g)">${standard*1000}F</strong><br>
+        👑 Premium (2000F) : <strong>${premium}</strong> annonces = <strong style="color:var(--g)">${premium*2000}F</strong>
+      </div>
+    </div>`;
+}
+
+async function loadBroadUsers(){
+  const users=await dbG("miniapp_users",{});
+  const msg=document.getElementById("broadMsg").value.trim();
+  const list=document.getElementById("broadList");
+  if(!users||!users.length){toast("Aucun utilisateur","er");return}
+  list.innerHTML=`<div class="card">
+    <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">📋 ${users.length} numéros WhatsApp</div>
+    <div style="font-size:11px;color:var(--mu);margin-bottom:12px">Copie le message et envoie-le à chaque numéro :</div>
+    ${msg?`<div style="background:var(--bg);border-radius:10px;padding:10px;font-size:12px;margin-bottom:12px;border:1px solid var(--brd)"><strong>Message :</strong><br>${msg.replace(/\n/g,"<br>")}</div>`:""}
+    ${users.map(u=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px;background:#fff;border-radius:10px;margin-bottom:6px;border:1px solid var(--brd)">
+      <div><div style="font-weight:600;font-size:12px">${u.nom||"—"}</div><div style="font-size:10px;color:var(--mu)">📱 ${u.telephone||"—"}</div></div>
+      <a href="https://wa.me/${(u.telephone||"").replace(/\D/g,"")}${msg?"?text="+encodeURIComponent(msg):""}" target="_blank"><button class="btn bg2 bs">💬 WA</button></a>
+    </div>`).join("")}
+  </div>`;
+}
+
+// Init
+if(localStorage.getItem("xa_admin")==="1"){
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("app").style.display="block";
+  loadPend();
+}
+</script>
+</body>
+</html>
