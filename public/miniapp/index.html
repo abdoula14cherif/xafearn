@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <title>XAFEARN Annonces</title>
+<script src="https://leekpay.fr/js/leekpay.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -262,23 +263,30 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--txt
       </div>
       <!-- STEP 3 -->
       <div id="s3" style="display:none">
-        <p style="font-size:11px;color:var(--mu);margin-bottom:11px">Étape 3 — Paiement</p>
-        <div class="pay-box">
-          <p style="font-weight:700;font-size:12px;color:var(--o);margin-bottom:9px">💳 Comment payer</p>
-          <div class="pay-step"><div class="pn">1</div><div>Envoie <strong id="pAmt">500F</strong> sur :</div></div>
-          <div style="background:rgba(245,124,0,.08);border-radius:9px;padding:10px;margin:7px 0;text-align:center">
-            <div style="font-size:9px;color:var(--mu)">📱 Orange / MTN / Wave / Flooz</div>
-            <div class="pay-num">699 663 183</div>
-            <div style="font-size:9px;color:var(--mu)">Abdoula CHERIF</div>
-          </div>
-          <div class="pay-step"><div class="pn">2</div><div>Note la référence SMS reçue</div></div>
-          <div class="pay-step"><div class="pn">3</div><div>Entre-la ci-dessous et soumets</div></div>
+        <p style="font-size:11px;color:var(--mu);margin-bottom:11px">Étape 3 — Paiement sécurisé</p>
+
+        <!-- Récap annonce -->
+        <div id="pRecap" style="background:var(--bg);border-radius:12px;padding:13px;margin-bottom:14px;font-size:12px;border:1px solid var(--brd)"></div>
+
+        <!-- Bouton LeekPay -->
+        <div style="background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border:2px solid #FED7AA;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center">
+          <div style="font-size:13px;color:var(--o);font-weight:700;margin-bottom:4px">💳 Paiement sécurisé</div>
+          <div style="font-size:11px;color:var(--mu);margin-bottom:14px">Orange Money · MTN · Wave · Flooz · Carte bancaire</div>
+          <button class="btn btn-o" id="leekBtn" onclick="doLeekPay()" style="font-size:16px;padding:15px">
+            💳 Payer maintenant
+          </button>
+          <div style="font-size:10px;color:var(--mu);margin-top:10px">🔒 Paiement sécurisé via LeekPay · Activation automatique</div>
         </div>
-        <div id="pRecap" style="background:var(--bg);border-radius:10px;padding:10px;margin-bottom:12px;font-size:11px;border:1px solid var(--brd)"></div>
-        <div class="fg"><label class="fl">Référence de transaction *</label><input class="fi" id="pRef" type="text" placeholder="Ex: TXN123456789"/></div>
+
+        <!-- État paiement -->
+        <div id="payStatus" style="display:none;text-align:center;padding:20px;background:#F0FDF4;border-radius:12px;border:2px solid #BBF7D0;margin-bottom:14px">
+          <div style="font-size:32px;margin-bottom:8px">✅</div>
+          <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;color:#059669">Paiement confirmé !</div>
+          <div style="font-size:12px;color:var(--mu);margin-top:4px">Ton annonce est en cours d'activation...</div>
+        </div>
+
         <div class="btn-row">
           <button class="btn btn-gh btn-sm" onclick="goStep(2)" style="width:auto">← Retour</button>
-          <button class="btn btn-g" id="subBtn" onclick="doSubmit()">✅ Soumettre</button>
         </div>
       </div>
     </div>
@@ -553,13 +561,15 @@ function goStep(n) {
   if (n===3) {
     if (!sPak) { alert2("Choisis un pack","er"); return; }
     var pk = PACKS[sPak];
-    document.getElementById("pAmt").textContent = pk.p + "F";
     document.getElementById("pRecap").innerHTML =
       "<strong>📋 Récapitulatif</strong><br>" +
       "Titre : " + esc(document.getElementById("pTit").value) + "<br>" +
-      "Catégorie : " + sCat + "<br>" +
-      "Pack : " + pk.n + " — <strong style='color:var(--o)'>" + pk.p + "F</strong><br>" +
+      "Catégorie : <strong>" + sCat + "</strong><br>" +
+      "Pack : <strong>" + pk.n + "</strong> — <strong style='color:var(--o)'>" + pk.p + "F</strong><br>" +
       "Durée : " + pk.d + " jour(s)";
+    document.getElementById("payStatus").style.display = "none";
+    document.getElementById("leekBtn").disabled = false;
+    document.getElementById("leekBtn").textContent = "💳 Payer maintenant";
   }
   setDot(n);
 }
@@ -576,35 +586,67 @@ function pickPack(p, el) {
   el.classList.add("on");
 }
 
-function doSubmit() {
-  var ref = (document.getElementById("pRef").value || "").trim();
-  if (ref.length < 4) { alert2("Entre la référence de transaction","er"); return; }
-  var btn = document.getElementById("subBtn");
-  btn.disabled = true; btn.textContent = "⏳ Envoi...";
+function doLeekPay() {
+  if (!sPak) { alert2("Pack non sélectionné","er"); return; }
+  var pk    = PACKS[sPak];
+  var titre = (document.getElementById("pTit").value||"").trim();
+  var btn   = document.getElementById("leekBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Ouverture du paiement...";
+
+  try {
+    LeekPay.checkout({
+      amount:      pk.p,
+      currency:    "XOF",
+      apiKey:      "pk_live_h0RQu365IhnhdXkW2YeWZiDmKQGo7Pn1",
+      description: "Annonce XAFEARN — Pack " + pk.n + " — " + titre,
+      onSuccess: function(data) {
+        // Paiement confirmé — activer l'annonce automatiquement
+        document.getElementById("payStatus").style.display = "block";
+        btn.style.display = "none";
+        saveAnnonce(data.payment_id || "LP-" + Date.now(), "approved");
+      },
+      onCancel: function() {
+        btn.disabled = false;
+        btn.textContent = "💳 Payer maintenant";
+        alert2("Paiement annulé — réessaie quand tu veux","in");
+      }
+    });
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = "💳 Payer maintenant";
+    alert2("Erreur LeekPay — vérifie ta connexion","er");
+  }
+}
+
+function saveAnnonce(payRef, status) {
   var pk  = PACKS[sPak];
-  var exp = new Date(); exp.setDate(exp.getDate() + pk.d);
+  var exp = new Date();
+  exp.setDate(exp.getDate() + pk.d);
   dbInsert("miniapp_annonces", {
     user_id: CU.id, nom_user: CU.nom, telegram_id: TID||null,
-    titre: document.getElementById("pTit").value.trim(),
-    description: document.getElementById("pDes").value.trim(),
-    categorie: sCat, prix_annonce: (document.getElementById("pPx").value||"").trim(),
-    contact: document.getElementById("pCt").value.trim(),
-    pays: CU.pays||"", pack: sPak, montant_paye: pk.p,
-    ref_paiement: ref, status: "pending", expires_at: exp.toISOString()
+    titre:        document.getElementById("pTit").value.trim(),
+    description:  document.getElementById("pDes").value.trim(),
+    categorie:    sCat,
+    prix_annonce: (document.getElementById("pPx").value||"").trim(),
+    contact:      document.getElementById("pCt").value.trim(),
+    pays:         CU.pays||"",
+    pack:         sPak,
+    montant_paye: pk.p,
+    ref_paiement: payRef,
+    status:       status,
+    expires_at:   exp.toISOString()
   }, function(err, res) {
-    if (err) { alert2(err,"er"); btn.disabled=false; btn.textContent="✅ Soumettre"; return; }
-    var ann = Array.isArray(res)?res[0]:res;
-    if (ann && ann.id) {
-      alert2("Annonce soumise ! En attente de validation ✅","ok");
-      ["pTit","pDes","pPx","pCt","pRef"].forEach(function(id){ document.getElementById(id).value=""; });
-      sCat=""; sPak="";
-      document.querySelectorAll(".cb,.pack").forEach(function(b){ b.classList.remove("on"); });
-      setDot(1);
+    if (err) { alert2("Paiement reçu mais erreur sauvegarde — contacte le support","er"); return; }
+    alert2("Annonce publiée automatiquement ! 🎉","ok");
+    // Reset
+    ["pTit","pDes","pPx","pCt"].forEach(function(id){ document.getElementById(id).value=""; });
+    sCat=""; sPak="";
+    document.querySelectorAll(".cb,.pack").forEach(function(b){ b.classList.remove("on"); });
+    setDot(1);
+    setTimeout(function(){
       goP("mes", document.querySelector(".nb:nth-child(3)"));
-    } else {
-      alert2("Réponse inattendue — réessaie","er");
-      btn.disabled=false; btn.textContent="✅ Soumettre";
-    }
+    }, 2000);
   });
 }
 
