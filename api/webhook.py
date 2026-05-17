@@ -628,7 +628,10 @@ def handle_msg(uid, uname, text):
 
         if text == "📢 Broadcast":
             set_session(uid, {"action":"broadcast"})
-            send(uid, "Ecris le message a envoyer a tous :"); return
+            send(uid,
+                "Ecris le message a envoyer a tous :\n\n"
+                "Le message sera envoye avec un bouton\n"
+                "[Publier mon annonce] qui ouvre la Mini App."); return
 
         if text == "🔙 Mode User":
             send(uid, "Mode Utilisateur", kb=main_kb()); return
@@ -958,14 +961,25 @@ def handle_admin_step(uid, text, sess):
         clear_session(uid)
 
     elif action == "broadcast":
-        users = db_get("users",{"is_registered":"eq.true"})
-        sent = 0
+        users = db_get("users", {"is_registered": "eq.true"})
+        sent  = 0
+        MINIAPP_URL = "https://abdoula14cherif-xafearn.vercel.app/miniapp"
+        kb = {"inline_keyboard": [[
+            {"text": "📢 Publier mon annonce", "web_app": {"url": MINIAPP_URL}}
+        ]]}
         for uu in users:
             if not uu.get("is_banned"):
-                try: tg("sendMessage",chat_id=uu["user_id"],text="Message XAFEARN\n\n"+text); sent+=1
-                except: pass
-        log_action(uid,"BROADCAST","sent="+str(sent)+" msg="+text[:50])
-        send(uid,"Broadcast : "+str(sent)+" envoyes.")
+                try:
+                    req.post(f"{API}/sendMessage", json={
+                        "chat_id":      uu["user_id"],
+                        "text":         "Message XAFEARN\n\n" + text,
+                        "reply_markup": kb
+                    }, timeout=10)
+                    sent += 1
+                except:
+                    pass
+        log_action(uid, "BROADCAST", "sent="+str(sent)+" msg="+text[:50])
+        send(uid, "Broadcast envoye a " + str(sent) + " utilisateurs.\nBouton [Publier mon annonce] inclus.")
         clear_session(uid)
 
 
