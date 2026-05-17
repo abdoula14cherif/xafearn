@@ -371,13 +371,24 @@ function dbInsert(table, data, cb) {
   xhr.open("POST", SB + "/rest/v1/" + table);
   for (var h in HDR) xhr.setRequestHeader(h, HDR[h]);
   xhr.onload = function() {
-    try {
-      var res = JSON.parse(xhr.responseText);
-      if (res && res.code) { cb("Erreur DB: " + (res.message || res.code)); }
-      else { cb(null, res); }
-    } catch(e) { cb("Erreur de réponse"); }
+    // 201 = insertion réussie
+    if (xhr.status === 201) {
+      try {
+        var res = JSON.parse(xhr.responseText);
+        // Si tableau non vide → parfait
+        if (Array.isArray(res) && res.length > 0) { cb(null, res); return; }
+        if (res && res.id) { cb(null, [res]); return; }
+        // Tableau vide → succès quand même, on signale ok avec status
+        cb(null, {__ok: true});
+      } catch(e) { cb(null, {__ok: true}); }
+    } else {
+      try {
+        var err = JSON.parse(xhr.responseText);
+        cb("Erreur " + xhr.status + ": " + (err.message || err.code || xhr.responseText));
+      } catch(e) { cb("Erreur HTTP " + xhr.status); }
+    }
   };
-  xhr.onerror = function() { cb("Pas de connexion"); };
+  xhr.onerror = function() { cb("Pas de connexion internet"); };
   xhr.send(JSON.stringify(data));
 }
 
@@ -407,17 +418,49 @@ function doRegister() {
       btn.textContent = "🚀 Créer mon compte";
       return;
     }
-    var user = Array.isArray(res) ? res[0] : res;
-    if (user && user.id) {
+
+    // Essayer d'extraire l'user depuis la réponse
+    var user = null;
+    if (Array.isArray(res) && res[0] && res[0].id) {
+      user = res[0];
+    } else if (res && res.id) {
+      user = res;
+    }
+
+    if (user) {
+      // User retourné directement
       CU = user;
       lsSet("xa_u", {id:user.id, nom:user.nom, telephone:user.telephone, pays:user.pays});
       document.getElementById("regPage").style.display = "none";
       showApp();
-      alert2("Bienvenue ! Compte créé 🎉","ok");
+      alert2("Bienvenue " + user.nom + " ! Compte créé 🎉","ok");
     } else {
-      alert2("Réponse inattendue — réessaie","er");
-      btn.disabled = false;
-      btn.textContent = "🚀 Créer mon compte";
+      // Insertion OK mais user pas retourné → relire depuis la base
+      var searchParam = TID ? {telegram_id:"eq."+TID} : {telephone:"eq."+tel, nom:"eq."+nom};
+      dbQ("miniapp_users", searchParam, function(err2, data) {
+        if (!err2 && data && data[0]) {
+          CU = data[0];
+          lsSet("xa_u", {id:CU.id, nom:CU.nom, telephone:CU.telephone, pays:CU.pays});
+          document.getElementById("regPage").style.display = "none";
+          showApp();
+          alert2("Bienvenue " + CU.nom + " ! Compte créé 🎉","ok");
+        } else {
+          // Recherche par téléphone seul si pas trouvé
+          dbQ("miniapp_users", {telephone:"eq."+tel, order:"id.desc", limit:"1"}, function(e3, d3) {
+            if (!e3 && d3 && d3[0]) {
+              CU = d3[0];
+              lsSet("xa_u", {id:CU.id, nom:CU.nom, telephone:CU.telephone, pays:CU.pays});
+              document.getElementById("regPage").style.display = "none";
+              showApp();
+              alert2("Bienvenue " + CU.nom + " ! Compte créé 🎉","ok");
+            } else {
+              alert2("Compte créé ! Rafraîchis la page si besoin.","ok");
+              btn.disabled = false;
+              btn.textContent = "🚀 Créer mon compte";
+            }
+          });
+        }
+      });
     }
   });
 }
