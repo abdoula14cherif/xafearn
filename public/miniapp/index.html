@@ -2,1096 +2,590 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>XAFEARN</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>XAFEARN App</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-  :root {
-    --blue: #1565C0;
-    --blue-light: #1E88E5;
-    --blue-dark: #0D47A1;
-    --orange: #F57C00;
-    --orange-light: #FF9800;
-    --orange-bright: #FFB300;
-    --white: #FFFFFF;
-    --bg: #F0F4FF;
-    --card: #FFFFFF;
-    --text: #0D1B3E;
-    --text-muted: #6B7DB3;
-    --border: #E0E8FF;
-    --shadow: 0 4px 24px rgba(21,101,192,0.12);
-    --shadow-orange: 0 4px 24px rgba(245,124,0,0.25);
-  }
+:root{--b:#1565C0;--bl:#1E88E5;--bd:#0D47A1;--o:#F57C00;--ol:#FF9800;--ob:#FFB300;--g:#10B981;--r:#EF4444;--bg:#F0F4FF;--card:#fff;--txt:#0D1B3E;--mu:#6B7DB3;--brd:#E0E8FF;--sh:0 4px 20px rgba(21,101,192,.1)}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+#loader{position:fixed;inset:0;background:linear-gradient(135deg,var(--bd),var(--b));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:999}
+.llogo{font-family:'Outfit',sans-serif;font-weight:900;font-size:38px;color:#fff;letter-spacing:3px}.llogo s{color:var(--ob);text-decoration:none}
+.lspin{width:34px;height:34px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--ob);border-radius:50%;animation:spin .8s linear infinite}
+.hd{background:linear-gradient(135deg,var(--bd),var(--b),var(--bl));padding:16px 14px 52px;position:relative;overflow:hidden}
+.hd::before{content:'';position:absolute;top:-25px;right:-25px;width:160px;height:160px;background:rgba(255,152,0,.1);border-radius:50%}
+.hdt{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;position:relative;z-index:1}
+.logo{font-family:'Outfit',sans-serif;font-weight:900;font-size:19px;color:#fff;letter-spacing:2px}.logo s{color:var(--ob);text-decoration:none}
+.vpill{background:linear-gradient(135deg,var(--o),var(--ob));color:#fff;font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;display:none}
+.vpill.on{display:block}
+.bx{position:relative;z-index:1;text-align:center}
+.blbl{color:rgba(255,255,255,.6);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.bnum{font-family:'Outfit',sans-serif;font-size:46px;font-weight:900;color:#fff;line-height:1}
+.bnum small{font-size:22px;color:var(--ob)}
+.bsub{color:rgba(255,255,255,.55);font-size:11px;margin-top:3px}
+.pw{margin-top:12px;background:rgba(255,255,255,.15);border-radius:8px;height:6px;overflow:hidden}
+.pb{height:100%;background:linear-gradient(90deg,var(--o),var(--ob));border-radius:8px;transition:width 1.2s}
+.pls{display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:rgba(255,255,255,.5)}
+nav{display:flex;background:#fff;border-radius:20px 20px 0 0;margin-top:-16px;position:relative;z-index:2;box-shadow:0 -4px 14px rgba(0,0,0,.07);padding:0 4px;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nb{flex:1;min-width:56px;padding:13px 3px 9px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:600;color:var(--mu);transition:.2s;position:relative;white-space:nowrap}
+.nb .ic{font-size:19px}
+.nb.on{color:var(--b)}
+.nb.on::after{content:'';position:absolute;bottom:0;left:15%;right:15%;height:3px;background:linear-gradient(90deg,var(--b),var(--o));border-radius:3px 3px 0 0}
+.pg{display:none;padding:14px 12px 96px}
+.pg.on{display:block}
+.cd{background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--sh);margin-bottom:12px;border:1px solid var(--brd)}
+.ct{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.sc{background:#fff;border-radius:13px;padding:13px;border:1px solid var(--brd);box-shadow:var(--sh)}
+.si{font-size:20px;margin-bottom:3px}
+.sv{font-family:'Outfit',sans-serif;font-size:19px;font-weight:700;color:var(--bd)}
+.sl{font-size:10px;color:var(--mu);font-weight:500}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;border:none;border-radius:13px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:.18s}
+.btn:active{transform:scale(.97)}
+.bb{background:linear-gradient(135deg,var(--b),var(--bl));color:#fff;box-shadow:0 4px 12px rgba(21,101,192,.3)}
+.bo{background:linear-gradient(135deg,var(--o),var(--ob));color:#fff;box-shadow:0 4px 12px rgba(245,124,0,.3)}
+.bg2{background:linear-gradient(135deg,#059669,var(--g));color:#fff;box-shadow:0 4px 12px rgba(16,185,129,.3)}
+.bgh{background:var(--bg);color:var(--txt);border:1px solid var(--brd)}
+.bs{padding:9px 12px;font-size:12px;border-radius:11px;width:auto}
+.br{display:flex;gap:7px}.br .btn{flex:1}
+.mb{margin-bottom:9px}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+.pl{animation:pulse 2s infinite}
 
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  
-  body {
-    font-family: 'Space Grotesk', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+/* Bonus timer */
+.btimer{text-align:center;padding:14px;background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border-radius:11px;border:1px solid #FED7AA;margin-bottom:12px}
+.btn2{font-family:'Outfit',sans-serif;font-size:26px;font-weight:900;color:var(--o)}
+.btlbl{font-size:10px;color:var(--o);font-weight:600;margin-top:2px}
 
-  /* ── HEADER ── */
-  .header {
-    background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 60%, var(--blue-light) 100%);
-    padding: 20px 20px 60px;
-    position: relative;
-    overflow: hidden;
-  }
-  .header::before {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 200px; height: 200px;
-    background: rgba(255,152,0,0.15);
-    border-radius: 50%;
-  }
-  .header::after {
-    content: '';
-    position: absolute;
-    bottom: -60px; left: -20px;
-    width: 150px; height: 150px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 50%;
-  }
-  .header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    position: relative; z-index:1;
-  }
-  .logo {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 900;
-    font-size: 22px;
-    color: white;
-    letter-spacing: 2px;
-  }
-  .logo span { color: var(--orange-bright); }
-  .vip-badge {
-    background: linear-gradient(135deg, var(--orange), var(--orange-bright));
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 20px;
-    display: none;
-  }
-  .vip-badge.show { display: block; }
+/* Wheel */
+.wc{text-align:center;padding:4px 0}
+.ww{position:relative;display:inline-block;margin:6px auto 14px}
+.wptr{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:26px;z-index:10;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+#wc{width:260px;height:260px;border-radius:50%;border:5px solid #fff;box-shadow:0 8px 24px rgba(0,0,0,.18),0 0 0 2px var(--o);display:block;transition:transform 5s cubic-bezier(.17,.67,.12,.99)}
+.sib{background:var(--bg);border-radius:9px;padding:9px 12px;margin-bottom:10px;font-size:11px;color:var(--mu);display:flex;align-items:center;justify-content:space-between}
+.ft{background:linear-gradient(135deg,var(--g),#059669);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px}
+.sr{display:none;border-radius:13px;padding:16px;text-align:center;margin-top:12px;animation:slideUp .4s ease}
+.sr.on{display:block}
+.sr.win{background:linear-gradient(135deg,var(--bd),var(--b))}
+.sr.lose{background:linear-gradient(135deg,#DC2626,var(--r))}
+.swn{font-family:'Outfit',sans-serif;font-size:38px;font-weight:900;color:var(--ob)}
+.gg{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.gi{border-radius:9px;padding:9px;text-align:center}
+.gv{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700}
+.gp{font-size:9px;margin-top:1px}
 
-  .balance-card {
-    position: relative; z-index:1;
-    text-align: center;
-  }
-  .balance-label {
-    color: rgba(255,255,255,0.7);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .balance-amount {
-    font-family: 'Outfit', sans-serif;
-    font-size: 52px;
-    font-weight: 900;
-    color: white;
-    line-height: 1;
-  }
-  .balance-amount span { color: var(--orange-bright); font-size: 28px; }
-  .balance-sub {
-    color: rgba(255,255,255,0.6);
-    font-size: 12px;
-    margin-top: 4px;
-  }
-  .progress-wrap {
-    margin-top: 16px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 10px;
-    height: 8px;
-    overflow: hidden;
-  }
-  .progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--orange), var(--orange-bright));
-    border-radius: 10px;
-    transition: width 1s ease;
-  }
-  .progress-label {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 6px;
-    font-size: 11px;
-    color: rgba(255,255,255,0.6);
-  }
+/* Retrait */
+.pgd{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.pb2{padding:11px 7px;border:2px solid var(--brd);border-radius:11px;background:#fff;cursor:pointer;text-align:center;font-size:11px;font-weight:600;transition:.18s}
+.pb2:active{transform:scale(.95)}
+.pb2.sel{border-color:var(--b);background:#EFF6FF;color:var(--b)}
+.pb2 .fl{font-size:20px;display:block;margin-bottom:2px}
+.mb2{padding:11px 14px;border:2px solid var(--brd);border-radius:11px;background:#fff;cursor:pointer;font-size:12px;font-weight:600;width:100%;text-align:left;margin-bottom:7px;transition:.18s;display:flex;align-items:center;gap:9px}
+.mb2:active{transform:scale(.98)}
+.mb2.sel{border-color:var(--o);background:#FFF7ED;color:var(--o)}
+.fg{margin-bottom:10px}
+.fl2{font-size:11px;font-weight:600;color:var(--mu);margin-bottom:4px;display:block}
+.fi{width:100%;padding:11px 13px;border:2px solid var(--brd);border-radius:11px;font-family:'Space Grotesk',sans-serif;font-size:13px;background:#fff;color:var(--txt);outline:none;transition:.18s}
+.fi:focus{border-color:var(--bl)}
+.sdi{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:16px}
+.sd{width:7px;height:7px;border-radius:50%;background:var(--brd);transition:.3s}
+.sd.on{background:var(--b);width:22px;border-radius:4px}
+.sd.dn{background:var(--g)}
+.cbs{display:flex;gap:8px;justify-content:center;margin:14px 0}
+.cb{width:52px;height:60px;border:2.5px solid var(--brd);border-radius:13px;font-family:'Outfit',sans-serif;font-size:26px;font-weight:700;text-align:center;background:#fff;outline:none;transition:.18s}
+.cb:focus{border-color:var(--bl)}
 
-  /* ── NAV ── */
-  .nav {
-    display: flex;
-    background: white;
-    border-radius: 20px 20px 0 0;
-    margin-top: -20px;
-    position: relative; z-index: 2;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-    padding: 0 10px;
-  }
-  .nav-btn {
-    flex: 1;
-    padding: 16px 8px 12px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    transition: all 0.2s;
-    position: relative;
-  }
-  .nav-btn .icon { font-size: 22px; }
-  .nav-btn.active { color: var(--blue); }
-  .nav-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 20%; right: 20%;
-    height: 3px;
-    background: linear-gradient(90deg, var(--blue), var(--orange));
-    border-radius: 3px 3px 0 0;
-  }
+/* VIP */
+.vp{border-radius:16px;padding:16px;margin-bottom:11px;cursor:pointer;border:2px solid transparent;transition:.2s;position:relative}
+.vp:active{transform:scale(.98)}
+.vs{background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-color:#93C5FD}
+.vpr{background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border-color:var(--ol)}
+.vpre{background:linear-gradient(135deg,var(--bd),var(--b));border-color:var(--ob)}
+.vbdg{position:absolute;top:10px;right:10px;font-size:8px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--o);color:#fff}
+.vbdg.h{background:var(--ob)}
+.vic{font-size:30px;margin-bottom:5px}
+.vnm{font-family:'Outfit',sans-serif;font-size:17px;font-weight:900;margin-bottom:3px}
+.vpr2{font-size:12px;opacity:.7;margin-bottom:11px}
+.vpr2 strong{font-family:'Outfit',sans-serif;font-size:20px;font-weight:900;color:var(--o);opacity:1}
+.vpre .vpr2 strong{color:var(--ob)}
+.ft2{display:flex;align-items:center;gap:5px;font-size:11px;margin-bottom:4px;opacity:.88}
+.ft2::before{content:'✓';color:var(--g);font-weight:700}
+.vpre .ft2::before{color:var(--ob)}
+.vbtn{width:100%;padding:10px;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-top:13px;transition:.18s}
+.vbtn:active{transform:scale(.97)}
+.vs .vbtn{background:var(--b);color:#fff}
+.vpr .vbtn{background:var(--o);color:#fff}
+.vpre .vbtn{background:var(--ob);color:var(--bd)}
+.cur{border:2.5px solid var(--g) !important}
+.cur::after{content:'ACTIF';position:absolute;bottom:10px;right:10px;font-size:8px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--g);color:#fff}
 
-  /* ── PAGES ── */
-  .page { display: none; padding: 20px 16px 100px; }
-  .page.active { display: block; }
+/* Tx */
+.ti{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--brd)}
+.ti:last-child{border-bottom:none}
+.tl{display:flex;align-items:center;gap:9px}
+.tic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--bg)}
+.tn{font-weight:600;font-size:12px}
+.td{font-size:9px;color:var(--mu)}
+.ta{font-family:'Outfit',sans-serif;font-weight:700;font-size:14px}
+.ta.p{color:var(--g)}.ta.m{color:var(--r)}
 
-  /* ── CARDS ── */
-  .card {
-    background: var(--card);
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: var(--shadow);
-    margin-bottom: 16px;
-    border: 1px solid var(--border);
-  }
-  .card-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+/* Rank */
+.ri{display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:12px;margin-bottom:7px;border:1px solid var(--brd)}
+.rn{font-family:'Outfit',sans-serif;font-size:17px;font-weight:900;width:26px;text-align:center}
+.ri2{flex:1}
+.rnm{font-weight:600;font-size:12px}
+.rfl{font-size:10px;color:var(--mu)}
+.rg{font-family:'Outfit',sans-serif;font-weight:700;color:var(--o);font-size:13px}
+.rime{background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border-color:#93C5FD}
 
-  /* ── STATS GRID ── */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .stat-card {
-    background: white;
-    border-radius: 16px;
-    padding: 16px;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-  }
-  .stat-icon { font-size: 24px; margin-bottom: 6px; }
-  .stat-value {
-    font-family: 'Outfit', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--blue-dark);
-  }
-  .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+/* Ref */
+.rc{background:linear-gradient(135deg,var(--bd),var(--b));border-radius:16px;padding:18px;color:#fff;margin-bottom:12px}
+.rlb{background:rgba(255,255,255,.12);border-radius:9px;padding:9px 11px;font-size:10px;word-break:break-all;color:rgba(255,255,255,.85);margin:8px 0}
 
-  /* ── BOUTONS ── */
-  .btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 16px;
-    border: none;
-    border-radius: 16px;
-    font-family: 'Outfit', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.5px;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-blue {
-    background: linear-gradient(135deg, var(--blue), var(--blue-light));
-    color: white;
-    box-shadow: 0 4px 16px rgba(21,101,192,0.35);
-  }
-  .btn-orange {
-    background: linear-gradient(135deg, var(--orange), var(--orange-bright));
-    color: white;
-    box-shadow: var(--shadow-orange);
-  }
-  .btn-outline {
-    background: transparent;
-    color: var(--blue);
-    border: 2px solid var(--blue);
-  }
-  .btn-ghost {
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-sm {
-    padding: 10px 16px;
-    font-size: 13px;
-    border-radius: 12px;
-    width: auto;
-  }
-
-  /* ── WHEEL ── */
-  .wheel-container {
-    text-align: center;
-    padding: 10px 0;
-  }
-  .wheel-wrap {
-    position: relative;
-    display: inline-block;
-    margin: 10px auto 20px;
-  }
-  .wheel-pointer {
-    position: absolute;
-    top: -18px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 32px;
-    z-index: 10;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-  }
-  #wheel {
-    width: 280px;
-    height: 280px;
-    border-radius: 50%;
-    border: 6px solid white;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2), 0 0 0 3px var(--orange);
-    transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-    display: block;
-  }
-  .spin-info {
-    background: var(--bg);
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-  .spin-free-badge {
-    display: inline-block;
-    background: linear-gradient(135deg, #10B981, #059669);
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-left: 6px;
-  }
-  .spin-result {
-    display: none;
-    background: linear-gradient(135deg, var(--blue-dark), var(--blue));
-    color: white;
-    border-radius: 16px;
-    padding: 20px;
-    text-align: center;
-    margin-top: 16px;
-    animation: slideUp 0.4s ease;
-  }
-  .spin-result.show { display: block; }
-  .spin-result-amount {
-    font-family: 'Outfit', sans-serif;
-    font-size: 40px;
-    font-weight: 900;
-    color: var(--orange-bright);
-  }
-
-  /* ── VIP ── */
-  .vip-plans {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .vip-plan {
-    border-radius: 20px;
-    padding: 20px;
-    border: 2px solid transparent;
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .vip-plan:active { transform: scale(0.98); }
-  .vip-plan.starter {
-    background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
-    border-color: #93C5FD;
-  }
-  .vip-plan.pro {
-    background: linear-gradient(135deg, #FFF7ED, #FFEDD5);
-    border-color: var(--orange-light);
-  }
-  .vip-plan.premium {
-    background: linear-gradient(135deg, var(--blue-dark), var(--blue));
-    border-color: var(--orange-bright);
-    color: white;
-  }
-  .vip-plan-badge {
-    position: absolute;
-    top: 12px; right: 12px;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-    background: var(--orange);
-    color: white;
-  }
-  .vip-plan-badge.popular { background: var(--orange-bright); }
-  .vip-plan-icon { font-size: 36px; margin-bottom: 8px; }
-  .vip-plan-name {
-    font-family: 'Outfit', sans-serif;
-    font-size: 20px;
-    font-weight: 900;
-    margin-bottom: 4px;
-  }
-  .vip-plan-price {
-    font-size: 14px;
-    opacity: 0.7;
-    margin-bottom: 14px;
-  }
-  .vip-plan-price strong {
-    font-size: 24px;
-    opacity: 1;
-    color: var(--orange);
-    font-family: 'Outfit', sans-serif;
-    font-weight: 900;
-  }
-  .vip-plan.premium .vip-plan-price strong { color: var(--orange-bright); }
-  .vip-feature {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    margin-bottom: 6px;
-    opacity: 0.9;
-  }
-  .vip-feature::before { content: '✓'; color: #10B981; font-weight: 700; }
-  .vip-plan.premium .vip-feature::before { color: var(--orange-bright); }
-  .vip-plan-btn {
-    margin-top: 16px;
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 12px;
-    font-family: 'Outfit', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .vip-plan.starter .vip-plan-btn { background: var(--blue); color: white; }
-  .vip-plan.pro .vip-plan-btn { background: var(--orange); color: white; }
-  .vip-plan.premium .vip-plan-btn { background: var(--orange-bright); color: var(--blue-dark); }
-
-  /* ── TRANSACTION LIST ── */
-  .tx-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .tx-item:last-child { border-bottom: none; }
-  .tx-left { display: flex; align-items: center; gap: 12px; }
-  .tx-icon {
-    width: 40px; height: 40px;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    background: var(--bg);
-  }
-  .tx-name { font-weight: 600; font-size: 14px; }
-  .tx-date { font-size: 11px; color: var(--text-muted); }
-  .tx-amount { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; }
-  .tx-amount.plus { color: #10B981; }
-  .tx-amount.minus { color: #EF4444; }
-
-  /* ── TOAST ── */
-  .toast {
-    position: fixed;
-    bottom: 90px; left: 16px; right: 16px;
-    background: var(--text);
-    color: white;
-    padding: 14px 20px;
-    border-radius: 14px;
-    font-size: 14px;
-    font-weight: 600;
-    text-align: center;
-    transform: translateY(120%);
-    transition: transform 0.3s ease;
-    z-index: 999;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  }
-  .toast.show { transform: translateY(0); }
-  .toast.success { background: linear-gradient(135deg, #10B981, #059669); }
-  .toast.error { background: linear-gradient(135deg, #EF4444, #DC2626); }
-
-  /* ── LOADER ── */
-  .loader {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    flex-direction: column;
-    gap: 16px;
-    background: linear-gradient(135deg, var(--blue-dark), var(--blue));
-  }
-  .loader-logo {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 900;
-    font-size: 36px;
-    color: white;
-    letter-spacing: 3px;
-  }
-  .loader-logo span { color: var(--orange-bright); }
-  .loader-spin {
-    width: 40px; height: 40px;
-    border: 3px solid rgba(255,255,255,0.2);
-    border-top-color: var(--orange-bright);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  /* ── MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    display: none;
-    align-items: flex-end;
-    z-index: 100;
-  }
-  .modal-overlay.show { display: flex; }
-  .modal {
-    background: white;
-    border-radius: 24px 24px 0 0;
-    padding: 24px 20px 40px;
-    width: 100%;
-    animation: slideUp 0.3s ease;
-  }
-  .modal-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 20px;
-    font-weight: 900;
-    margin-bottom: 16px;
-    text-align: center;
-  }
-  .modal-close {
-    float: right;
-    background: var(--bg);
-    border: none;
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 16px;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes slideUp { from { transform: translateY(40px); opacity:0; } to { transform: translateY(0); opacity:1; } }
-  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
-  .pulse { animation: pulse 2s infinite; }
+.toast2{position:fixed;bottom:84px;left:10px;right:10px;padding:12px 16px;border-radius:12px;font-size:12px;font-weight:600;text-align:center;transform:translateY(130%);transition:transform .3s;z-index:999;box-shadow:0 8px 18px rgba(0,0,0,.22)}
+.toast2.on{transform:translateY(0)}
+.toast2.ok{background:linear-gradient(135deg,#059669,var(--g));color:#fff}
+.toast2.er{background:linear-gradient(135deg,#DC2626,var(--r));color:#fff}
+.toast2.in{background:linear-gradient(135deg,var(--bd),var(--b));color:#fff}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;z-index:100}
+.ov.on{display:flex}
+.mo{background:#fff;border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;animation:slideUp .3s ease;max-height:88vh;overflow-y:auto}
+.mot{font-family:'Outfit',sans-serif;font-size:17px;font-weight:900;margin-bottom:13px;text-align:center}
+.mcl{float:right;background:var(--bg);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
 </style>
 </head>
 <body>
-
-<!-- LOADER -->
-<div class="loader" id="loader">
-  <div class="loader-logo">X<span>A</span>FEARN</div>
-  <div class="loader-spin"></div>
+<div id="loader">
+  <div class="llogo">X<s>A</s>FEARN</div>
+  <div class="lspin"></div>
+  <div style="color:rgba(255,255,255,.45);font-size:11px">Chargement...</div>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none">
-
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-top">
-      <div class="logo">X<span>A</span>FEARN</div>
-      <div class="vip-badge" id="vipBadge">💎 VIP</div>
-    </div>
-    <div class="balance-card">
-      <div class="balance-label">Ton solde</div>
-      <div class="balance-amount" id="balanceDisplay">0<span>F</span></div>
-      <div class="balance-sub" id="balanceSub">Chargement...</div>
-      <div class="progress-wrap">
-        <div class="progress-bar" id="progressBar" style="width:0%"></div>
-      </div>
-      <div class="progress-label">
-        <span>0F</span>
-        <span id="progressLabel">Objectif retrait</span>
-      </div>
-    </div>
+<div class="hd">
+  <div class="hdt">
+    <div class="logo">X<s>A</s>FEARN</div>
+    <div class="vpill" id="vp">💎 VIP</div>
   </div>
-
-  <!-- NAV -->
-  <nav class="nav">
-    <button class="nav-btn active" onclick="showPage('dashboard',this)">
-      <span class="icon">🏠</span>Accueil
-    </button>
-    <button class="nav-btn" onclick="showPage('wheel',this)">
-      <span class="icon">🎰</span>Fortune
-    </button>
-    <button class="nav-btn" onclick="showPage('vip',this)">
-      <span class="icon">💎</span>VIP
-    </button>
-    <button class="nav-btn" onclick="showPage('history',this)">
-      <span class="icon">📋</span>Historique
-    </button>
-  </nav>
-
-  <!-- PAGE DASHBOARD -->
-  <div class="page active" id="page-dashboard">
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">👥</div>
-        <div class="stat-value" id="refCount">0</div>
-        <div class="stat-label">Filleuls actifs</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">💰</div>
-        <div class="stat-value" id="refGain">0F</div>
-        <div class="stat-label">Gains parrainage</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🎁 Bonus Journalier</div>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Récupère ton bonus quotidien directement dans le bot !</p>
-      <button class="btn btn-orange pulse" onclick="openBot('bonus')">
-        🎁 Réclamer mon Bonus
-      </button>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🔗 Mon Lien de Parrainage</div>
-      <div style="background:var(--bg);border-radius:12px;padding:12px;font-size:12px;color:var(--text-muted);word-break:break-all;margin-bottom:12px" id="refLink">
-        Chargement...
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-blue btn-sm" onclick="copyRef()" style="flex:1">📋 Copier</button>
-        <button class="btn btn-orange btn-sm" onclick="shareRef()" style="flex:1">📤 Partager</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">✅ Tâches du Jour</div>
-      <div id="taskList">
-        <div style="text-align:center;padding:20px;color:var(--text-muted)">
-          <div style="font-size:32px;margin-bottom:8px">✅</div>
-          <div>Ouvre le bot pour voir les tâches</div>
-        </div>
-      </div>
-      <button class="btn btn-ghost" onclick="openBot('tasks')" style="margin-top:12px">
-        Voir toutes les tâches →
-      </button>
-    </div>
+  <div class="bx">
+    <div class="blbl">Ton solde</div>
+    <div class="bnum" id="bn">0<small>F</small></div>
+    <div class="bsub" id="bs">Chargement...</div>
+    <div class="pw"><div class="pb" id="pb" style="width:0%"></div></div>
+    <div class="pls"><span>0F</span><span id="pl2">Objectif retrait</span></div>
   </div>
-
-  <!-- PAGE ROUE -->
-  <div class="page" id="page-wheel">
-    <div class="card">
-      <div class="card-title">🎰 Roue de la Fortune</div>
-      <div class="spin-info">
-        <span id="spinStatus">1 spin gratuit disponible !</span>
-        <span class="spin-free-badge" id="freeBadge">GRATUIT</span>
-      </div>
-
-      <div class="wheel-container">
-        <div class="wheel-wrap">
-          <div class="wheel-pointer">▼</div>
-          <canvas id="wheel" width="280" height="280"></canvas>
-        </div>
-      </div>
-
-      <button class="btn btn-orange pulse" id="spinBtn" onclick="spinWheel()">
-        🎰 TOURNER LA ROUE
-      </button>
-      <p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:10px">
-        Spin supplémentaire : <strong>200F</strong>
-      </p>
-
-      <div class="spin-result" id="spinResult">
-        <div style="font-size:24px;margin-bottom:8px">🎉</div>
-        <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-bottom:4px">Tu as gagné</div>
-        <div class="spin-result-amount" id="spinResultAmount">500F</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:8px">Crédité sur ton compte !</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🏆 Tableau des gains</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="background:#F0FDF4;border-radius:12px;padding:12px;text-align:center;border:1px solid #BBF7D0">
-          <div style="font-size:20px;font-weight:700;color:#059669;font-family:'Outfit',sans-serif">50F</div>
-          <div style="font-size:11px;color:#059669">40% chance</div>
-        </div>
-        <div style="background:#F0FDF4;border-radius:12px;padding:12px;text-align:center;border:1px solid #BBF7D0">
-          <div style="font-size:20px;font-weight:700;color:#059669;font-family:'Outfit',sans-serif">100F</div>
-          <div style="font-size:11px;color:#059669">25% chance</div>
-        </div>
-        <div style="background:#FFF7ED;border-radius:12px;padding:12px;text-align:center;border:1px solid #FED7AA">
-          <div style="font-size:20px;font-weight:700;color:var(--orange);font-family:'Outfit',sans-serif">200F</div>
-          <div style="font-size:11px;color:var(--orange)">15% chance</div>
-        </div>
-        <div style="background:#FFF7ED;border-radius:12px;padding:12px;text-align:center;border:1px solid #FED7AA">
-          <div style="font-size:20px;font-weight:700;color:var(--orange);font-family:'Outfit',sans-serif">500F</div>
-          <div style="font-size:11px;color:var(--orange)">10% chance</div>
-        </div>
-        <div style="background:#EFF6FF;border-radius:12px;padding:12px;text-align:center;border:1px solid #BFDBFE">
-          <div style="font-size:20px;font-weight:700;color:var(--blue);font-family:'Outfit',sans-serif">1000F</div>
-          <div style="font-size:11px;color:var(--blue)">5% chance</div>
-        </div>
-        <div style="background:#FFF1F2;border-radius:12px;padding:12px;text-align:center;border:1px solid #FECDD3">
-          <div style="font-size:20px;font-weight:700;color:#EF4444;font-family:'Outfit',sans-serif">Perdu</div>
-          <div style="font-size:11px;color:#EF4444">5% chance</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PAGE VIP -->
-  <div class="page" id="page-vip">
-    <div style="text-align:center;margin-bottom:20px">
-      <div style="font-family:'Outfit',sans-serif;font-size:24px;font-weight:900;color:var(--text)">
-        Passe au niveau supérieur 💎
-      </div>
-      <div style="font-size:13px;color:var(--text-muted);margin-top:4px">
-        Multiplie tes gains avec un abonnement VIP
-      </div>
-    </div>
-
-    <div class="vip-plans">
-      <div class="vip-plan starter">
-        <span class="vip-plan-badge">STARTER</span>
-        <div class="vip-plan-icon">🥉</div>
-        <div class="vip-plan-name">Starter</div>
-        <div class="vip-plan-price"><strong>500F</strong>/mois</div>
-        <div class="vip-feature">Bonus 75F/jour au lieu de 50F</div>
-        <div class="vip-feature">1 spin bonus sur la roue/jour</div>
-        <div class="vip-feature">Badge VIP visible</div>
-        <div class="vip-feature">Support prioritaire</div>
-        <button class="vip-plan-btn" onclick="activateVIP('starter',500)">
-          Activer Starter — 500F
-        </button>
-      </div>
-
-      <div class="vip-plan pro">
-        <span class="vip-plan-badge popular">POPULAIRE ⭐</span>
-        <div class="vip-plan-icon">🥈</div>
-        <div class="vip-plan-name">Pro</div>
-        <div class="vip-plan-price"><strong>1000F</strong>/mois</div>
-        <div class="vip-feature">Bonus 100F/jour</div>
-        <div class="vip-feature">3 spins bonus/jour</div>
-        <div class="vip-feature">Tâches exclusives Pro</div>
-        <div class="vip-feature">Boost parrainage x1.5</div>
-        <div class="vip-feature">Badge Pro Orange</div>
-        <button class="vip-plan-btn" onclick="activateVIP('pro',1000)">
-          Activer Pro — 1000F
-        </button>
-      </div>
-
-      <div class="vip-plan premium">
-        <span class="vip-plan-badge" style="background:var(--orange-bright);color:var(--blue-dark)">PREMIUM 👑</span>
-        <div class="vip-plan-icon">💎</div>
-        <div class="vip-plan-name" style="color:white">Premium</div>
-        <div class="vip-plan-price" style="color:rgba(255,255,255,0.7)"><strong>2000F</strong>/mois</div>
-        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Bonus 150F/jour</div>
-        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Spins illimités/jour</div>
-        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Tâches exclusives 500F-1000F</div>
-        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Retrait prioritaire 24h</div>
-        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Boost parrainage x2</div>
-        <div class="vip-feature" style="color:rgba(255,255,255,0.9)">Badge Premium Doré 👑</div>
-        <button class="vip-plan-btn" onclick="activateVIP('premium',2000)">
-          👑 Activer Premium — 2000F
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PAGE HISTORIQUE -->
-  <div class="page" id="page-history">
-    <div class="card">
-      <div class="card-title">📋 Historique des transactions</div>
-      <div id="historyList">
-        <div style="text-align:center;padding:20px;color:var(--text-muted)">
-          <div style="font-size:32px;margin-bottom:8px">📋</div>
-          <div>Aucune transaction</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
+<nav>
+  <button class="nb on" onclick="go('home',this)"><span class="ic">🏠</span>Accueil</button>
+  <button class="nb" onclick="go('bonus',this)"><span class="ic">🎁</span>Bonus</button>
+  <button class="nb" onclick="go('tasks',this)"><span class="ic">✅</span>Tâches</button>
+  <button class="nb" onclick="go('wheel',this)"><span class="ic">🎰</span>Fortune</button>
+  <button class="nb" onclick="go('retrait',this)"><span class="ic">💸</span>Retrait</button>
+  <button class="nb" onclick="go('parrain',this)"><span class="ic">👥</span>Parrainage</button>
+  <button class="nb" onclick="go('vip',this)"><span class="ic">💎</span>VIP</button>
+  <button class="nb" onclick="go('hist',this)"><span class="ic">📋</span>Historique</button>
+</nav>
 
-<!-- MODAL CONFIRM -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-title" id="modalTitle">Confirmer</div>
-    <div id="modalBody"></div>
-    <div style="display:flex;gap:10px;margin-top:20px">
-      <button class="btn btn-ghost" onclick="closeModal()" style="flex:1">Annuler</button>
-      <button class="btn btn-orange" id="modalConfirm" style="flex:1">Confirmer</button>
+<!-- HOME -->
+<div class="pg on" id="pg-home">
+  <div class="sg">
+    <div class="sc"><div class="si">👥</div><div class="sv" id="sRef">0</div><div class="sl">Filleuls</div></div>
+    <div class="sc"><div class="si">💰</div><div class="sv" id="sGain">0F</div><div class="sl">Gains parrainage</div></div>
+    <div class="sc"><div class="si">✅</div><div class="sv" id="sTsk">0</div><div class="sl">Tâches faites</div></div>
+    <div class="sc"><div class="si">🎰</div><div class="sv" id="sSp">0</div><div class="sl">Spins utilisés</div></div>
+  </div>
+  <div class="cd">
+    <div class="ct">⚡ Actions rapides</div>
+    <button class="btn bo pl mb" onclick="go('bonus',document.querySelector('.nb:nth-child(2)'))">🎁 Réclamer mon Bonus</button>
+    <button class="btn bb mb" onclick="go('tasks',document.querySelector('.nb:nth-child(3)'))">✅ Voir les Tâches</button>
+    <button class="btn bgh" onclick="go('wheel',document.querySelector('.nb:nth-child(4)'))">🎰 Tourner la Roue</button>
+  </div>
+  <div class="cd">
+    <div class="ct">🔗 Mon lien parrainage</div>
+    <div style="background:var(--bg);border-radius:9px;padding:9px;font-size:10px;color:var(--mu);word-break:break-all;margin-bottom:9px" id="rlh">...</div>
+    <div class="br">
+      <button class="btn bb bs" onclick="copyRef()">📋 Copier</button>
+      <button class="btn bo bs" onclick="shareRef()">📤 Partager</button>
+    </div>
+  </div>
+</div>
+
+<!-- BONUS -->
+<div class="pg" id="pg-bonus">
+  <div class="cd">
+    <div class="ct">🎁 Bonus Journalier</div>
+    <div id="bonusContent">
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:44px;margin-bottom:6px">🎁</div>
+        <div style="font-size:26px;font-weight:700;font-family:'Outfit',sans-serif;color:var(--o)" id="bamt">50F</div>
+        <div style="font-size:11px;color:var(--mu);margin:5px 0 16px">à récupérer chaque jour</div>
+      </div>
+      <button class="btn bo pl" id="bBtn" onclick="claimBonus()">🎁 Réclamer mon Bonus</button>
+    </div>
+    <div id="bonusTimer" style="display:none">
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:38px;margin-bottom:6px">⏳</div>
+        <div style="font-size:12px;color:var(--mu);margin-bottom:8px">Prochain bonus dans :</div>
+        <div class="btimer"><div class="btn2" id="tc">00:00:00</div><div class="btlbl">heures : minutes : secondes</div></div>
+        <div style="font-size:11px;color:var(--mu)">Reviens demain pour +<strong id="bamt2">50</strong>F !</div>
+      </div>
+    </div>
+  </div>
+  <div class="cd">
+    <div class="ct">📊 Historique bonus</div>
+    <div id="bHist"><div style="text-align:center;padding:14px;color:var(--mu);font-size:12px">Aucun bonus encore</div></div>
+  </div>
+</div>
+
+<!-- TACHES -->
+<div class="pg" id="pg-tasks">
+  <div id="tList"><div style="text-align:center;padding:30px;color:var(--mu)"><div style="font-size:34px">✅</div><div style="margin-top:7px">Chargement...</div></div></div>
+</div>
+
+<!-- WHEEL -->
+<div class="pg" id="pg-wheel">
+  <div class="cd">
+    <div class="ct">🎰 Roue de la Fortune</div>
+    <div class="sib"><span id="sit">1 spin gratuit disponible !</span><span class="ft" id="ftag">GRATUIT</span></div>
+    <div class="wc"><div class="ww"><div class="wptr">▼</div><canvas id="wc" width="260" height="260"></canvas></div></div>
+    <button class="btn bo pl mb" id="spBtn" onclick="spinWheel()">🎰 TOURNER LA ROUE</button>
+    <div style="text-align:center;font-size:10px;color:var(--mu)">Spin supplémentaire : <strong>200F</strong></div>
+    <div class="sr" id="sr">
+      <div style="font-size:20px;margin-bottom:5px">🎉</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.7);margin-bottom:2px">Tu as gagné</div>
+      <div class="swn" id="swn">0F</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:5px">Crédité sur ton compte !</div>
+    </div>
+  </div>
+  <div class="cd">
+    <div class="ct">🏆 Tableau des gains</div>
+    <div class="gg">
+      <div class="gi" style="background:#F0FDF4;border:1px solid #BBF7D0"><div class="gv" style="color:#059669">50F</div><div class="gp" style="color:#059669">40%</div></div>
+      <div class="gi" style="background:#F0FDF4;border:1px solid #BBF7D0"><div class="gv" style="color:#059669">100F</div><div class="gp" style="color:#059669">25%</div></div>
+      <div class="gi" style="background:#FFF7ED;border:1px solid #FED7AA"><div class="gv" style="color:var(--o)">200F</div><div class="gp" style="color:var(--o)">15%</div></div>
+      <div class="gi" style="background:#FFF7ED;border:1px solid #FED7AA"><div class="gv" style="color:var(--o)">500F</div><div class="gp" style="color:var(--o)">10%</div></div>
+      <div class="gi" style="background:#EFF6FF;border:1px solid #BFDBFE"><div class="gv" style="color:var(--b)">1000F</div><div class="gp" style="color:var(--b)">5%</div></div>
+      <div class="gi" style="background:#FFF1F2;border:1px solid #FECDD3"><div class="gv" style="color:var(--r)">Perdu</div><div class="gp" style="color:var(--r)">5%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- RETRAIT -->
+<div class="pg" id="pg-retrait">
+  <div class="cd">
+    <div class="ct">💸 Demande de Retrait</div>
+    <div class="sdi"><div class="sd on" id="sd1"></div><div class="sd" id="sd2"></div><div class="sd" id="sd3"></div><div class="sd" id="sd4"></div><div class="sd" id="sd5"></div></div>
+    <div id="rs1">
+      <div class="ct" style="font-size:12px">Choisis ton pays / réseau</div>
+      <div class="pgd" id="pGrid"></div>
+    </div>
+    <div id="rs2" style="display:none">
+      <div class="ct" style="font-size:12px">Choisis ta méthode de paiement</div>
+      <div id="mGrid"></div>
+      <button class="btn bgh bs" onclick="rBk(1)" style="margin-top:7px;width:auto">← Retour</button>
+    </div>
+    <div id="rs3" style="display:none">
+      <div class="fg">
+        <label class="fl2">Montant à retirer (F)</label>
+        <input class="fi" type="number" id="rAmt" placeholder="Ex: 1000" inputmode="numeric"/>
+        <div style="font-size:10px;color:var(--mu);margin-top:3px">Minimum : <strong id="rMn">1000</strong>F — Disponible : <strong id="rBal">0</strong>F</div>
+      </div>
+      <div class="br"><button class="btn bgh bs" onclick="rBk(2)" style="width:auto">← Retour</button><button class="btn bb" onclick="rN3()">Suivant →</button></div>
+    </div>
+    <div id="rs4" style="display:none">
+      <div class="fg"><label class="fl2" id="nlbl">Numéro de paiement</label><input class="fi" type="text" id="rNum" placeholder="Ex: 699123456"/></div>
+      <div class="fg"><label class="fl2">Nom complet</label><input class="fi" type="text" id="rNm" placeholder="Ex: Jean Dupont"/></div>
+      <div class="br"><button class="btn bgh bs" onclick="rBk(3)" style="width:auto">← Retour</button><button class="btn bb" onclick="rN4()">Suivant →</button></div>
+    </div>
+    <div id="rs5" style="display:none">
+      <div style="text-align:center;margin-bottom:9px">
+        <div style="font-size:13px;color:var(--mu)">Code de sécurité</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:30px;font-weight:900;color:var(--b);letter-spacing:7px;margin:7px 0" id="ccode">----</div>
+        <div style="font-size:10px;color:var(--mu)">Entre ce code pour confirmer</div>
+      </div>
+      <div class="cbs">
+        <input class="cb" type="number" id="c1" oninput="ci(this,'c2')" inputmode="numeric"/>
+        <input class="cb" type="number" id="c2" oninput="ci(this,'c3')" inputmode="numeric"/>
+        <input class="cb" type="number" id="c3" oninput="ci(this,'c4')" inputmode="numeric"/>
+        <input class="cb" type="number" id="c4" oninput="ci(this,null)" inputmode="numeric"/>
+      </div>
+      <div class="br"><button class="btn bgh bs" onclick="rBk(4)" style="width:auto">← Retour</button><button class="btn bg2" onclick="confR()">✅ Confirmer</button></div>
+      <div style="background:var(--bg);border-radius:10px;padding:10px;margin-top:12px;font-size:11px" id="recap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PARRAINAGE -->
+<div class="pg" id="pg-parrain">
+  <div class="rc">
+    <div style="font-family:'Outfit',sans-serif;font-size:17px;font-weight:900;margin-bottom:3px">👥 Programme Parrainage</div>
+    <div style="font-size:11px;opacity:.7;margin-bottom:10px">Gagne <strong id="rba" style="color:var(--ob)">75F</strong> par ami inscrit !</div>
+    <div class="rlb" id="rlp">...</div>
+    <div class="br">
+      <button class="btn bs" style="background:rgba(255,255,255,.2);color:#fff;flex:1" onclick="copyRef()">📋 Copier</button>
+      <button class="btn bs" style="background:rgba(255,255,255,.2);color:#fff;flex:1" onclick="shareRef()">📤 Partager</button>
+      <button class="btn bs" style="background:rgba(255,255,255,.2);color:#fff;flex:1" onclick="shareWA()">📱 WhatsApp</button>
+    </div>
+  </div>
+  <div class="sg" style="margin-bottom:12px">
+    <div class="sc"><div class="si">👥</div><div class="sv" id="pRef">0</div><div class="sl">Filleuls actifs</div></div>
+    <div class="sc"><div class="si">💵</div><div class="sv" id="pGain">0F</div><div class="sl">Total gagné</div></div>
+  </div>
+  <div class="cd">
+    <div class="ct">🏆 Classement</div>
+    <div id="rank"><div style="text-align:center;padding:14px;color:var(--mu)">Chargement...</div></div>
+  </div>
+</div>
+
+<!-- VIP -->
+<div class="pg" id="pg-vip">
+  <div style="text-align:center;margin-bottom:16px">
+    <div style="font-family:'Outfit',sans-serif;font-size:20px;font-weight:900">Passe au niveau supérieur 💎</div>
+    <div style="font-size:11px;color:var(--mu);margin-top:3px">Multiplie tes gains avec un abonnement VIP</div>
+  </div>
+  <div id="cvip" style="display:none;background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border:2px solid #86EFAC;border-radius:13px;padding:12px;margin-bottom:12px;text-align:center">
+    <div style="font-size:20px">✅</div>
+    <div style="font-family:'Outfit',sans-serif;font-weight:700;color:#059669;font-size:13px" id="cvt">Plan actif</div>
+  </div>
+  <div class="vp vs" id="pS"><span class="vbdg">STARTER</span><div class="vic">🥉</div><div class="vnm">Starter</div><div class="vpr2"><strong>500F</strong>/mois</div><div class="ft2">Bonus 75F/jour</div><div class="ft2">1 spin bonus/jour</div><div class="ft2">Badge VIP</div><div class="ft2">Support prioritaire</div><button class="vbtn" onclick="actVIP('starter',500)">Activer — 500F</button></div>
+  <div class="vp vpr" id="pP"><span class="vbdg h">⭐ POPULAIRE</span><div class="vic">🥈</div><div class="vnm">Pro</div><div class="vpr2"><strong>1000F</strong>/mois</div><div class="ft2">Bonus 100F/jour</div><div class="ft2">3 spins bonus/jour</div><div class="ft2">Tâches exclusives</div><div class="ft2">Boost parrainage x1.5</div><button class="vbtn" onclick="actVIP('pro',1000)">Activer — 1000F</button></div>
+  <div class="vp vpre" id="pPr"><span class="vbdg" style="background:var(--ob);color:var(--bd)">👑 PREMIUM</span><div class="vic">💎</div><div class="vnm" style="color:#fff">Premium</div><div class="vpr2" style="color:rgba(255,255,255,.7)"><strong>2000F</strong>/mois</div><div class="ft2" style="color:rgba(255,255,255,.88)">Bonus 150F/jour</div><div class="ft2" style="color:rgba(255,255,255,.88)">Spins illimités</div><div class="ft2" style="color:rgba(255,255,255,.88)">Tâches 500F-1000F</div><div class="ft2" style="color:rgba(255,255,255,.88)">Retrait prioritaire 24h</div><div class="ft2" style="color:rgba(255,255,255,.88)">Boost parrainage x2</div><button class="vbtn" onclick="actVIP('premium',2000)">👑 Activer — 2000F</button></div>
+</div>
+
+<!-- HIST -->
+<div class="pg" id="pg-hist">
+  <div class="cd"><div class="ct">💳 Transactions</div><div id="hList"><div style="text-align:center;padding:18px;color:var(--mu)">Chargement...</div></div></div>
+  <div class="cd"><div class="ct">💸 Mes retraits</div><div id="wList"><div style="text-align:center;padding:14px;color:var(--mu)">Aucun retrait</div></div></div>
+</div>
+</div>
+
+<div class="toast2" id="t2"></div>
+<div class="ov" id="ov" onclick="cMo()">
+  <div class="mo" onclick="event.stopPropagation()">
+    <button class="mcl" onclick="cMo()">✕</button>
+    <div class="mot" id="mt">Confirmer</div>
+    <div id="mb2"></div>
+    <div class="br" style="margin-top:14px">
+      <button class="btn bgh" onclick="cMo()" style="flex:1">Annuler</button>
+      <button class="btn bo" id="mok" style="flex:1">Confirmer</button>
     </div>
   </div>
 </div>
 
 <script>
-const SB_URL = "https://xtmmmrajknnadodgrrcu.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bW1tcmFqa25uYWRvZGdycmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5ODc5NjQsImV4cCI6MjA2MDU2Mzk2NH0.Ht_BdMdgwkiuB4VuMTdH2CKg4BLj1bKNzW_g8mENwn0";
-const BOT = "xafearn_bot";
-const MIN_W = 1000;
-const H = {
-  "apikey": SB_KEY,
-  "Authorization": "Bearer " + SB_KEY,
-  "Content-Type": "application/json",
-  "Prefer": "return=representation"
-};
+const SB="https://xtmmmrajknnadodgrrcu.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bW1tcmFqa25uYWRvZGdycmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5ODc5NjQsImV4cCI6MjA2MDU2Mzk2NH0.Ht_BdMdgwkiuB4VuMTdH2CKg4BLj1bKNzW_g8mENwn0",BOT="xafearn_bot";
+const H={"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json","Prefer":"return=representation"};
+const PAYS={"🇹🇬 Togo":["Flooz","T-Money"],"🇨🇮 Côte d'Ivoire":["Orange Money","Wave","MTN Money","Moov Money"],"🇸🇳 Sénégal":["Orange Money","Wave","Free Money"],"🇧🇫 Burkina Faso":["Orange Money","Moov Money"],"🇲🇱 Mali":["Orange Money","Moov Money"],"🇧🇯 Bénin":["MTN Money","Moov Money"],"🇨🇲 Cameroun":["Orange Money","MTN Money"],"🇬🇳 Guinée":["Orange Money","MTN Money"],"🇳🇪 Niger":["Airtel Money","Moov Money"],"🇨🇬 Congo":["Airtel Money","MTN Money"],"🇬🇦 Gabon":["Airtel Money","Moov Money"],"🇹🇩 Tchad":["Airtel Money","Moov Money"],"Autre":["Virement Bancaire","PayPal"],"💰 Crypto":["USDT TRC20","USDT BEP20 (BSC)","BNB BSC","SOL (Solana)"]};
+const SEGS=[{l:"50F",c:"#10B981",g:50},{l:"100F",c:"#F59E0B",g:100},{l:"PERDU",c:"#EF4444",g:0},{l:"200F",c:"#1E88E5",g:200},{l:"500F",c:"#F97316",g:500},{l:"1000F",c:"#1565C0",g:1000},{l:"50F",c:"#10B981",g:50},{l:"100F",c:"#F59E0B",g:100}];
+let U=null,TU=null,MW=1000,spun=false,rot=0,rPays="",rMeth="",rAmt2=0,rNum2="",rNm2="",rCd="";
 
-let userData = null;
-let tgUser = null;
-let spunToday = false;
-let currentRotation = 0;
+async function dbG(t,p={}){const q=Object.entries(p).map(([k,v])=>k+"="+v).join("&");const r=await fetch(SB+"/rest/v1/"+t+(q?"?"+q:""),{headers:H});return await r.json()}
+async function dbPa(t,p,d){const q=Object.entries(p).map(([k,v])=>k+"="+v).join("&");await fetch(SB+"/rest/v1/"+t+"?"+q,{method:"PATCH",headers:H,body:JSON.stringify(d)})}
+async function dbPo(t,d){const r=await fetch(SB+"/rest/v1/"+t,{method:"POST",headers:H,body:JSON.stringify(d)});return await r.json()}
+async function getCfg(k){const r=await dbG("config",{"key":"eq."+k});return r&&r[0]?parseInt(r[0].value):0}
 
-const SEGMENTS = [
-  { label:"50F",   color:"#10B981", gain:50  },
-  { label:"100F",  color:"#F59E0B", gain:100 },
-  { label:"PERDU", color:"#EF4444", gain:0   },
-  { label:"200F",  color:"#1E88E5", gain:200 },
-  { label:"500F",  color:"#F97316", gain:500 },
-  { label:"1000F", color:"#1565C0", gain:1000},
-  { label:"50F",   color:"#10B981", gain:50  },
-  { label:"100F",  color:"#F59E0B", gain:100 },
-];
+function toast(m,t="in"){const e=document.getElementById("t2");e.textContent=m;e.className="toast2 on "+t;setTimeout(()=>e.className="toast2",2700)}
+function go(n,btn){document.querySelectorAll(".pg").forEach(p=>p.classList.remove("on"));document.querySelectorAll(".nb").forEach(b=>b.classList.remove("on"));document.getElementById("pg-"+n).classList.add("on");if(btn)btn.classList.add("on");if(n==="tasks")loadTasks();if(n==="hist")loadHist();if(n==="parrain")loadParrain();if(n==="bonus")loadBonus()}
+function showMo(t,b,ok){document.getElementById("mt").textContent=t;document.getElementById("mb2").innerHTML=b;document.getElementById("mok").onclick=ok;document.getElementById("ov").classList.add("on")}
+function cMo(){document.getElementById("ov").classList.remove("on")}
 
-async function dbGet(table, params={}) {
-  const q = Object.entries(params).map(([k,v])=>k+"="+v).join("&");
-  const r = await fetch(SB_URL+"/rest/v1/"+table+(q?"?"+q:""), {headers:H});
-  return await r.json();
+function upBal(){
+  document.getElementById("bn").innerHTML=U.balance+"<small>F</small>";
+  const pct=Math.min(100,(U.balance/MW)*100);
+  document.getElementById("pb").style.width=pct+"%";
+  const r=Math.max(0,MW-U.balance);
+  document.getElementById("bs").textContent=r>0?"Plus que "+r+"F pour retirer":"✅ Tu peux retirer maintenant !";
+  document.getElementById("pl2").textContent=r>0?"Objectif : "+MW+"F":"Objectif atteint !";
 }
 
-async function dbPatch(table, params, data) {
-  const q = Object.entries(params).map(([k,v])=>k+"="+v).join("&");
-  await fetch(SB_URL+"/rest/v1/"+table+"?"+q, {
-    method:"PATCH", headers:H, body:JSON.stringify(data)
-  });
+// BONUS
+async function loadBonus(){
+  const bonus=await getCfg("bonus_daily")||50;
+  document.getElementById("bamt").textContent=bonus+"F";
+  document.getElementById("bamt2").textContent=bonus;
+  const today=new Date().toISOString().slice(0,10);
+  if(U&&U.last_bonus===today)showBT();
+  const txs=await dbG("transactions",{"user_id":"eq."+TU.id,"type":"eq.bonus","order":"created_at.desc","limit":"5"});
+  const c=document.getElementById("bHist");
+  if(!txs||!txs.length)return;
+  c.innerHTML=txs.map(t=>`<div class="ti"><div class="tl"><div class="tic">🎁</div><div><div class="tn">Bonus journalier</div><div class="td">${t.created_at?.slice(0,10)||""}</div></div></div><div class="ta p">+${t.amount}F</div></div>`).join("");
+}
+function showBT(){document.getElementById("bonusContent").style.display="none";document.getElementById("bonusTimer").style.display="block";upTimer();setInterval(upTimer,1000)}
+function upTimer(){const now=new Date(),mid=new Date();mid.setHours(24,0,0,0);const d=mid-now;const h=Math.floor(d/3600000).toString().padStart(2,"0"),m=Math.floor((d%3600000)/60000).toString().padStart(2,"0"),s=Math.floor((d%60000)/1000).toString().padStart(2,"0");document.getElementById("tc").textContent=h+":"+m+":"+s}
+async function claimBonus(){
+  const today=new Date().toISOString().slice(0,10);
+  if(U.last_bonus===today){showBT();return}
+  const bonus=await getCfg("bonus_daily")||50;
+  document.getElementById("bBtn").disabled=true;document.getElementById("bBtn").textContent="⏳...";
+  await dbPa("users",{"user_id":"eq."+TU.id},{"balance":U.balance+bonus,"last_bonus":today});
+  await dbPo("transactions",{"user_id":TU.id,"type":"bonus","amount":bonus,"description":"Bonus journalier"});
+  U.balance+=bonus;U.last_bonus=today;upBal();toast("+"+bonus+"F Bonus récupéré !","ok");showBT();
 }
 
-async function dbPost(table, data) {
-  const r = await fetch(SB_URL+"/rest/v1/"+table, {
-    method:"POST", headers:H, body:JSON.stringify(data)
-  });
-  return await r.json();
+// TACHES
+const AT={id:"auto_sniper",desc:"S'inscrire sur Sniper Business Center",link:"https://www.sniperbuisnesscenter.com/signup?affiliationCode=abdoula",rew:500};
+async function loadTasks(){
+  const today=new Date().toISOString().slice(0,10);
+  const[tasks,aR,aP,dR]=await Promise.all([dbG("tasks",{"date":"eq."+today,"is_active":"eq.true"}),dbG("user_tasks",{"user_id":"eq."+TU.id,"task_id":"eq.auto_sniper"}),dbG("task_validations",{"user_id":"eq."+TU.id,"task_id":"eq.auto_sniper","status":"eq.pending"}),dbG("user_tasks",{"user_id":"eq."+TU.id})]);
+  const aDone=aR.some(r=>r.completed_at?.slice(0,10)===today),aP2=aP.some(r=>r.created_at?.slice(0,10)===today);
+  const dIds=dR.map(r=>String(r.task_id));
+  let h=`<div class="cd"><div class="ct">🤖 Tâche Automatique</div><div style="border:2px solid ${aDone?"#BBF7D0":aP2?"#FED7AA":"var(--brd)"};border-radius:13px;padding:13px;background:${aDone?"#F0FDF4":aP2?"#FFF7ED":"#fff"}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px"><div style="font-size:12px;font-weight:600;flex:1;padding-right:7px">${AT.desc}</div><div style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--o);font-size:16px">${AT.rew}F</div></div>
+    <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:${aDone?"#BBF7D0":aP2?"#FED7AA":"#BFDBFE"};color:${aDone?"#059669":aP2?"var(--o)":"var(--bd)"};display:inline-block;margin-bottom:7px">${aDone?"✅ Validée":aP2?"⏳ En vérification":"🆕 Nouvelle"}</span>
+    ${!aDone&&!aP2?`<a href="${AT.link}" target="_blank" style="font-size:10px;color:var(--b);display:block;margin-bottom:7px">🔗 Ouvrir le site</a>`:""}
+    ${!aDone&&!aP2?`<button class="btn bo bs" onclick="subAT()" style="width:100%">Valider — ${AT.rew}F</button>`:""}
+  </div></div>`;
+  if(tasks&&tasks.length){
+    h+=`<div class="cd"><div class="ct">📋 Tâches du Jour</div>`;
+    tasks.forEach(t=>{
+      const done=dIds.includes(String(t.id));
+      h+=`<div style="border:2px solid ${done?"#BBF7D0":"var(--brd)"};border-radius:13px;padding:13px;background:${done?"#F0FDF4":"#fff"};margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div style="font-size:12px;font-weight:600;flex:1;padding-right:7px">${t.description}</div><div style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--o);font-size:15px">${t.reward}F</div></div>
+        <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:${done?"#BBF7D0":"#BFDBFE"};color:${done?"#059669":"var(--bd)"};display:inline-block;margin-bottom:7px">${done?"✅ Validée":"🆕 Nouvelle"}</span>
+        ${!done&&t.link?`<a href="${t.link}" target="_blank" style="font-size:10px;color:var(--b);display:block;margin-bottom:7px">🔗 Ouvrir le lien</a>`:""}
+        ${!done?`<button class="btn bb bs" onclick="valT(${t.id},${t.reward})" style="width:100%">Valider — ${t.reward}F</button>`:""}
+      </div>`;
+    });
+    h+=`</div>`;
+  }
+  document.getElementById("tList").innerHTML=h;
 }
+async function subAT(){const r=await dbPo("task_validations",{"user_id":TU.id,"task_id":"auto_sniper","status":"pending"});toast("Demande envoyée ! En attente de validation ✅","in");loadTasks()}
+async function valT(id,rew){await dbPo("user_tasks",{"user_id":TU.id,"task_id":String(id)});await dbPa("users",{"user_id":"eq."+TU.id},{"balance":U.balance+rew});await dbPo("transactions",{"user_id":TU.id,"type":"tache","amount":rew,"description":"Tache #"+id});U.balance+=rew;upBal();toast("+"+rew+"F Tâche validée !","ok");loadTasks()}
 
-function toast(msg, type="") {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.className = "toast show " + type;
-  setTimeout(()=>t.className="toast", 2500);
-}
-
-function showPage(name, btn) {
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
-  document.getElementById("page-"+name).classList.add("active");
-  btn.classList.add("active");
-}
-
-function openBot(action) {
-  Telegram.WebApp.openTelegramLink("https://t.me/"+BOT+"?start="+action);
-}
-
-function copyRef() {
-  const link = "https://t.me/"+BOT+"?start="+tgUser.id;
-  navigator.clipboard.writeText(link).then(()=>toast("Lien copié !","success"));
-}
-
-function shareRef() {
-  const link = "https://t.me/"+BOT+"?start="+tgUser.id;
-  const msg = "Rejoins XAFEARN et gagne de l argent chaque jour ! " + link;
-  Telegram.WebApp.openTelegramLink("https://t.me/share/url?url="+encodeURIComponent(link)+"&text="+encodeURIComponent(msg));
-}
-
-function drawWheel() {
-  const canvas = document.getElementById("wheel");
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  const R = W/2 - 4;
-  const cx = W/2, cy = H/2;
-  const N = SEGMENTS.length;
-  const arc = (2*Math.PI)/N;
-
+// WHEEL
+function drawWheel(){
+  const cv=document.getElementById("wc"),ctx=cv.getContext("2d");
+  const W=cv.width,H=cv.height,R=W/2-4,cx=W/2,cy=H/2,N=SEGS.length,arc=2*Math.PI/N;
   ctx.clearRect(0,0,W,H);
-  SEGMENTS.forEach((seg,i)=>{
-    const start = i*arc - Math.PI/2;
-    const end = start + arc;
-    ctx.beginPath();
-    ctx.moveTo(cx,cy);
-    ctx.arc(cx,cy,R,start,end);
-    ctx.closePath();
-    ctx.fillStyle = seg.color;
-    ctx.fill();
-    ctx.strokeStyle = "rgba(255,255,255,0.3)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.save();
-    ctx.translate(cx,cy);
-    ctx.rotate(start + arc/2);
-    ctx.textAlign = "right";
-    ctx.fillStyle = "white";
-    ctx.font = "bold 14px 'Outfit',sans-serif";
-    ctx.shadowColor = "rgba(0,0,0,0.3)";
-    ctx.shadowBlur = 4;
-    ctx.fillText(seg.label, R-12, 5);
-    ctx.restore();
-  });
-
-  // Centre
-  ctx.beginPath();
-  ctx.arc(cx,cy,22,0,2*Math.PI);
-  ctx.fillStyle = "white";
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(cx,cy,16,0,2*Math.PI);
-  ctx.fillStyle = "#1565C0";
-  ctx.fill();
-  ctx.fillStyle = "white";
-  ctx.font = "bold 10px 'Outfit',sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("X", cx, cy);
+  SEGS.forEach((s,i)=>{const st=i*arc-Math.PI/2,en=st+arc;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,st,en);ctx.closePath();ctx.fillStyle=s.c;ctx.fill();ctx.strokeStyle="rgba(255,255,255,.3)";ctx.lineWidth=2;ctx.stroke();ctx.save();ctx.translate(cx,cy);ctx.rotate(st+arc/2);ctx.textAlign="right";ctx.fillStyle="#fff";ctx.font="bold 12px 'Outfit',sans-serif";ctx.shadowColor="rgba(0,0,0,.3)";ctx.shadowBlur=3;ctx.fillText(s.l,R-8,5);ctx.restore();});
+  ctx.beginPath();ctx.arc(cx,cy,18,0,2*Math.PI);ctx.fillStyle="#fff";ctx.fill();ctx.beginPath();ctx.arc(cx,cy,12,0,2*Math.PI);ctx.fillStyle="#1565C0";ctx.fill();ctx.fillStyle="#fff";ctx.font="bold 8px 'Outfit',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("X",cx,cy);
+}
+async function spinWheel(){
+  if(!U)return;const btn=document.getElementById("spBtn");if(btn.disabled)return;
+  if(!spun){await doSpin(true,0);return}
+  if(U.balance<200){toast("Solde insuffisant ! Spin = 200F","er");return}
+  showMo("Spin Payant",`<p style="text-align:center;padding:9px 0;color:var(--mu);font-size:13px">Un spin coûte <strong style="color:var(--o);font-size:20px">200F</strong><br>Tu peux gagner jusqu'à <strong>1000F</strong> !</p>`,async()=>{cMo();await doSpin(false,200)})
+}
+async function doSpin(free,cost){
+  const btn=document.getElementById("spBtn");btn.disabled=true;btn.classList.remove("pl");btn.textContent="⏳ En cours...";
+  document.getElementById("sr").className="sr";
+  if(cost>0){await dbPa("users",{"user_id":"eq."+TU.id},{"balance":U.balance-cost});U.balance-=cost;upBal()}
+  const rand=Math.random()*100;let si,gain;
+  if(rand<40){si=0;gain=50}else if(rand<65){si=1;gain=100}else if(rand<80){si=3;gain=200}else if(rand<90){si=4;gain=500}else if(rand<95){si=5;gain=1000}else{si=2;gain=0}
+  const arc=360/SEGS.length,target=si*arc+arc/2;
+  rot+=360*8+(360-target);document.getElementById("wc").style.transform="rotate("+rot+"deg)";
+  await new Promise(r=>setTimeout(r,5300));
+  if(gain>0){await dbPa("users",{"user_id":"eq."+TU.id},{"balance":U.balance+gain});await dbPo("transactions",{"user_id":TU.id,"type":"roue","amount":gain,"description":"Roue de la Fortune"});U.balance+=gain;upBal();document.getElementById("swn").textContent="+"+gain+"F";const sr=document.getElementById("sr");sr.className="sr win on";sr.querySelector("div:first-child").textContent="🎉";toast("Félicitations ! +"+gain+"F !","ok")}
+  else{const sr=document.getElementById("sr");sr.className="sr lose on";sr.querySelector("div:first-child").textContent="😔";document.getElementById("swn").textContent="Perdu !";toast("Pas de chance ! Réessaie !","er")}
+  spun=true;document.getElementById("sit").textContent="Spin gratuit utilisé";document.getElementById("ftag").style.display="none";btn.disabled=false;btn.textContent="🎰 TOURNER ENCORE (200F)";
 }
 
-async function spinWheel() {
-  if (!userData) return;
-  const btn = document.getElementById("spinBtn");
-  if (btn.disabled) return;
-
-  const today = new Date().toISOString().slice(0,10);
-  let isFree = !spunToday;
-  let cost = isFree ? 0 : 200;
-
-  if (!isFree && userData.balance < 200) {
-    toast("Solde insuffisant ! Spin = 200F","error"); return;
-  }
-
-  if (!isFree) {
-    showModal(
-      "Spin Payant",
-      "<p style='text-align:center;color:var(--text-muted);font-size:14px;margin:10px 0'>Un spin coûte <strong style='color:var(--orange);font-size:20px'>200F</strong><br>de ton solde actuel.</p><p style='text-align:center;font-size:13px;color:var(--text-muted)'>Tu peux gagner jusqu à <strong>1000F</strong> !</p>",
-      async ()=>{
-        closeModal();
-        await doSpin(false, 200);
-      }
-    );
-    return;
-  }
-
-  await doSpin(true, 0);
+// RETRAIT
+function initR(){
+  const g=document.getElementById("pGrid");
+  g.innerHTML=Object.keys(PAYS).map((p,i)=>{const f=p.match(/\p{Emoji_Presentation}/gu)?.[0]||"💰",n=p.replace(/\p{Emoji_Presentation}/gu,"").trim()||p;return`<button class="pb2" onclick="selP('${p.replace(/'/g,"\\'")}',this)"><span class="fl">${f}</span>${n}</button>`}).join("");
+  document.getElementById("rMn").textContent=MW;document.getElementById("rBal").textContent=U?U.balance:0;
+}
+function selP(p,el){document.querySelectorAll(".pb2").forEach(b=>b.classList.remove("sel"));el.classList.add("sel");rPays=p;const g=document.getElementById("mGrid");g.innerHTML=PAYS[p].map(m=>`<button class="mb2" onclick="selM('${m}',this)"><span style="font-size:18px">${m.includes("USDT")||m.includes("BNB")||m.includes("SOL")?"💰":"📱"}</span>${m}</button>`).join("");rStep(2)}
+function selM(m,el){document.querySelectorAll(".mb2").forEach(b=>b.classList.remove("sel"));el.classList.add("sel");rMeth=m;document.getElementById("nlbl").textContent=["USDT TRC20","USDT BEP20 (BSC)","BNB BSC","SOL (Solana)"].includes(m)?"Adresse wallet":"Numéro de paiement";rStep(3)}
+function rStep(n){[1,2,3,4,5].forEach(i=>{document.getElementById("rs"+i).style.display=i===n?"block":"none";const d=document.getElementById("sd"+i);d.className="sd"+(i<n?" dn":i===n?" on":"");})}
+function rBk(n){rStep(n)}
+async function rN3(){
+  const a=parseInt(document.getElementById("rAmt").value||0);
+  if(!a||a<MW){toast("Minimum : "+MW+"F","er");return}
+  if(a>U.balance){toast("Solde insuffisant !","er");return}
+  const pause=await dbG("config",{"key":"eq.retraits_pauses"});
+  if(pause&&pause[0]?.value==="1"){toast("Retraits temporairement suspendus","er");return}
+  const appr=await dbG("withdrawals",{"user_id":"eq."+TU.id,"status":"eq.approved","order":"requested_at.desc","limit":"1"});
+  if(appr&&appr[0]){const d=Math.floor((Date.now()-new Date(appr[0].requested_at).getTime())/86400000);if(d<7){toast("Prochain retrait dans "+(7-d)+" jour(s)","er");return}}
+  const pend=await dbG("withdrawals",{"user_id":"eq."+TU.id,"status":"eq.pending"});
+  if(pend&&pend.length){toast("Tu as déjà une demande en attente","er");return}
+  rAmt2=a;rStep(4);
+}
+function rN4(){
+  const num=document.getElementById("rNum").value.trim(),nm=document.getElementById("rNm").value.trim();
+  const isCr=["USDT TRC20","USDT BEP20 (BSC)","BNB BSC","SOL (Solana)"].includes(rMeth);
+  if(num.length<(isCr?26:8)){toast(isCr?"Adresse invalide (min 26 car.)":"Numéro invalide","er");return}
+  if(nm.length<3){toast("Nom invalide","er");return}
+  rNum2=num;rNm2=nm;rCd=String(Math.floor(1000+Math.random()*9000));
+  document.getElementById("ccode").textContent=rCd;
+  ["c1","c2","c3","c4"].forEach(id=>document.getElementById(id).value="");
+  const masked=isCr?num.slice(0,6)+"..."+num.slice(-4):num.slice(0,4)+" *** "+num.slice(-2);
+  document.getElementById("recap").innerHTML=`<div style="font-weight:600;font-size:11px;margin-bottom:7px;color:var(--txt)">📋 Récapitulatif</div><div style="font-size:11px;color:var(--mu);line-height:1.9">Montant : <strong style="color:var(--txt)">${rAmt2}F</strong><br>Méthode : <strong style="color:var(--txt)">${rMeth}</strong><br>${isCr?"Adresse":"Numéro"} : <strong style="color:var(--txt)">${masked}</strong><br>Nom : <strong style="color:var(--txt)">${nm}</strong></div>`;
+  rStep(5);
+}
+function ci(el,nxt){if(el.value.length>1)el.value=el.value.slice(-1);if(el.value&&nxt)document.getElementById(nxt).focus()}
+async function confR(){
+  const ent=["c1","c2","c3","c4"].map(id=>document.getElementById(id).value).join("");
+  if(ent!==rCd){toast("Code incorrect !","er");return}
+  const btn=document.getElementById("mok");btn.disabled=true;btn.textContent="⏳...";
+  await dbPa("users",{"user_id":"eq."+TU.id},{"balance":U.balance-rAmt2});
+  const r=await dbPo("withdrawals",{"user_id":TU.id,"amount":rAmt2,"method":rPays+" - "+rMeth,"number":rNum2,"name":rNm2,"status":"pending"});
+  await dbPo("transactions",{"user_id":TU.id,"type":"retrait","amount":-rAmt2,"description":"Retrait #"+(r[0]?.id||"?")});
+  U.balance-=rAmt2;upBal();toast("Demande envoyée ! En cours de traitement 🎉","ok");rStep(1);["c1","c2","c3","c4"].forEach(id=>document.getElementById(id).value="");
 }
 
-async function doSpin(isFree, cost) {
-  const btn = document.getElementById("spinBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ En cours...";
-
-  // Déduire le coût
-  if (cost > 0) {
-    await dbPatch("users", {"user_id":"eq."+tgUser.id}, {"balance": userData.balance - cost});
-    userData.balance -= cost;
-    updateBalanceDisplay();
-  }
-
-  // Résultat pondéré
-  const rand = Math.random() * 100;
-  let segIndex, gain;
-  if (rand < 40)       { segIndex=0; gain=50; }
-  else if (rand < 65)  { segIndex=1; gain=100; }
-  else if (rand < 80)  { segIndex=3; gain=200; }
-  else if (rand < 90)  { segIndex=4; gain=500; }
-  else if (rand < 95)  { segIndex=5; gain=1000; }
-  else                 { segIndex=2; gain=0; }
-
-  // Rotation calculée
-  const N = SEGMENTS.length;
-  const arc = 360/N;
-  const targetAngle = segIndex * arc + arc/2;
-  const extra = 360*8;
-  const finalAngle = extra + (360 - targetAngle);
-  currentRotation += finalAngle;
-
-  const canvas = document.getElementById("wheel");
-  canvas.style.transform = "rotate("+currentRotation+"deg)";
-
-  await new Promise(r=>setTimeout(r, 5200));
-
-  // Créditer
-  if (gain > 0) {
-    await dbPatch("users",{"user_id":"eq."+tgUser.id},{"balance":userData.balance + gain});
-    await dbPost("transactions",{"user_id":tgUser.id,"type":"roue","amount":gain,"description":"Roue de la Fortune"});
-    userData.balance += gain;
-    updateBalanceDisplay();
-    document.getElementById("spinResultAmount").textContent = "+"+gain+"F";
-    document.getElementById("spinResult").className = "spin-result show";
-    toast("Félicitations ! +"+gain+"F gagné !","success");
-  } else {
-    document.getElementById("spinResultAmount").textContent = "Perdu !";
-    document.getElementById("spinResult").className = "spin-result show";
-    document.getElementById("spinResult").style.background = "linear-gradient(135deg,#EF4444,#DC2626)";
-    toast("Pas de chance ! Réessaie !","error");
-  }
-
-  spunToday = true;
-  document.getElementById("spinStatus").textContent = "Spin gratuit utilisé";
-  document.getElementById("freeBadge").style.display = "none";
-  btn.disabled = false;
-  btn.textContent = "🎰 TOURNER ENCORE (200F)";
-  btn.classList.remove("pulse");
+// VIP
+async function actVIP(plan,cost){
+  if(!U)return;if(U.vip_plan===plan){toast("Tu as déjà ce plan VIP !","in");return}
+  if(U.balance<cost){toast("Solde insuffisant ! Il te faut "+cost+"F","er");return}
+  const nms={starter:"Starter 🥉",pro:"Pro 🥈",premium:"Premium 💎"};
+  showMo("Activer "+nms[plan],`<p style="text-align:center;padding:9px 0;color:var(--mu);font-size:13px">Abonnement mensuel :<br><strong style="color:var(--o);font-size:26px;font-family:'Outfit',sans-serif">${cost}F</strong><br>sera déduit de ton solde.</p>`,async()=>{
+    cMo();await dbPa("users",{"user_id":"eq."+TU.id},{"balance":U.balance-cost,"vip_plan":plan});await dbPo("transactions",{"user_id":TU.id,"type":"vip","amount":-cost,"description":"VIP "+plan});
+    U.balance-=cost;U.vip_plan=plan;upBal();document.getElementById("vp").classList.add("on");document.getElementById("cvip").style.display="block";document.getElementById("cvt").textContent="Plan "+nms[plan]+" actif ✅";
+    ["pS","pP","pPr"].forEach(id=>document.getElementById(id).classList.remove("cur"));
+    const ids={starter:"pS",pro:"pP",premium:"pPr"};if(ids[plan])document.getElementById(ids[plan]).classList.add("cur");
+    toast("VIP "+nms[plan]+" activé 🎉","ok");
+  })
 }
 
-function showModal(title, body, onConfirm) {
-  document.getElementById("modalTitle").textContent = title;
-  document.getElementById("modalBody").innerHTML = body;
-  document.getElementById("modalConfirm").onclick = onConfirm;
-  document.getElementById("modalOverlay").classList.add("show");
+// PARRAINAGE
+async function loadParrain(){
+  const[refs,cfg]=await Promise.all([dbG("users",{"referred_by":"eq."+TU.id,"is_registered":"eq.true"}),dbG("config",{"key":"eq.bonus_referral"})]);
+  const bonus=cfg&&cfg[0]?parseInt(cfg[0].value):75,nb=refs?refs.length:0;
+  document.getElementById("pRef").textContent=nb;document.getElementById("pGain").textContent=(nb*bonus)+"F";document.getElementById("rba").textContent=bonus+"F";
+  const users=await dbG("users",{"is_registered":"eq.true"});
+  const cnt=await Promise.all((users||[]).slice(0,12).map(async u=>{const r=await dbG("users",{"referred_by":"eq."+u.user_id,"is_registered":"eq.true"});return{...u,rfs:r?r.length:0}}));
+  const ranked=cnt.sort((a,b)=>b.rfs-a.rfs).slice(0,10);
+  const mdl=["🥇","🥈","🥉","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟"];
+  document.getElementById("rank").innerHTML=ranked.map((u,i)=>`<div class="ri ${u.user_id===TU.id?"rime":""}"><div class="rn">${mdl[i]||i+1}</div><div class="ri2"><div class="rnm">@${u.username||"Anonyme"}${u.user_id===TU.id?" (Toi)":""}</div><div class="rfl">${u.rfs} filleul${u.rfs>1?"s":""}</div></div><div class="rg">${u.rfs*bonus}F</div></div>`).join("")||`<div style="text-align:center;padding:14px;color:var(--mu)">Sois le premier !</div>`;
+}
+function copyRef(){const l="https://t.me/"+BOT+"?start="+TU.id;navigator.clipboard.writeText(l).then(()=>toast("Lien copié !","ok"))}
+function shareRef(){const l="https://t.me/"+BOT+"?start="+TU.id;Telegram.WebApp.openTelegramLink("https://t.me/share/url?url="+encodeURIComponent(l))}
+function shareWA(){const l="https://t.me/"+BOT+"?start="+TU.id;window.open("https://wa.me/?text="+encodeURIComponent("Rejoins XAFEARN et gagne de l'argent chaque jour ! "+l))}
+
+// HISTORIQUE
+async function loadHist(){
+  const[txs,wds]=await Promise.all([dbG("transactions",{"user_id":"eq."+TU.id,"order":"created_at.desc","limit":"20"}),dbG("withdrawals",{"user_id":"eq."+TU.id,"order":"requested_at.desc","limit":"10"})]);
+  const ics={bonus:"🎁",parrainage:"👥",retrait:"💸",roue:"🎰",tache:"✅",vip:"💎",credit_admin:"💰",remboursement:"🔄"};
+  document.getElementById("hList").innerHTML=(txs&&txs.length)?txs.map(t=>`<div class="ti"><div class="tl"><div class="tic">${ics[t.type]||"💰"}</div><div><div class="tn">${t.description}</div><div class="td">${t.created_at?.slice(0,10)||""}</div></div></div><div class="ta ${t.amount>0?"p":"m"}">${t.amount>0?"+":""}${t.amount}F</div></div>`).join(""):`<div style="text-align:center;padding:18px;color:var(--mu)">Aucune transaction</div>`;
+  const se={pending:"⏳ EN ATTENTE",approved:"✅ PAYÉ",rejected:"❌ REFUSÉ"};
+  document.getElementById("wList").innerHTML=(wds&&wds.length)?wds.map(w=>`<div class="ti"><div class="tl"><div class="tic">💸</div><div><div class="tn">${w.amount}F — ${w.method||""}</div><div class="td">${w.requested_at?.slice(0,10)||""}</div></div></div><div style="font-size:10px;font-weight:700;color:${w.status==="approved"?"#059669":w.status==="pending"?"var(--o)":"var(--r)"}">${se[w.status]||w.status}</div></div>`).join(""):`<div style="text-align:center;padding:14px;color:var(--mu)">Aucun retrait</div>`;
 }
 
-function closeModal() {
-  document.getElementById("modalOverlay").classList.remove("show");
+// INIT
+async function init(){
+  Telegram.WebApp.ready();Telegram.WebApp.expand();
+  TU=Telegram.WebApp.initDataUnsafe?.user||{id:8268831517,first_name:"Test",username:"abdoulacherif2"};
+  try{
+    const[users,cfgMin,cfgRef,refs,tDone,spins]=await Promise.all([dbG("users",{"user_id":"eq."+TU.id}),getCfg("min_withdrawal"),getCfg("bonus_referral"),dbG("users",{"referred_by":"eq."+TU.id,"is_registered":"eq.true"}),dbG("user_tasks",{"user_id":"eq."+TU.id}),dbG("transactions",{"user_id":"eq."+TU.id,"type":"eq.roue","order":"created_at.desc","limit":"1"})]);
+    U=users&&users[0]?users[0]:{balance:0,vip_plan:null};MW=cfgMin||1000;
+    const nb=refs?refs.length:0,bonus_ref=cfgRef||75;
+    document.getElementById("sRef").textContent=nb;document.getElementById("sGain").textContent=(nb*bonus_ref)+"F";document.getElementById("sTsk").textContent=tDone?tDone.length:0;document.getElementById("sSp").textContent=spins?spins.length:0;
+    const rl="https://t.me/"+BOT+"?start="+TU.id;document.getElementById("rlh").textContent=rl;document.getElementById("rlp").textContent=rl;document.getElementById("rba").textContent=bonus_ref+"F";
+    const today=new Date().toISOString().slice(0,10);
+    if(spins&&spins[0]&&spins[0].created_at?.slice(0,10)===today){spun=true;document.getElementById("sit").textContent="Spin gratuit déjà utilisé";document.getElementById("ftag").style.display="none";document.getElementById("spBtn").textContent="🎰 TOURNER (200F)";document.getElementById("spBtn").classList.remove("pl")}
+    if(U.vip_plan){document.getElementById("vp").classList.add("on");document.getElementById("cvip").style.display="block";const nms={starter:"Starter 🥉",pro:"Pro 🥈",premium:"Premium 💎"};document.getElementById("cvt").textContent="Plan "+nms[U.vip_plan]+" actif ✅";const ids={starter:"pS",pro:"pP",premium:"pPr"};if(ids[U.vip_plan])document.getElementById(ids[U.vip_plan]).classList.add("cur")}
+    upBal();drawWheel();initR();
+  }catch(e){console.error(e);toast("Erreur de chargement","er")}
+  document.getElementById("loader").style.display="none";document.getElementById("app").style.display="block";
 }
-
-async function activateVIP(plan, cost) {
-  if (!userData) return;
-  if (userData.balance < cost) {
-    toast("Solde insuffisant ! Il te faut "+cost+"F","error"); return;
-  }
-  const names = {starter:"Starter 🥉",pro:"Pro 🥈",premium:"Premium 💎"};
-  showModal(
-    "Activer "+names[plan],
-    "<p style='text-align:center;color:var(--text-muted);font-size:14px;margin:10px 0'>Abonnement mensuel :<br><strong style='color:var(--orange);font-size:28px;font-family:Outfit,sans-serif'>"+cost+"F</strong><br>sera déduit de ton solde.</p>",
-    async ()=>{
-      closeModal();
-      await dbPatch("users",{"user_id":"eq."+tgUser.id},{
-        "balance": userData.balance - cost,
-        "vip_plan": plan
-      });
-      await dbPost("transactions",{"user_id":tgUser.id,"type":"vip","amount":-cost,"description":"Abonnement VIP "+plan});
-      userData.balance -= cost;
-      userData.vip_plan = plan;
-      updateBalanceDisplay();
-      document.getElementById("vipBadge").classList.add("show");
-      toast("VIP "+plan+" activé ! Bénéfices dès maintenant 🎉","success");
-    }
-  );
-}
-
-function updateBalanceDisplay() {
-  document.getElementById("balanceDisplay").innerHTML = userData.balance + "<span>F</span>";
-  const pct = Math.min(100, (userData.balance/MIN_W)*100);
-  document.getElementById("progressBar").style.width = pct+"%";
-  const reste = Math.max(0, MIN_W - userData.balance);
-  if (reste <= 0) {
-    document.getElementById("balanceSub").textContent = "✅ Tu peux retirer maintenant !";
-    document.getElementById("progressLabel").textContent = "Objectif atteint !";
-  } else {
-    document.getElementById("balanceSub").textContent = "Plus que "+reste+"F pour retirer";
-    document.getElementById("progressLabel").textContent = "Objectif : "+MIN_W+"F";
-  }
-}
-
-async function loadHistory() {
-  const txs = await dbGet("transactions",{"user_id":"eq."+tgUser.id,"order":"created_at.desc","limit":"15"});
-  const list = document.getElementById("historyList");
-  if (!txs || !txs.length) return;
-  const icons = {bonus:"🎁",parrainage:"👥",retrait:"💸",roue:"🎰",tache:"✅",vip:"💎",credit_admin:"💰",remboursement:"🔄"};
-  list.innerHTML = txs.map(tx=>`
-    <div class="tx-item">
-      <div class="tx-left">
-        <div class="tx-icon">${icons[tx.type]||"💰"}</div>
-        <div>
-          <div class="tx-name">${tx.description}</div>
-          <div class="tx-date">${tx.created_at?tx.created_at.slice(0,10):""}</div>
-        </div>
-      </div>
-      <div class="tx-amount ${tx.amount>0?"plus":"minus"}">${tx.amount>0?"+":""}${tx.amount}F</div>
-    </div>
-  `).join("");
-}
-
-async function init() {
-  Telegram.WebApp.ready();
-  Telegram.WebApp.expand();
-
-  tgUser = Telegram.WebApp.initDataUnsafe?.user || {id:8268831517,first_name:"Test",username:"abdoulacherif2"};
-
-  try {
-    const users = await dbGet("users",{"user_id":"eq."+tgUser.id});
-    userData = users && users[0] ? users[0] : {balance:0,vip_plan:null};
-
-    const today = new Date().toISOString().slice(0,10);
-    const txs = await dbGet("transactions",{"user_id":"eq."+tgUser.id,"type":"eq.roue","order":"created_at.desc","limit":"1"});
-    if (txs && txs[0] && txs[0].created_at?.slice(0,10)===today) spunToday=true;
-
-    const refs = await dbGet("users",{"referred_by":"eq."+tgUser.id,"is_registered":"eq.true"});
-    const refCount = refs ? refs.length : 0;
-
-    document.getElementById("balanceDisplay").innerHTML = userData.balance+"<span>F</span>";
-    document.getElementById("refCount").textContent = refCount;
-    document.getElementById("refGain").textContent = (refCount*75)+"F";
-    document.getElementById("refLink").textContent = "https://t.me/"+BOT+"?start="+tgUser.id;
-
-    if (userData.vip_plan) document.getElementById("vipBadge").classList.add("show");
-
-    updateBalanceDisplay();
-    await loadHistory();
-
-    // Wheel
-    drawWheel();
-    if (spunToday) {
-      document.getElementById("spinStatus").textContent = "Spin gratuit déjà utilisé";
-      document.getElementById("freeBadge").style.display = "none";
-      document.getElementById("spinBtn").textContent = "🎰 TOURNER (200F)";
-      document.getElementById("spinBtn").classList.remove("pulse");
-    }
-  } catch(e) {
-    console.error(e);
-    toast("Erreur de chargement","error");
-  }
-
-  document.getElementById("loader").style.display="none";
-  document.getElementById("app").style.display="block";
-}
-
 init();
 </script>
 </body>
