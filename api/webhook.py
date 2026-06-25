@@ -642,38 +642,8 @@ def handle_msg(uid, uname, text):
     # ══════════════════════════════
     # UTILISATEUR
     # ══════════════════════════════
-# ═══════════════════════════════════════
-# PUBLICITÉ — lien sponsorisé
-# ═══════════════════════════════════════
-AD_URL = "https://omg10.com/4/11160450"
-
-def show_ad_then(uid, action_cb_data, content_preview):
-    """Affiche la pub. 1er clic = pub, 2e clic = contenu."""
-    req.post(f"{API}/sendMessage", json={
-        "chat_id": uid,
-        "text":
-            "📣 Message sponsorise\n\n"
-            "Clique sur Voir l annonce\n"
-            "puis reviens et clique Continuer\n\n"
-            + content_preview,
-        "reply_markup": {"inline_keyboard": [
-            [{"text": "📣 Voir l annonce", "url": AD_URL}],
-            [{"text": "✅ Continuer →",    "callback_data": action_cb_data}]
-        ]}
-    }, timeout=10)
-
-def ad_seen_today(uid):
-    """Retourne True si l'user a déjà vu une pub aujourd'hui."""
-    today = str(date.today())
-    u = get_user(uid)
-    return str(u.get("last_ad_view","")) == today
-
-def mark_ad_seen(uid):
-    """Marque la pub comme vue aujourd'hui."""
-    db_patch("users", {"user_id": f"eq.{uid}"}, {"last_ad_view": str(date.today())})
-
     if text == "🎁 Bonus":
-        # Re-vérifier canal
+        # Re-vérifier que l'user est toujours dans le canal
         if not check_joined(uid):
             db_patch("users", {"user_id": f"eq.{uid}"}, {"is_registered": False})
             send(uid,
@@ -689,12 +659,6 @@ def mark_ad_seen(uid):
         bonus = get_cfg("bonus_daily")
         if str(u.get("last_bonus","")) == today:
             send(uid, "Bonus deja recupere !\n\nSolde : "+str(u["balance"])+"F\nReviens demain pour +"+str(bonus)+"F"); return
-        # ── PUB 1er clic ──
-        if not ad_seen_today(uid):
-            mark_ad_seen(uid)
-            show_ad_then(uid, "ad_bonus", "Tu recevras +" + str(bonus) + "F apres la pub !")
-            return
-        # ── Donner le bonus ──
         update_balance(uid, bonus)
         db_patch("users",{"user_id":f"eq.{uid}"},{"last_bonus":today})
         db_post("transactions",{"user_id":uid,"type":"bonus","amount":bonus,"description":"Bonus journalier"})
@@ -707,11 +671,6 @@ def mark_ad_seen(uid):
         ref_link = "https://t.me/"+BOT_USERNAME+"?start="+str(uid)
         min_w = get_cfg("min_withdrawal")
         reste = max(0, min_w - u["balance"])
-        # ── PUB 1er clic ──
-        if not ad_seen_today(uid):
-            mark_ad_seen(uid)
-            show_ad_then(uid, "ad_solde", "Ton solde : "+str(u["balance"])+"F")
-            return
         send(uid,
             "TON COMPTE XAFEARN\n\n"
             "Solde : " + str(u["balance"]) + "F\n"
@@ -765,11 +724,6 @@ def mark_ad_seen(uid):
             kb=pays_keyboard())
 
     elif text == "✅ Taches":
-        # ── PUB 1er clic ──
-        if not ad_seen_today(uid):
-            mark_ad_seen(uid)
-            show_ad_then(uid, "ad_tasks", "Vois les taches du jour et gagne des recompenses !")
-            return
         tasks = db_get("tasks",{"date":f"eq.{today}","is_active":"eq.true"})
         auto_rows = db_get("user_tasks",{"user_id":f"eq.{uid}","task_id":f"eq.{AUTO_TASK_ID}"})
         auto_done = any(str(r.get("completed_at",""))[:10]==today for r in auto_rows)
@@ -1031,70 +985,6 @@ def handle_admin_step(uid, text, sess):
 
 def handle_cb(uid, data, mid, cid):
     today = str(date.today())
-
-    # ── CALLBACKS PUBLICITÉ ──────────────────────────────
-    if data == "ad_bonus":
-        u = get_user(uid)
-        if not u or u.get("is_banned"): return
-        bonus = get_cfg("bonus_daily")
-        if str(u.get("last_bonus","")) == today:
-            edit(uid, mid, "Bonus deja recupere aujourd hui !\nReviens demain pour +"+str(bonus)+"F"); return
-        update_balance(uid, bonus)
-        db_patch("users",{"user_id":f"eq.{uid}"},{"last_bonus":today})
-        db_post("transactions",{"user_id":uid,"type":"bonus","amount":bonus,"description":"Bonus journalier"})
-        new_u = get_user(uid)
-        edit(uid, mid,
-            "BONUS RECU !\n\n"
-            "+"+str(bonus)+"F credite\n"
-            "Nouveau solde : "+str(new_u["balance"])+"F\n\n"
-            "Reviens demain !")
-        notif_palier(uid, new_u["balance"])
-        return
-
-    if data == "ad_solde":
-        u = get_user(uid)
-        if not u or u.get("is_banned"): return
-        nb = get_ref_count(uid)
-        ref_link = "https://t.me/"+BOT_USERNAME+"?start="+str(uid)
-        min_w = get_cfg("min_withdrawal")
-        reste = max(0, min_w - u["balance"])
-        edit(uid, mid,
-            "TON COMPTE XAFEARN\n\n"
-            "Solde : " + str(u["balance"]) + "F\n"
-            "Filleuls : " + str(nb) + "\n"
-            "Gains parrainage : " + str(nb*get_cfg("bonus_referral")) + "F\n\n"
-            + ("Plus que " + str(reste) + "F pour retirer !\n\n" if reste > 0 else "Tu peux retirer maintenant !\n\n")
-            + "Ton lien :\n" + ref_link)
-        return
-
-    if data == "ad_tasks":
-        u = get_user(uid)
-        if not u or u.get("is_banned"): return
-        tasks = db_get("tasks",{"date":f"eq.{today}","is_active":"eq.true"})
-        auto_rows = db_get("user_tasks",{"user_id":f"eq.{uid}","task_id":f"eq.{AUTO_TASK_ID}"})
-        auto_done = any(str(r.get("completed_at",""))[:10]==today for r in auto_rows)
-        auto_pend = db_get("task_validations",{"user_id":f"eq.{uid}","task_id":f"eq.{AUTO_TASK_ID}","status":"eq.pending"})
-        auto_pend_today = any(str(r.get("created_at",""))[:10]==today for r in auto_pend)
-        msg_text = "TACHES DU JOUR\n\n================================\n\n"
-        if auto_done:
-            msg_text += "OK "+AUTO_TASK_DESC+"\nRecompense : "+str(AUTO_TASK_REW)+"F - VALIDEE\n\n"
-        elif auto_pend_today:
-            msg_text += "EN ATTENTE "+AUTO_TASK_DESC+"\nRecompense : "+str(AUTO_TASK_REW)+"F - En verification\n\n"
-        else:
-            msg_text += "-- "+AUTO_TASK_DESC+"\nLien : "+AUTO_TASK_LINK+"\nRecompense : "+str(AUTO_TASK_REW)+"F\n\n"
-        msg_text += "================================\n\n"
-        buttons = []
-        if not auto_done and not auto_pend_today:
-            buttons.append([{"text":"Valider : S inscrire Sniper Business","callback_data":"auto_task_"+AUTO_TASK_ID}])
-        for t in (tasks or []):
-            done = len(db_get("user_tasks",{"user_id":f"eq.{uid}","task_id":f"eq.{t['id']}"})) > 0
-            msg_text += ("OK " if done else "-- ")+str(t["description"])+"\n"
-            if t.get("link"): msg_text += "Lien : "+str(t["link"])+"\n"
-            msg_text += "Recompense : "+str(t["reward"])+"F\n\n"
-            if not done:
-                buttons.append([{"text":"Valider : "+str(t["description"])[:30],"callback_data":"task_"+str(t["id"])}])
-        edit(uid, mid, msg_text, kb={"inline_keyboard":buttons} if buttons else None)
-        return
 
     if data.startswith("pays_"):
         idx = int(data.split("_")[1])
