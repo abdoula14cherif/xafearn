@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>XAFEARN GAME</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --b:#1565C0;--bl:#1E88E5;--bd:#0D47A1;
+  --o:#F57C00;--ob:#FFB300;--og:#FF9800;
+  --g:#10B981;--r:#EF4444;
+  --pur:#7C3AED;--pink:#EC4899;
+  --bg:#0A0E1A;--bg2:#111827;--bg3:#1F2937;
+  --card:#1F2937;--brd:#374151;
+  --txt:#F9FAFB;--mu:#9CA3AF;
+}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:linear-gradient(135deg,#0A0E1A,#1a0533);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999}
+.llogo{font-family:'Outfit',sans-serif;font-weight:900;font-size:34px;color:#fff;letter-spacing:2px}
+.llogo em{color:var(--ob);font-style:normal}
+.lsub{font-size:12px;color:var(--mu);letter-spacing:1px}
+.spin{width:36px;height:36px;border:3px solid rgba(255,179,0,.2);border-top-color:var(--ob);border-radius:50%;animation:spin .8s linear infinite}
+
+/* AUTH */
+#authPage{position:fixed;inset:0;background:linear-gradient(135deg,#0A0E1A,#1a0533);display:none;align-items:center;justify-content:center;padding:24px;z-index:50;overflow-y:auto}
+.auth-card{background:var(--bg2);border-radius:20px;padding:24px;width:100%;max-width:360px;border:1px solid var(--brd)}
+.auth-logo{font-family:'Outfit',sans-serif;font-weight:900;font-size:24px;color:#fff;text-align:center;margin-bottom:3px}
+.auth-logo em{color:var(--ob);font-style:normal}
+.auth-sub{text-align:center;font-size:11px;color:var(--mu);margin-bottom:20px}
+.tabs{display:flex;background:var(--bg3);border-radius:11px;padding:3px;margin-bottom:18px;gap:3px}
+.tab{flex:1;padding:9px;border:none;border-radius:9px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;color:var(--mu);background:transparent;transition:.2s}
+.tab.on{background:var(--b);color:#fff}
+.fg{margin-bottom:12px}
+.fl{font-size:11px;font-weight:600;color:var(--mu);margin-bottom:4px;display:block}
+.fi{width:100%;padding:11px 13px;border:2px solid var(--brd);border-radius:11px;font-family:'Space Grotesk',sans-serif;font-size:13px;background:var(--bg3);color:var(--txt);outline:none}
+.fi:focus{border-color:var(--b)}
+.sel-row{display:flex;gap:8px}
+.sel-row select{width:100px;padding:11px 8px;border:2px solid var(--brd);border-radius:11px;font-size:11px;background:var(--bg3);color:var(--txt);outline:none;flex-shrink:0}
+.sel-row .fi{flex:1}
+
+/* BTN */
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;border:none;border-radius:12px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:.18s}
+.btn:active{transform:scale(.97)}
+.btn-b{background:linear-gradient(135deg,var(--b),var(--bl));color:#fff}
+.btn-o{background:linear-gradient(135deg,var(--o),var(--ob));color:#fff}
+.btn-g{background:linear-gradient(135deg,#059669,var(--g));color:#fff}
+.btn-r{background:linear-gradient(135deg,#DC2626,var(--r));color:#fff}
+.btn-p{background:linear-gradient(135deg,#6D28D9,var(--pur));color:#fff}
+.btn-pk{background:linear-gradient(135deg,#BE185D,var(--pink));color:#fff}
+.btn-gh{background:var(--bg3);color:var(--txt);border:1px solid var(--brd)}
+.btn-sm{padding:8px 12px;font-size:11px;border-radius:9px;width:auto}
+.btn-row{display:flex;gap:7px}.btn-row .btn{flex:1}
+.mb{margin-bottom:9px}
+
+/* APP */
+#app{display:none}
+
+/* HEADER */
+.hd{background:linear-gradient(135deg,#0D0B2B,#1a0533,#0D47A1);padding:14px 14px 56px;position:relative;overflow:hidden}
+.hd::before{content:'';position:absolute;top:-20px;right:-20px;width:160px;height:160px;background:rgba(255,179,0,.08);border-radius:50%}
+.hd::after{content:'';position:absolute;bottom:-30px;left:-20px;width:120px;height:120px;background:rgba(124,58,237,.1);border-radius:50%}
+.hdt{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;margin-bottom:16px}
+.logo{font-family:'Outfit',sans-serif;font-weight:900;font-size:17px;color:#fff;letter-spacing:1px}
+.logo em{color:var(--ob);font-style:normal}
+.hd-coins{display:flex;align-items:center;gap:6px;background:rgba(255,179,0,.15);border:1px solid rgba(255,179,0,.3);border-radius:20px;padding:5px 12px}
+.hd-coins span{font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;color:var(--ob)}
+.hd-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;position:relative;z-index:1}
+.hd-stat{text-align:center}
+.hd-stat-val{font-family:'Outfit',sans-serif;font-size:18px;font-weight:900;color:#fff}
+.hd-stat-lbl{font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px}
+
+/* NAV */
+nav{display:flex;background:var(--bg2);border-top:1px solid var(--brd);position:sticky;bottom:0;z-index:10;padding:0 4px;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nb{flex:1;min-width:56px;padding:10px 3px 7px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:600;color:var(--mu);transition:.2s;position:relative}
+.nb .ic{font-size:20px}
+.nb.on{color:var(--ob)}
+.nb.on::after{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:linear-gradient(90deg,var(--o),var(--ob));border-radius:0 0 3px 3px}
+
+/* PAGES */
+.pg{display:none;padding:14px 12px 80px}
+.pg.on{display:block}
+.card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid var(--brd)}
+.ct{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:7px}
+
+/* DASHBOARD */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.sc{background:var(--bg3);border-radius:13px;padding:13px;border:1px solid var(--brd);text-align:center}
+.si{font-size:22px;margin-bottom:4px}
+.sv{font-family:'Outfit',sans-serif;font-size:19px;font-weight:700}
+.sl{font-size:10px;color:var(--mu)}
+
+/* FERME */
+.animal-card{background:var(--bg3);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--brd);position:relative;overflow:hidden}
+.animal-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,179,0,.05),transparent)}
+.animal-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.animal-ico{font-size:36px}
+.animal-info{flex:1}
+.animal-name{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700}
+.animal-prod{font-size:11px;color:var(--g)}
+.animal-qty{font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:var(--ob);text-align:right}
+.animal-qty small{font-size:11px;color:var(--mu)}
+.progress-wrap{background:rgba(255,255,255,.1);border-radius:8px;height:6px;margin-bottom:10px;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--g),var(--ob));border-radius:8px;transition:width .5s}
+
+/* MINING */
+.mine-visual{text-align:center;padding:20px 0}
+.mine-ico{font-size:64px;margin-bottom:8px;display:block;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.mine-rate{font-family:'Outfit',sans-serif;font-size:28px;font-weight:900;color:var(--ob)}
+.mine-rate small{font-size:13px;color:var(--mu)}
+.upgrade-item{display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg3);border-radius:12px;margin-bottom:8px;border:1px solid var(--brd)}
+.upgrade-item.active{border-color:var(--g);background:rgba(16,185,129,.08)}
+.upg-left{display:flex;align-items:center;gap:10px}
+.upg-ico{font-size:28px}
+.upg-name{font-family:'Outfit',sans-serif;font-weight:700;font-size:13px}
+.upg-rate{font-size:11px;color:var(--g)}
+
+/* EMPIRE */
+.empire-map{background:linear-gradient(135deg,#1a2e0a,#0d1f05);border-radius:16px;padding:20px;text-align:center;margin-bottom:12px;border:2px solid rgba(16,185,129,.3);position:relative;overflow:hidden}
+.empire-map::before{content:'🌿🌿🌿🌿🌿🌿🌿🌿';position:absolute;bottom:0;left:0;right:0;font-size:20px;opacity:.3}
+.empire-ico{font-size:56px;margin-bottom:6px;display:block}
+.empire-name{font-family:'Outfit',sans-serif;font-size:18px;font-weight:900;color:#fff;margin-bottom:4px}
+.empire-level{font-size:11px;color:var(--g)}
+.stats-empire{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.se{background:var(--bg3);border-radius:11px;padding:10px;text-align:center;border:1px solid var(--brd)}
+.se-val{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--ob)}
+.se-lbl{font-size:9px;color:var(--mu)}
+.enemy-item{display:flex;align-items:center;gap:10px;padding:11px;background:var(--bg3);border-radius:12px;margin-bottom:8px;border:1px solid var(--brd);cursor:pointer}
+.enemy-item:active{background:rgba(239,68,68,.1);border-color:var(--r)}
+
+/* BATTLE */
+.battle-arena{text-align:center;padding:16px 0}
+.vs-text{font-family:'Outfit',sans-serif;font-size:36px;font-weight:900;color:var(--r);text-shadow:0 0 20px rgba(239,68,68,.5)}
+.card-battle{display:inline-block;width:80px;height:110px;border-radius:12px;font-size:32px;display:flex;align-items:center;justify-content:center;border:3px solid;position:relative;cursor:pointer;transition:.3s}
+.card-battle:active{transform:scale(.92)}
+.cards-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.cards-hand{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:14px 0}
+.battle-waiting{text-align:center;padding:24px}
+.battle-ico{font-size:48px;margin-bottom:10px;display:block}
+
+/* MARCHE */
+.conv-card{background:linear-gradient(135deg,rgba(255,179,0,.1),rgba(16,185,129,.05));border:2px solid rgba(255,179,0,.3);border-radius:16px;padding:16px;margin-bottom:14px;text-align:center}
+.conv-rate{font-family:'Outfit',sans-serif;font-size:28px;font-weight:900;color:var(--ob)}
+.conv-sub{font-size:11px;color:var(--mu);margin-top:3px}
+.market-item{display:flex;align-items:center;justify-content:space-between;padding:11px;background:var(--bg3);border-radius:12px;margin-bottom:8px;border:1px solid var(--brd)}
+
+/* TOAST */
+.toast{position:fixed;top:16px;left:10px;right:10px;padding:12px 16px;border-radius:12px;font-size:12px;font-weight:600;text-align:center;transform:translateY(-130%);transition:transform .3s;z-index:9999}
+.toast.on{transform:translateY(0)}
+.toast-ok{background:linear-gradient(135deg,#059669,var(--g));color:#fff}
+.toast-er{background:linear-gradient(135deg,#DC2626,var(--r));color:#fff}
+.toast-in{background:linear-gradient(135deg,var(--bd),var(--b));color:#fff}
+.toast-gold{background:linear-gradient(135deg,var(--o),var(--ob));color:#fff}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;z-index:100}
+.ov.on{display:flex}
+.mo{background:var(--bg2);border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-height:90vh;overflow-y:auto;animation:slideUp .3s;border-top:1px solid var(--brd)}
+.mo-title{font-family:'Outfit',sans-serif;font-size:17px;font-weight:900;margin-bottom:14px;text-align:center}
+.mcl{float:right;background:var(--bg3);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;color:var(--txt)}
+
+/* BADGES & MISC */
+.badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px}
+.badge-g{background:rgba(16,185,129,.2);color:var(--g);border:1px solid rgba(16,185,129,.3)}
+.badge-o{background:rgba(255,179,0,.2);color:var(--ob);border:1px solid rgba(255,179,0,.3)}
+.badge-r{background:rgba(239,68,68,.2);color:var(--r);border:1px solid rgba(239,68,68,.3)}
+.empty{text-align:center;padding:32px 16px;color:var(--mu)}
+.xacoin-icon{display:inline;color:var(--ob)}
+
+/* NEON GLOW */
+.glow-gold{box-shadow:0 0 20px rgba(255,179,0,.3)}
+.glow-green{box-shadow:0 0 20px rgba(16,185,129,.3)}
+.glow-blue{box-shadow:0 0 20px rgba(21,101,192,.4)}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.pulse-anim{animation:pulse 2s infinite}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.shake{animation:shake .3s}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="llogo">X<em>A</em>FEARN</div>
+  <div style="font-size:28px;margin:-4px 0">🎮</div>
+  <div class="spin"></div>
+  <div class="lsub">Chargement du jeu...</div>
+</div>
+
+<!-- AUTH -->
+<div id="authPage">
+  <div class="auth-card">
+    <div class="auth-logo">X<em>A</em>FEARN <span style="font-size:14px">🎮</span></div>
+    <div class="auth-sub">Le jeu africain qui paye !</div>
+    <div class="tabs">
+      <button class="tab on" id="tabL" onclick="switchTab('login')">Se connecter</button>
+      <button class="tab" id="tabR" onclick="switchTab('reg')">S'inscrire</button>
+    </div>
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <div class="fg"><label class="fl">Numéro WhatsApp</label>
+        <div class="sel-row">
+          <select id="lCode"><option value="+237">🇨🇲+237</option><option value="+228">🇹🇬+228</option><option value="+225">🇨🇮+225</option><option value="+221">🇸🇳+221</option><option value="+226">🇧🇫+226</option><option value="+223">🇲🇱+223</option><option value="+229">🇧🇯+229</option><option value="+224">🇬🇳+224</option><option value="+227">🇳🇪+227</option><option value="+242">🇨🇬+242</option></select>
+          <input class="fi" id="lTel" type="tel" placeholder="699123456" inputmode="numeric"/>
+        </div>
+      </div>
+      <button class="btn btn-b" id="loginBtn" onclick="doLogin()">🔑 Se connecter</button>
+    </div>
+    <!-- REGISTER -->
+    <div id="regForm" style="display:none">
+      <div class="fg"><label class="fl">Prénom / Nom *</label><input class="fi" id="rNom" type="text" placeholder="Ex: Jean Dupont"/></div>
+      <div class="fg"><label class="fl">Numéro WhatsApp *</label>
+        <div class="sel-row">
+          <select id="rCode"><option value="+237">🇨🇲+237</option><option value="+228">🇹🇬+228</option><option value="+225">🇨🇮+225</option><option value="+221">🇸🇳+221</option><option value="+226">🇧🇫+226</option><option value="+223">🇲🇱+223</option><option value="+229">🇧🇯+229</option><option value="+224">🇬🇳+224</option><option value="+227">🇳🇪+227</option><option value="+242">🇨🇬+242</option></select>
+          <input class="fi" id="rTel" type="tel" placeholder="699123456" inputmode="numeric"/>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Pays *</label>
+        <select class="fi" id="rPays"><option value="">-- Pays --</option><option value="Cameroun">🇨🇲 Cameroun</option><option value="Togo">🇹🇬 Togo</option><option value="Côte d'Ivoire">🇨🇮 Côte d'Ivoire</option><option value="Sénégal">🇸🇳 Sénégal</option><option value="Burkina Faso">🇧🇫 Burkina Faso</option><option value="Mali">🇲🇱 Mali</option><option value="Bénin">🇧🇯 Bénin</option><option value="Guinée">🇬🇳 Guinée</option><option value="Niger">🇳🇪 Niger</option><option value="Congo">🇨🇬 Congo</option><option value="Gabon">🇬🇦 Gabon</option><option value="Autre">Autre</option></select>
+      </div>
+      <button class="btn btn-o" id="regBtn" onclick="doRegister()">🚀 Créer mon compte</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- HEADER -->
+  <div class="hd">
+    <div class="hdt">
+      <div class="logo">X<em>A</em>FEARN <span style="font-size:11px;opacity:.6">Game</span></div>
+      <div class="hd-coins">🪙 <span id="hCoins">0</span> XAC</div>
+    </div>
+    <div class="hd-stats">
+      <div class="hd-stat"><div class="hd-stat-val" id="hNiveau">1</div><div class="hd-stat-lbl">Niveau</div></div>
+      <div class="hd-stat"><div class="hd-stat-val" id="hFcfa">0F</div><div class="hd-stat-lbl">Solde FCFA</div></div>
+      <div class="hd-stat"><div class="hd-stat-val" id="hRang">-</div><div class="hd-stat-lbl">Rang</div></div>
+    </div>
+  </div>
+
+  <!-- PAGES -->
+  <div class="pg on" id="pg-home">
+    <div class="sg">
+      <div class="sc"><div class="si">🐔</div><div class="sv" id="dFerme" style="color:var(--ob)">0</div><div class="sl">XAC/heure ferme</div></div>
+      <div class="sc"><div class="si">⛏️</div><div class="sv" id="dMine" style="color:var(--pur)">0</div><div class="sl">XAC/heure mine</div></div>
+      <div class="sc"><div class="si">🏰</div><div class="sv" id="dEmpire" style="color:var(--g)">0</div><div class="sl">Ressources</div></div>
+      <div class="sc"><div class="si">⚔️</div><div class="sv" id="dBattles" style="color:var(--r)">0</div><div class="sl">Batailles gagnées</div></div>
+    </div>
+    <div class="card glow-gold">
+      <div class="ct">🎁 Bonus de connexion</div>
+      <div style="text-align:center;padding:10px 0">
+        <div style="font-size:38px;margin-bottom:6px" id="bonusIco">🎁</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:20px;font-weight:700;color:var(--ob)" id="bonusTxt">+50 XACoins</div>
+        <div style="font-size:11px;color:var(--mu);margin:4px 0 14px">Reviens chaque jour pour gagner plus !</div>
+        <button class="btn btn-o pulse-anim" id="bonusBtn" onclick="claimBonus()">🎁 Réclamer</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">📊 Production totale</div>
+      <div style="background:var(--bg3);border-radius:11px;padding:12px;font-size:12px;line-height:2;border:1px solid var(--brd)">
+        🐔 Ferme : <strong id="totalFerme" style="color:var(--ob)">0 XAC/h</strong><br>
+        ⛏️ Mining : <strong id="totalMine" style="color:var(--pur)">0 XAC/h</strong><br>
+        🏰 Empire : <strong id="totalEmpire" style="color:var(--g)">0 res/h</strong><br>
+        💰 Total/jour : <strong id="totalJour" style="color:var(--ob)">0 XAC</strong>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">⚡ Actions rapides</div>
+      <button class="btn btn-o mb" onclick="goPage('ferme',document.querySelector('.nb:nth-child(2)'))">🐔 Collecter la ferme</button>
+      <button class="btn btn-p mb" onclick="goPage('mining',document.querySelector('.nb:nth-child(3)'))">⛏️ Miner des XACoins</button>
+      <button class="btn btn-pk" onclick="goPage('battle',document.querySelector('.nb:nth-child(5)'))">⚔️ Lancer une bataille</button>
+    </div>
+  </div>
+
+  <!-- FERME -->
+  <div class="pg" id="pg-ferme">
+    <div class="card" style="background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(255,179,0,.05));border-color:rgba(16,185,129,.3)">
+      <div style="text-align:center;padding:8px 0">
+        <div style="font-size:44px">🌾</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;margin:4px 0">Ta Ferme Africaine</div>
+        <div style="font-size:11px;color:var(--mu)">Production totale : <strong id="fermeTotal" style="color:var(--ob)">0 XAC/h</strong></div>
+      </div>
+    </div>
+    <button class="btn btn-g mb" id="collectBtn" onclick="collecterFerme()">🧺 Collecter tout</button>
+    <div id="fermeAnimaux"><div class="empty">Chargement...</div></div>
+    <div class="card" style="margin-top:12px">
+      <div class="ct">🛒 Acheter des animaux</div>
+      <div id="shopAnimaux"></div>
+    </div>
+  </div>
+
+  <!-- MINING -->
+  <div class="pg" id="pg-mining">
+    <div class="card glow-blue">
+      <div class="mine-visual">
+        <span class="mine-ico" id="mineIco">⛏️</span>
+        <div class="mine-rate" id="mineRate">0 <small>XAC/heure</small></div>
+        <div style="font-size:11px;color:var(--mu);margin-top:4px" id="mineLast">Dernière mine : jamais</div>
+      </div>
+      <button class="btn btn-p pulse-anim" id="mineBtn" onclick="miner()">⛏️ Miner maintenant</button>
+    </div>
+    <div class="card">
+      <div class="ct">⬆️ Niveaux de mine</div>
+      <div class="upgrade-item" id="upg1">
+        <div class="upg-left"><div class="upg-ico">🪨</div><div><div class="upg-name">Mine Basique</div><div class="upg-rate">1 XAC/heure — Gratuit</div></div></div>
+        <span class="badge badge-g" id="upg1Badge">ACTIF</span>
+      </div>
+      <div class="upgrade-item" id="upg2">
+        <div class="upg-left"><div class="upg-ico">⚙️</div><div><div class="upg-name">Mine Turbo</div><div class="upg-rate">5 XAC/heure — 1000F</div></div></div>
+        <button class="btn btn-p btn-sm" id="upg2Btn" onclick="upgraderMine(2,1000)">Acheter</button>
+      </div>
+      <div class="upgrade-item" id="upg3">
+        <div class="upg-left"><div class="upg-ico">💎</div><div><div class="upg-name">Mine Premium</div><div class="upg-rate">15 XAC/heure — 2500F</div></div></div>
+        <button class="btn btn-pk btn-sm" id="upg3Btn" onclick="upgraderMine(3,2500)">Acheter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMPIRE -->
+  <div class="pg" id="pg-empire">
+    <div class="empire-map" id="empireMap">
+      <span class="empire-ico">🏘️</span>
+      <div class="empire-name" id="empireNom">Mon Village</div>
+      <div class="empire-level" id="empireLevel">Niveau 1</div>
+    </div>
+    <div class="stats-empire">
+      <div class="se"><div class="se-val" id="empSoldats">10</div><div class="se-lbl">Soldats</div></div>
+      <div class="se"><div class="se-val" id="empRes">100</div><div class="se-lbl">Ressources</div></div>
+      <div class="se"><div class="se-val" id="empAtk">5</div><div class="se-lbl">Attaque</div></div>
+    </div>
+    <div class="btn-row mb">
+      <button class="btn btn-g" onclick="collecterEmpire()">🌾 Collecter</button>
+      <button class="btn btn-o" onclick="ameliorerEmpire()">⬆️ Améliorer</button>
+    </div>
+    <div class="card">
+      <div class="ct">⚔️ Attaquer un empire</div>
+      <div id="empireEnnemis"><div class="empty"><span style="font-size:28px;display:block;margin-bottom:6px">🗺️</span>Recherche d'ennemis...</div></div>
+    </div>
+  </div>
+
+  <!-- BATTLE -->
+  <div class="pg" id="pg-battle">
+    <div class="card" style="background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(124,58,237,.05));border-color:rgba(239,68,68,.3)">
+      <div class="ct" style="justify-content:center">⚔️ Arène de Combat</div>
+      <div style="text-align:center;margin-bottom:10px">
+        <div style="font-size:12px;color:var(--mu);margin-bottom:3px">Mise</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:26px;font-weight:900;color:var(--ob)">200 XAC</div>
+        <div style="font-size:10px;color:var(--mu)">Gagnant reçoit 340 XAC (15% commission)</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-r" onclick="rejoindreArene()">⚔️ Combattre</button>
+        <button class="btn btn-gh" onclick="loadBattles()">👁️ En direct</button>
+      </div>
+    </div>
+    <div id="battleContent">
+      <div class="card">
+        <div class="ct">📜 Comment jouer</div>
+        <div style="font-size:12px;color:var(--mu);line-height:2">
+          1. Tu mises <strong style="color:var(--ob)">200 XAC</strong><br>
+          2. Tu choisis une carte<br>
+          3. Ton adversaire choisit sa carte<br>
+          4. La plus forte carte gagne<br><br>
+          <strong style="color:var(--ob)">Hiérarchie :</strong> 👑 &gt; 🐯 &gt; 🦁 &gt; 🐻 &gt; 🦊 &gt; 🐰
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">🏆 Mes batailles</div>
+        <div id="mesBattles"><div class="empty">Aucune bataille encore</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARCHE -->
+  <div class="pg" id="pg-marche">
+    <div class="conv-card">
+      <div style="font-size:13px;color:var(--mu);margin-bottom:4px">Taux de conversion</div>
+      <div class="conv-rate">2 XAC = 1 FCFA</div>
+      <div class="conv-sub">Retrait minimum : 2000 XAC (1000F)</div>
+    </div>
+    <div class="card">
+      <div class="ct">💸 Convertir mes XACoins</div>
+      <div class="fg" style="margin-bottom:8px">
+        <label class="fl">Montant XACoins (min 2000)</label>
+        <input class="fi" id="convAmt" type="number" placeholder="Ex: 2000" inputmode="numeric"/>
+        <div style="font-size:10px;color:var(--mu);margin-top:3px">= <strong id="convFcfa" style="color:var(--g)">0F</strong></div>
+      </div>
+      <button class="btn btn-g" onclick="convertir()">💸 Convertir en FCFA</button>
+    </div>
+    <div class="card">
+      <div class="ct">💰 Retrait FCFA</div>
+      <div style="font-size:12px;color:var(--mu);margin-bottom:12px">
+        Solde disponible : <strong id="marcheBalance" style="color:var(--g);font-size:15px">0F</strong>
+      </div>
+      <button class="btn btn-b" onclick="demanderRetrait()">📱 Demander un retrait</button>
+    </div>
+    <div class="card">
+      <div class="ct">📊 Mes transactions</div>
+      <div id="transactionsList"><div class="empty">Aucune transaction</div></div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav>
+    <button class="nb on" onclick="goPage('home',this)"><span class="ic">🏠</span>Accueil</button>
+    <button class="nb" onclick="goPage('ferme',this)"><span class="ic">🐔</span>Ferme</button>
+    <button class="nb" onclick="goPage('mining',this)"><span class="ic">⛏️</span>Mining</button>
+    <button class="nb" onclick="goPage('empire',this)"><span class="ic">🏰</span>Empire</button>
+    <button class="nb" onclick="goPage('battle',this)"><span class="ic">⚔️</span>Battle</button>
+    <button class="nb" onclick="goPage('marche',this)"><span class="ic">💰</span>Marché</button>
+  </nav>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toastEl"></div>
+
+<!-- MODAL -->
+<div class="ov" id="ov" onclick="closeMo()">
+  <div class="mo" onclick="event.stopPropagation()">
+    <button class="mcl" onclick="closeMo()">✕</button>
+    <div id="moBody"></div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────
+var SB  = "https://xtmmmrajknnadodgrrcu.supabase.co";
+var KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bW1tcmFqa25uYWRvZGdycmN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzM2NTEsImV4cCI6MjA5NDIwOTY1MX0.0r3JfPL2rgKGWO0iiapV7mb8fI8N3Cmz4M9L1L-zqVw";
+var H   = {"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json","Prefer":"return=representation"};
+
+var ANIMAUX = {
+  poule:    {nom:"Poule Pondeuse",    ico:"🐔", prix:500,  ph:1.04,  desc:"25 XAC/jour"},
+  mouton:   {nom:"Mouton Lainier",    ico:"🐑", prix:1500, ph:3.33,  desc:"80 XAC/jour"},
+  vache:    {nom:"Vache Laitière",    ico:"🐄", prix:3000, ph:8.33,  desc:"200 XAC/jour"},
+  troupeau: {nom:"Troupeau Élevage",  ico:"🐃", prix:8000, ph:25,    desc:"600 XAC/jour"}
+};
+var CARTES = ["👑","🐯","🦁","🐻","🦊","🐰"];
+var CARTE_FORCE = {"👑":6,"🐯":5,"🦁":4,"🐻":3,"🦊":2,"🐰":1};
+var CONV_RATE = 2; // 2 XAC = 1 FCFA
+var MISE_BATTLE = 200;
+
+var CU = null;
+var TID = null;
+
+// ── DB ────────────────────────────────────────────────────
+function dbQ(t,p,cb){
+  var qs=p?"?"+Object.keys(p).map(function(k){return k+"="+p[k];}).join("&"):"";
+  var x=new XMLHttpRequest();
+  x.open("GET",SB+"/rest/v1/"+t+qs);
+  Object.keys(H).forEach(function(h){x.setRequestHeader(h,H[h]);});
+  x.onload=function(){try{cb(null,JSON.parse(x.responseText));}catch(e){cb("Err");}};
+  x.onerror=function(){cb("Net");};
+  x.send();
+}
+function dbI(t,d,cb){
+  var x=new XMLHttpRequest();
+  x.open("POST",SB+"/rest/v1/"+t);
+  Object.keys(H).forEach(function(h){x.setRequestHeader(h,H[h]);});
+  x.onload=function(){
+    var r=JSON.parse(x.responseText||"{}");
+    if(r&&r.code)cb("Err:"+r.message);
+    else cb(null,r);
+  };
+  x.onerror=function(){cb("Net");};
+  x.send(JSON.stringify(d));
+}
+function dbU(t,p,d,cb){
+  var qs="?"+Object.keys(p).map(function(k){return k+"="+p[k];}).join("&");
+  var x=new XMLHttpRequest();
+  x.open("PATCH",SB+"/rest/v1/"+t+qs);
+  Object.keys(H).forEach(function(h){x.setRequestHeader(h,H[h]);});
+  x.onload=function(){if(cb)cb();};
+  x.onerror=function(){if(cb)cb();};
+  x.send(JSON.stringify(d));
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function toast(m,t){
+  var e=document.getElementById("toastEl");
+  e.textContent=m;
+  e.className="toast on toast-"+(t||"in");
+  setTimeout(function(){e.className="toast";},3000);
+}
+function showMo(h){document.getElementById("moBody").innerHTML=h;document.getElementById("ov").classList.add("on");}
+function closeMo(){document.getElementById("ov").classList.remove("on");}
+function goPage(n,btn){
+  document.querySelectorAll(".pg").forEach(function(p){p.classList.remove("on");});
+  document.querySelectorAll(".nb").forEach(function(b){b.classList.remove("on");});
+  document.getElementById("pg-"+n).classList.add("on");
+  if(btn)btn.classList.add("on");
+  if(n==="ferme")loadFerme();
+  if(n==="mining")loadMining();
+  if(n==="empire")loadEmpire();
+  if(n==="battle")loadBattles();
+  if(n==="marche")loadMarche();
+  if(n==="home")loadHome();
+}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
+function fmt(n){return Math.floor(n).toLocaleString("fr");}
+function today(){return new Date().toISOString().slice(0,10);}
+function hoursAgo(d){return (Date.now()-new Date(d).getTime())/3600000;}
+
+function updateHeader(){
+  if(!CU)return;
+  document.getElementById("hCoins").textContent=fmt(CU.xacoins);
+  document.getElementById("hNiveau").textContent=CU.niveau||1;
+  document.getElementById("hFcfa").textContent=fmt(CU.fcfa_balance||0)+"F";
+}
+
+// ── AUTH ──────────────────────────────────────────────────
+function switchTab(t){
+  document.getElementById("loginForm").style.display=t==="login"?"block":"none";
+  document.getElementById("regForm").style.display=t==="reg"?"block":"none";
+  document.getElementById("tabL").className="tab"+(t==="login"?" on":"");
+  document.getElementById("tabR").className="tab"+(t==="reg"?" on":"");
+}
+
+function doLogin(){
+  var code=document.getElementById("lCode").value;
+  var num=(document.getElementById("lTel").value||"").trim().replace(/\D/g,"");
+  if(!num||num.length<6){toast("Entre ton numéro","er");return;}
+  var tel=code+num;
+  var btn=document.getElementById("loginBtn");
+  btn.disabled=true;btn.textContent="⏳...";
+  dbQ("xa_users",{telephone:"eq."+tel,limit:"1"},function(e,d){
+    if(!e&&d&&d[0]){
+      CU=d[0];lsSet("xa_game_user",{id:CU.id});
+      document.getElementById("authPage").style.display="none";
+      showApp();toast("Bienvenue "+CU.nom+" ! 👋","ok");
+    } else {
+      // Essai sans indicatif
+      dbQ("xa_users",{telephone:"eq."+num,limit:"1"},function(e2,d2){
+        if(!e2&&d2&&d2[0]){
+          CU=d2[0];lsSet("xa_game_user",{id:CU.id});
+          document.getElementById("authPage").style.display="none";
+          showApp();toast("Bienvenue "+CU.nom+" ! 👋","ok");
+        } else {
+          toast("Numéro introuvable — inscris-toi","er");
+          btn.disabled=false;btn.textContent="🔑 Se connecter";
+          setTimeout(function(){switchTab("reg");},1500);
+        }
+      });
+    }
+  });
+}
+
+function doRegister(){
+  var nom=(document.getElementById("rNom").value||"").trim();
+  var code=document.getElementById("rCode").value;
+  var num=(document.getElementById("rTel").value||"").trim().replace(/\D/g,"");
+  var pays=document.getElementById("rPays").value;
+  if(!nom||nom.length<2){toast("Entre ton nom","er");return;}
+  if(!num||num.length<6){toast("Numéro invalide","er");return;}
+  if(!pays){toast("Choisis ton pays","er");return;}
+  var tel=code+num;
+  var btn=document.getElementById("regBtn");
+  btn.disabled=true;btn.textContent="⏳ Création...";
+  // Vérif doublon
+  dbQ("xa_users",{telephone:"eq."+tel,limit:"1"},function(e,ex){
+    if(!e&&ex&&ex[0]){
+      CU=ex[0];lsSet("xa_game_user",{id:CU.id});
+      document.getElementById("authPage").style.display="none";
+      showApp();toast("Compte trouvé — connecté ! 👋","ok");return;
+    }
+    dbI("xa_users",{
+      telegram_id:TID||null,nom:nom,telephone:tel,pays:pays,
+      xacoins:100,fcfa_balance:0,niveau:1,experience:0
+    },function(err,res){
+      if(err){toast("Erreur : "+err,"er");btn.disabled=false;btn.textContent="🚀 Créer";return;}
+      var u=Array.isArray(res)?res[0]:res;
+      if(u&&u.id){
+        CU=u;lsSet("xa_game_user",{id:u.id});
+        // Créer mine + empire par défaut
+        dbI("xa_mining",{user_id:u.id,niveau:1,xacoins_total:0},function(){});
+        dbI("xa_empire",{user_id:u.id,nom_empire:nom+" Empire",niveau:1,soldats:10,ressources:100},function(){});
+        document.getElementById("authPage").style.display="none";
+        showApp();
+        toast("Bienvenue ! +100 XACoins offerts 🎁","gold");
+      } else {
+        // Relire
+        dbQ("xa_users",{telephone:"eq."+tel,order:"id.desc",limit:"1"},function(e3,d3){
+          if(!e3&&d3&&d3[0]){
+            CU=d3[0];lsSet("xa_game_user",{id:CU.id});
+            dbI("xa_mining",{user_id:CU.id,niveau:1,xacoins_total:0},function(){});
+            dbI("xa_empire",{user_id:CU.id,nom_empire:nom+" Empire",niveau:1,soldats:10,ressources:100},function(){});
+            document.getElementById("authPage").style.display="none";
+            showApp();toast("Bienvenue "+nom+" ! 🎉","ok");
+          } else {toast("Erreur — réessaie","er");btn.disabled=false;btn.textContent="🚀 Créer";}
+        });
+      }
+    });
+  });
+}
+
+// ── SHOW APP ──────────────────────────────────────────────
+function showApp(){
+  updateHeader();
+  document.getElementById("app").style.display="block";
+  loadHome();
+}
+
+// ── HOME ──────────────────────────────────────────────────
+function loadHome(){
+  if(!CU)return;
+  updateHeader();
+  // Bonus connexion
+  var bBtn=document.getElementById("bonusBtn");
+  if(CU.derniere_connexion===today()){
+    bBtn.disabled=true;bBtn.textContent="✅ Déjà réclamé";bBtn.className="btn btn-gh";
+    document.getElementById("bonusIco").textContent="✅";
+    document.getElementById("bonusTxt").textContent="Reviens demain !";
+  }
+  // Calcul productions
+  dbQ("xa_animaux",{user_id:"eq."+CU.id},function(e,anims){
+    var phFerme=0;
+    (anims||[]).forEach(function(a){
+      var aInfo=ANIMAUX[a.type_animal];
+      if(aInfo)phFerme+=aInfo.ph*(a.quantite||0);
+    });
+    document.getElementById("dFerme").textContent=phFerme.toFixed(1);
+    document.getElementById("totalFerme").textContent=phFerme.toFixed(1)+" XAC/h";
+    document.getElementById("totalJour").textContent=fmt(phFerme*24)+" XAC";
+  });
+  dbQ("xa_mining",{user_id:"eq."+CU.id},function(e,mine){
+    var rates=[0,1,5,15];
+    var niv=mine&&mine[0]?mine[0].niveau:1;
+    var rate=rates[niv]||1;
+    document.getElementById("dMine").textContent=rate;
+    document.getElementById("totalMine").textContent=rate+" XAC/h";
+  });
+  dbQ("xa_empire",{user_id:"eq."+CU.id},function(e,emp){
+    var res=emp&&emp[0]?emp[0].ressources:0;
+    document.getElementById("dEmpire").textContent=fmt(res);
+    document.getElementById("totalEmpire").textContent=fmt(res)+" res";
+  });
+  dbQ("xa_battles",{gagnant_id:"eq."+CU.id},function(e,b){
+    document.getElementById("dBattles").textContent=(b||[]).length;
+  });
+}
+
+function claimBonus(){
+  if(!CU)return;
+  if(CU.derniere_connexion===today()){toast("Bonus déjà réclamé aujourd'hui !","er");return;}
+  var bonus=50+(CU.niveau||1)*10;
+  dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins+bonus,derniere_connexion:today()},function(){
+    CU.xacoins+=bonus;CU.derniere_connexion=today();
+    dbI("xa_transactions",{user_id:CU.id,type:"bonus",xacoins:bonus,description:"Bonus connexion jour "+today()},function(){});
+    toast("+"+bonus+" XACoins ! Bonus réclamé 🎁","gold");
+    loadHome();
+  });
+}
+
+// ── FERME ─────────────────────────────────────────────────
+function loadFerme(){
+  if(!CU)return;
+  var total=0;
+  dbQ("xa_animaux",{user_id:"eq."+CU.id},function(e,anims){
+    var html="";
+    var types=Object.keys(ANIMAUX);
+    types.forEach(function(type){
+      var aInfo=ANIMAUX[type];
+      var myAnim=(anims||[]).find(function(a){return a.type_animal===type;});
+      var qty=myAnim?myAnim.quantite:0;
+      var prod=aInfo.ph*qty;
+      total+=prod;
+      var lastC=myAnim?myAnim.derniere_collecte:null;
+      var heures=lastC?hoursAgo(lastC):0;
+      var pending=Math.min(heures*prod,prod*24); // max 24h
+      html+='<div class="animal-card">' +
+        '<div class="animal-top">' +
+          '<div class="animal-ico">'+aInfo.ico+'</div>' +
+          '<div class="animal-info">' +
+            '<div class="animal-name">'+aInfo.nom+'</div>' +
+            '<div class="animal-prod">+'+aInfo.ph.toFixed(1)+' XAC/h • '+aInfo.desc+'</div>' +
+          '</div>' +
+          '<div class="animal-qty">'+qty+'<small style="display:block;font-size:9px">animaux</small></div>' +
+        '</div>' +
+        (qty>0?'<div style="font-size:11px;color:var(--g);margin-bottom:6px">💰 En attente : <strong>'+pending.toFixed(0)+' XAC</strong></div>':'') +
+        (qty>0?'<div class="progress-wrap"><div class="progress-bar" style="width:'+Math.min(100,(heures/24)*100)+'%"></div></div>':'') +
+        (qty===0?'<div style="font-size:11px;color:var(--mu)">Aucun animal • Achète en bas !</div>':'') +
+      '</div>';
+    });
+    document.getElementById("fermeAnimaux").innerHTML=html||'<div class="empty">Aucun animal encore</div>';
+    document.getElementById("fermeTotal").textContent=total.toFixed(1)+" XAC/h";
+  });
+  // Shop
+  var shopHtml="";
+  Object.keys(ANIMAUX).forEach(function(type){
+    var a=ANIMAUX[type];
+    shopHtml+='<div class="market-item">' +
+      '<div style="display:flex;align-items:center;gap:9px">' +
+        '<span style="font-size:28px">'+a.ico+'</span>' +
+        '<div><div style="font-weight:600;font-size:12px">'+a.nom+'</div>' +
+        '<div style="font-size:10px;color:var(--g)">'+a.desc+'</div></div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-family:Outfit,sans-serif;font-weight:700;color:var(--ob)">'+a.prix+'F</div>' +
+        '<button class="btn btn-o btn-sm" style="margin-top:4px" onclick="acheterAnimal(\''+type+'\')">Acheter</button>' +
+      '</div>' +
+    '</div>';
+  });
+  document.getElementById("shopAnimaux").innerHTML=shopHtml;
+}
+
+function collecterFerme(){
+  if(!CU)return;
+  var btn=document.getElementById("collectBtn");
+  btn.disabled=true;btn.textContent="⏳ Collecte...";
+  dbQ("xa_animaux",{user_id:"eq."+CU.id},function(e,anims){
+    if(!anims||!anims.length){toast("Tu n'as pas encore d'animaux !","er");btn.disabled=false;btn.textContent="🧺 Collecter tout";return;}
+    var total=0;var now=new Date().toISOString();
+    var done=0;
+    anims.forEach(function(anim){
+      var aInfo=ANIMAUX[anim.type_animal];
+      if(!aInfo||anim.quantite===0){done++;if(done===anims.length)finishCollect(total);return;}
+      var heures=hoursAgo(anim.derniere_collecte);
+      var pending=Math.min(heures*aInfo.ph*anim.quantite, aInfo.ph*anim.quantite*24);
+      total+=pending;
+      dbU("xa_animaux",{id:"eq."+anim.id},{derniere_collecte:now},function(){
+        done++;if(done===anims.length)finishCollect(total);
+      });
+    });
+  });
+  function finishCollect(total){
+    total=Math.floor(total);
+    if(total===0){toast("Rien à collecter encore — attends un peu !","in");btn.disabled=false;btn.textContent="🧺 Collecter tout";return;}
+    dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins+total},function(){
+      dbI("xa_transactions",{user_id:CU.id,type:"ferme",xacoins:total,description:"Collecte ferme"},function(){});
+      CU.xacoins+=total;updateHeader();
+      toast("+"+total+" XAC récoltés ! 🌾","gold");
+      btn.disabled=false;btn.textContent="🧺 Collecter tout";
+      loadFerme();
+    });
+  }
+}
+
+function acheterAnimal(type){
+  if(!CU)return;
+  var a=ANIMAUX[type];
+  showMo(
+    '<div style="text-align:center;padding:10px 0">' +
+    '<div style="font-size:52px;margin-bottom:8px">'+a.ico+'</div>' +
+    '<div style="font-family:Outfit,sans-serif;font-size:18px;font-weight:700;margin-bottom:4px">'+a.nom+'</div>' +
+    '<div style="font-size:12px;color:var(--mu);margin-bottom:16px">'+a.desc+'</div>' +
+    '<div style="background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:16px">' +
+    '<div style="font-size:11px;color:var(--mu)">Prix</div>' +
+    '<div style="font-family:Outfit,sans-serif;font-size:28px;font-weight:900;color:var(--ob)">'+a.prix+'F</div>' +
+    '<div style="font-size:10px;color:var(--mu);margin-top:2px">Paiement via Mobile Money</div>' +
+    '</div>' +
+    '<button class="btn btn-o" onclick="confirmerAchatAnimal(\''+type+'\')" style="margin-bottom:8px">💳 Payer '+a.prix+'F</button>' +
+    '<button class="btn btn-gh" onclick="closeMo()">Annuler</button>' +
+    '</div>'
+  );
+}
+
+function confirmerAchatAnimal(type){
+  closeMo();
+  // Ici intégration LeekPay
+  showMo(
+    '<div style="text-align:center;padding:16px">' +
+    '<div style="font-size:36px;margin-bottom:10px">💳</div>' +
+    '<div style="font-family:Outfit,sans-serif;font-size:16px;font-weight:700;margin-bottom:12px">Paiement Mobile Money</div>' +
+    '<div style="background:var(--bg3);border-radius:11px;padding:12px;margin-bottom:14px">' +
+    '<div style="font-size:9px;color:var(--mu)">Orange / MTN / Wave / Flooz</div>' +
+    '<div style="font-family:Outfit,sans-serif;font-size:22px;font-weight:900;color:var(--ob);margin:4px 0">699 663 183</div>' +
+    '<div style="font-size:10px;color:var(--mu)">Abdoula CHERIF</div>' +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--mu);margin-bottom:12px">Envoie le montant puis entre la référence :</div>' +
+    '<input class="fi" id="refPay" type="text" placeholder="Référence transaction" style="margin-bottom:12px"/>' +
+    '<button class="btn btn-g" onclick="validerAchatAnimal(\''+type+'\')">✅ Valider l\'achat</button>' +
+    '</div>'
+  );
+}
+
+function validerAchatAnimal(type){
+  var ref=(document.getElementById("refPay")||{}).value||"";
+  if(!ref||ref.length<4){toast("Entre la référence de paiement","er");return;}
+  dbQ("xa_animaux",{user_id:"eq."+CU.id,type_animal:"eq."+type},function(e,ex){
+    if(!e&&ex&&ex[0]){
+      // Incrémenter
+      dbU("xa_animaux",{id:"eq."+ex[0].id},{quantite:ex[0].quantite+1},function(){
+        dbI("xa_transactions",{user_id:CU.id,type:"achat_animal",fcfa:ANIMAUX[type].prix,description:"Achat "+ANIMAUX[type].nom+" ref:"+ref},function(){});
+        closeMo();toast("🐔 "+ANIMAUX[type].nom+" achetée ! En cours d'activation","ok");
+        loadFerme();
+      });
+    } else {
+      dbI("xa_animaux",{user_id:CU.id,type_animal:type,quantite:1,derniere_collecte:new Date().toISOString()},function(err){
+        if(!err){
+          dbI("xa_transactions",{user_id:CU.id,type:"achat_animal",fcfa:ANIMAUX[type].prix,description:"Achat "+ANIMAUX[type].nom+" ref:"+ref},function(){});
+          closeMo();toast("🐔 "+ANIMAUX[type].nom+" achetée ! Production démarrée","ok");
+          loadFerme();
+        } else {toast("Erreur — contacte le support","er");}
+      });
+    }
+  });
+}
+
+// ── MINING ────────────────────────────────────────────────
+function loadMining(){
+  if(!CU)return;
+  dbQ("xa_mining",{user_id:"eq."+CU.id},function(e,mine){
+    var rates=[0,1,5,15];
+    var icons=["","⛏️","⚙️","💎"];
+    if(!mine||!mine[0]){
+      dbI("xa_mining",{user_id:CU.id,niveau:1,xacoins_total:0},function(err,r){
+        if(!err)loadMining();
+      });return;
+    }
+    var m=mine[0];
+    var niv=m.niveau||1;
+    var rate=rates[niv]||1;
+    var h=hoursAgo(m.derniere_mine);
+    document.getElementById("mineIco").textContent=icons[niv];
+    document.getElementById("mineRate").innerHTML=rate+" <small>XAC/heure</small>";
+    document.getElementById("mineLast").textContent="Il y a "+h.toFixed(1)+"h (gain en attente: "+Math.floor(h*rate)+" XAC)";
+    // Badges niveaux
+    [1,2,3].forEach(function(i){
+      var el=document.getElementById("upg"+i);
+      var badge=document.getElementById("upg"+i+"Badge");
+      if(i<niv){el.classList.add("active");if(badge)badge.style.display="block";}
+      else if(i===niv){el.classList.add("active");if(badge)badge.style.display="block";}
+      var btn=document.getElementById("upg"+i+"Btn");
+      if(btn&&i<=niv)btn.style.display="none";
+    });
+  });
+}
+
+function miner(){
+  if(!CU)return;
+  var btn=document.getElementById("mineBtn");
+  btn.disabled=true;btn.textContent="⛏️ Mining...";
+  dbQ("xa_mining",{user_id:"eq."+CU.id},function(e,mine){
+    if(!mine||!mine[0]){btn.disabled=false;btn.textContent="⛏️ Miner";return;}
+    var m=mine[0];
+    var rates=[0,1,5,15];
+    var rate=rates[m.niveau||1]||1;
+    var h=hoursAgo(m.derniere_mine);
+    var gain=Math.min(Math.floor(h*rate),rate*24);
+    if(gain<1){toast("Attends encore un peu ! (min 1 heure)","in");btn.disabled=false;btn.textContent="⛏️ Miner maintenant";return;}
+    var now=new Date().toISOString();
+    dbU("xa_mining",{id:"eq."+m.id},{derniere_mine:now,xacoins_total:(m.xacoins_total||0)+gain},function(){
+      dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins+gain},function(){
+        dbI("xa_transactions",{user_id:CU.id,type:"mining",xacoins:gain,description:"Mining niveau "+m.niveau},function(){});
+        CU.xacoins+=gain;updateHeader();
+        toast("+"+gain+" XAC minés ! ⛏️","gold");
+        btn.disabled=false;btn.textContent="⛏️ Miner maintenant";
+        loadMining();
+      });
+    });
+  });
+}
+
+function upgraderMine(niveau,prixFcfa){
+  showMo(
+    '<div style="text-align:center;padding:10px 0">' +
+    '<div style="font-size:48px;margin-bottom:8px">'+(niveau===2?"⚙️":"💎")+'</div>' +
+    '<div style="font-family:Outfit,sans-serif;font-size:17px;font-weight:700;margin-bottom:4px">Mine '+(niveau===2?"Turbo":"Premium")+'</div>' +
+    '<div style="font-size:12px;color:var(--mu);margin-bottom:16px">'+(niveau===2?"5":"15")+' XAC/heure</div>' +
+    '<div style="background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:16px">' +
+    '<div style="font-family:Outfit,sans-serif;font-size:26px;font-weight:900;color:var(--ob)">'+prixFcfa+'F</div>' +
+    '</div>' +
+    '<input class="fi" id="refMine" type="text" placeholder="Référence paiement" style="margin-bottom:12px"/>' +
+    '<button class="btn btn-p" onclick="validerUpgradeMine('+niveau+',\''+prixFcfa+'F\')" style="margin-bottom:8px">✅ Valider</button>' +
+    '<button class="btn btn-gh" onclick="closeMo()">Annuler</button>' +
+    '</div>'
+  );
+}
+
+function validerUpgradeMine(niveau,prix){
+  var ref=(document.getElementById("refMine")||{}).value||"";
+  if(!ref||ref.length<4){toast("Entre la référence","er");return;}
+  dbQ("xa_mining",{user_id:"eq."+CU.id},function(e,mine){
+    if(!mine||!mine[0])return;
+    dbU("xa_mining",{id:"eq."+mine[0].id},{niveau:niveau},function(){
+      dbI("xa_transactions",{user_id:CU.id,type:"upgrade_mine",fcfa:parseInt(prix),description:"Upgrade mine niveau "+niveau+" ref:"+ref},function(){});
+      closeMo();toast("Mine upgradée ! Niveau "+niveau+" actif ✨","ok");
+      loadMining();
+    });
+  });
+}
+
+// ── EMPIRE ────────────────────────────────────────────────
+function loadEmpire(){
+  if(!CU)return;
+  dbQ("xa_empire",{user_id:"eq."+CU.id},function(e,emp){
+    if(!emp||!emp[0]){
+      dbI("xa_empire",{user_id:CU.id,nom_empire:CU.nom+" Empire",niveau:1,soldats:10,ressources:100},function(err,r){
+        if(!err)loadEmpire();
+      });return;
+    }
+    var em=emp[0];
+    var empIcos=["","🏘️","🏡","🏠","🏛️","🏯","🏰","👑"];
+    document.getElementById("empireIco")||document.querySelector(".empire-ico");
+    var ico=document.querySelector(".empire-ico");
+    if(ico)ico.textContent=empIcos[Math.min(em.niveau||1,7)];
+    document.getElementById("empireNom").textContent=em.nom_empire;
+    document.getElementById("empireLevel").textContent="Niveau "+(em.niveau||1)+" • "+em.soldats+" soldats";
+    document.getElementById("empSoldats").textContent=em.soldats;
+    document.getElementById("empRes").textContent=fmt(em.ressources);
+    document.getElementById("empAtk").textContent=em.points_attaque||5;
+  });
+  // Charger ennemis
+  dbQ("xa_empire",{order:"ressources.desc",limit:"10"},function(e,emps){
+    var html="";
+    (emps||[]).forEach(function(em){
+      if(em.user_id===CU.id)return;
+      html+='<div class="enemy-item" onclick="attaquerEmpire('+em.id+',\''+em.nom_empire+'\','+em.soldats+')">' +
+        '<span style="font-size:28px">🏰</span>' +
+        '<div style="flex:1"><div style="font-weight:600;font-size:12px">'+em.nom_empire+'</div>' +
+        '<div style="font-size:10px;color:var(--mu)">'+em.soldats+' soldats • '+fmt(em.ressources)+' ressources</div></div>' +
+        '<span class="badge badge-r">Attaquer ⚔️</span>' +
+      '</div>';
+    });
+    document.getElementById("empireEnnemis").innerHTML=html||'<div class="empty">Aucun ennemi disponible</div>';
+  });
+}
+
+function collecterEmpire(){
+  dbQ("xa_empire",{user_id:"eq."+CU.id},function(e,emp){
+    if(!emp||!emp[0])return;
+    var em=emp[0];
+    var h=hoursAgo(em.derniere_collecte);
+    var gain=Math.floor(h*(em.niveau||1)*5);
+    if(gain<1){toast("Attends encore — production en cours","in");return;}
+    dbU("xa_empire",{id:"eq."+em.id},{ressources:em.ressources+gain,derniere_collecte:new Date().toISOString()},function(){
+      toast("+"+gain+" ressources collectées ! 🌾","ok");
+      loadEmpire();
+    });
+  });
+}
+
+function ameliorerEmpire(){
+  dbQ("xa_empire",{user_id:"eq."+CU.id},function(e,emp){
+    if(!emp||!emp[0])return;
+    var em=emp[0];
+    var cout=em.niveau*100; // ressources nécessaires
+    if(em.ressources<cout){toast("Pas assez de ressources ! ("+cout+" nécessaires)","er");return;}
+    dbU("xa_empire",{id:"eq."+em.id},{niveau:em.niveau+1,ressources:em.ressources-cout,soldats:em.soldats+5,points_attaque:em.points_attaque+2,points_defense:em.points_defense+2},function(){
+      toast("Empire amélioré ! Niveau "+(em.niveau+1)+" 🏰","gold");
+      loadEmpire();
+    });
+  });
+}
+
+function attaquerEmpire(empireId,nom,soldatsEnnemi){
+  dbQ("xa_empire",{user_id:"eq."+CU.id},function(e,myEmp){
+    if(!myEmp||!myEmp[0]){toast("Tu n'as pas d'empire","er");return;}
+    var me=myEmp[0];
+    var score_moi=me.soldats*(me.points_attaque||5);
+    var score_enn=soldatsEnnemi*5;
+    var victoire=score_moi>score_enn||Math.random()>0.4; // avantage attaquant
+    if(victoire){
+      var butin=Math.floor(Math.random()*50+20);
+      dbU("xa_empire",{id:"eq."+me.id},{ressources:me.ressources+butin},function(){
+        toast("VICTOIRE ! +"+butin+" ressources pillées ⚔️","gold");loadEmpire();
+      });
+    } else {
+      var perte=Math.floor(Math.random()*20+5);
+      dbU("xa_empire",{id:"eq."+me.id},{soldats:Math.max(1,me.soldats-perte)},function(){
+        toast("DÉFAITE... -"+perte+" soldats perdus 😔","er");loadEmpire();
+      });
+    }
+  });
+}
+
+// ── BATTLE ────────────────────────────────────────────────
+function loadBattles(){
+  dbQ("xa_battles",{status:"eq.waiting",order:"created_at.desc",limit:"5"},function(e,b){
+    document.getElementById("mesBattles").innerHTML=(b&&b.length)?
+      b.map(function(bt){return '<div class="card" style="margin-bottom:8px;text-align:center"><div style="font-size:22px;margin-bottom:4px">⚔️ Bataille en attente</div><div style="font-size:11px;color:var(--mu)">Mise: '+bt.mise_xacoins+' XAC</div><button class="btn btn-r btn-sm" onclick="rejoindreBattle('+bt.id+')">Rejoindre ⚔️</button></div>';}).join(""):
+      '<div class="empty">Aucune bataille en cours</div>';
+  });
+}
+
+function rejoindreArene(){
+  if(!CU)return;
+  if(CU.xacoins<MISE_BATTLE){toast("Tu as besoin de "+MISE_BATTLE+" XAC pour jouer","er");return;}
+  showMo(
+    '<div style="text-align:center">' +
+    '<div style="font-size:44px;margin-bottom:10px">⚔️</div>' +
+    '<div style="font-family:Outfit,sans-serif;font-size:17px;font-weight:700;margin-bottom:6px">Choisir une carte</div>' +
+    '<div style="font-size:11px;color:var(--mu);margin-bottom:16px">Mise : '+MISE_BATTLE+' XAC • Gagnant reçoit '+(MISE_BATTLE*2*0.85).toFixed(0)+' XAC</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">' +
+    CARTES.map(function(c,i){
+      var force=CARTE_FORCE[c];
+      return '<div onclick="choisirCarte(\''+c+'\')" style="background:var(--bg3);border-radius:12px;padding:14px;border:2px solid var(--brd);cursor:pointer;text-align:center" class="card-choice">' +
+        '<div style="font-size:32px">'+c+'</div>' +
+        '<div style="font-size:10px;color:var(--mu);margin-top:4px">Force: '+force+'</div>' +
+      '</div>';
+    }).join("") +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function choisirCarte(carte){
+  closeMo();
+  // Vérif si bataille en attente
+  dbQ("xa_battles",{status:"eq.waiting",order:"created_at.asc",limit:"1"},function(e,battles){
+    if(!e&&battles&&battles[0]&&battles[0].player1_id!==CU.id){
+      // Rejoindre une bataille existante
+      var bt=battles[0];
+      var maCarte=carte;
+      var cartAdv=bt.player1_carte;
+      var win=CARTE_FORCE[maCarte]>CARTE_FORCE[cartAdv];
+      var commission=Math.floor(bt.mise_xacoins*0.15);
+      var gain=Math.floor(bt.mise_xacoins*2*0.85);
+      var gagnant=win?CU.id:bt.player1_id;
+      var perdant=win?bt.player1_id:CU.id;
+      // Déduire mise du joueur 2
+      var newCoins=CU.xacoins-bt.mise_xacoins;
+      dbU("xa_users",{id:"eq."+CU.id},{xacoins:newCoins},function(){
+        CU.xacoins=newCoins;
+        // Donner gain au gagnant
+        dbQ("xa_users",{id:"eq."+gagnant},function(e2,gu){
+          if(!e2&&gu&&gu[0]){
+            dbU("xa_users",{id:"eq."+gagnant},{xacoins:gu[0].xacoins+gain},function(){
+              if(gagnant===CU.id)CU.xacoins+=gain;
+              dbU("xa_battles",{id:"eq."+bt.id},{player2_id:CU.id,player2_carte:maCarte,status:"finished",gagnant_id:gagnant,commission:commission,finished_at:new Date().toISOString()},function(){
+                updateHeader();
+                if(win){
+                  toast("🏆 VICTOIRE ! "+maCarte+" bat "+cartAdv+" ! +"+gain+" XAC","gold");
+                } else {
+                  toast("😔 DÉFAITE ! "+cartAdv+" bat "+maCarte+"...","er");
+                }
+                loadBattles();
+              });
+            });
+          }
+        });
+      });
+    } else {
+      // Créer nouvelle bataille
+      dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins-MISE_BATTLE},function(){
+        CU.xacoins-=MISE_BATTLE;updateHeader();
+        dbI("xa_battles",{player1_id:CU.id,player1_carte:carte,mise_xacoins:MISE_BATTLE,status:"waiting"},function(err){
+          if(!err){toast("Bataille créée ! En attente d'un adversaire... ⚔️","in");}
+          else{
+            // Rembourser
+            dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins+MISE_BATTLE},function(){CU.xacoins+=MISE_BATTLE;updateHeader();});
+            toast("Erreur — réessaie","er");
+          }
+          loadBattles();
+        });
+      });
+    }
+  });
+}
+
+function rejoindreBattle(btId){
+  if(!CU||CU.xacoins<MISE_BATTLE){toast("Pas assez de XAC","er");return;}
+  dbQ("xa_battles",{id:"eq."+btId},function(e,b){
+    if(!b||!b[0]||b[0].status!=="waiting"){toast("Bataille indisponible","er");return;}
+    if(b[0].player1_id===CU.id){toast("Tu ne peux pas combattre toi-même","er");return;}
+    showMo(
+      '<div style="text-align:center">' +
+      '<div style="font-size:42px;margin-bottom:10px">⚔️</div>' +
+      '<div style="font-family:Outfit,sans-serif;font-size:16px;font-weight:700;margin-bottom:14px">Rejoindre la bataille</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">' +
+      CARTES.map(function(c){
+        return '<div onclick="choisirCarte(\''+c+'\')" style="background:var(--bg3);border-radius:12px;padding:14px;border:2px solid var(--brd);cursor:pointer;text-align:center">' +
+          '<div style="font-size:30px">'+c+'</div>' +
+          '<div style="font-size:9px;color:var(--mu);margin-top:3px">Force: '+CARTE_FORCE[c]+'</div>' +
+        '</div>';
+      }).join("") +
+      '</div></div>'
+    );
+  });
+}
+
+// ── MARCHE ────────────────────────────────────────────────
+function loadMarche(){
+  if(!CU)return;
+  document.getElementById("marcheBalance").textContent=fmt(CU.fcfa_balance||0)+"F";
+  document.getElementById("convAmt").oninput=function(){
+    var v=parseInt(this.value)||0;
+    document.getElementById("convFcfa").textContent=Math.floor(v/CONV_RATE)+"F";
+  };
+  dbQ("xa_transactions",{user_id:"eq."+CU.id,order:"created_at.desc",limit:"10"},function(e,txs){
+    var icons={bonus:"🎁",ferme:"🌾",mining:"⛏️",battle:"⚔️",achat_animal:"🐔",upgrade_mine:"⚙️",retrait:"💸",conversion:"💱"};
+    document.getElementById("transactionsList").innerHTML=(txs&&txs.length)?
+      txs.map(function(t){
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--brd)">' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+          '<div style="font-size:18px">'+(icons[t.type]||"💰")+'</div>' +
+          '<div><div style="font-size:12px;font-weight:600">'+t.description+'</div>' +
+          '<div style="font-size:10px;color:var(--mu)">'+(t.created_at||"").slice(0,10)+'</div></div>' +
+          '</div>' +
+          '<div style="text-align:right">' +
+          (t.xacoins>0?'<div style="font-family:Outfit,sans-serif;font-weight:700;color:var(--ob)">+'+t.xacoins+' XAC</div>':'') +
+          (t.fcfa>0?'<div style="font-size:11px;color:var(--r)">-'+t.fcfa+'F</div>':'') +
+          '</div></div>';
+      }).join(""):
+      '<div class="empty">Aucune transaction</div>';
+  });
+}
+
+function convertir(){
+  if(!CU)return;
+  var amt=parseInt(document.getElementById("convAmt").value||0);
+  if(!amt||amt<2000){toast("Minimum 2000 XAC à convertir","er");return;}
+  if(amt>CU.xacoins){toast("Pas assez de XAC","er");return;}
+  var fcfa=Math.floor(amt/CONV_RATE);
+  dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins-amt,fcfa_balance:(CU.fcfa_balance||0)+fcfa},function(){
+    dbI("xa_transactions",{user_id:CU.id,type:"conversion",xacoins:-amt,fcfa:fcfa,description:"Conversion "+amt+" XAC → "+fcfa+"F"},function(){});
+    CU.xacoins-=amt;CU.fcfa_balance=(CU.fcfa_balance||0)+fcfa;
+    updateHeader();
+    document.getElementById("marcheBalance").textContent=fmt(CU.fcfa_balance)+"F";
+    toast("+"+fcfa+"F converti ! 💱","gold");
+    document.getElementById("convAmt").value="";
+    document.getElementById("convFcfa").textContent="0F";
+    loadMarche();
+  });
+}
+
+function demanderRetrait(){
+  if(!CU)return;
+  var bal=CU.fcfa_balance||0;
+  if(bal<1000){toast("Minimum 1000F pour retirer","er");return;}
+  showMo(
+    '<div>' +
+    '<div style="font-family:Outfit,sans-serif;font-size:17px;font-weight:700;text-align:center;margin-bottom:14px">💸 Demande de retrait</div>' +
+    '<div style="background:var(--bg3);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center">' +
+    '<div style="font-size:11px;color:var(--mu)">Solde disponible</div>' +
+    '<div style="font-family:Outfit,sans-serif;font-size:26px;font-weight:900;color:var(--g)">'+fmt(bal)+'F</div>' +
+    '</div>' +
+    '<div class="fg"><label class="fl">Méthode de paiement</label><select class="fi" id="rwMethod"><option>Orange Money</option><option>MTN Money</option><option>Wave</option><option>Flooz</option><option>T-Money</option><option>USDT TRC20</option></select></div>' +
+    '<div class="fg"><label class="fl">Numéro / Adresse</label><input class="fi" id="rwNum" type="text" placeholder="699123456"/></div>' +
+    '<div class="fg"><label class="fl">Nom complet</label><input class="fi" id="rwName" type="text" placeholder="Jean Dupont"/></div>' +
+    '<div class="fg"><label class="fl">Montant (min 1000F)</label><input class="fi" id="rwAmt" type="number" placeholder="1000" max="'+bal+'" inputmode="numeric"/></div>' +
+    '<button class="btn btn-g" onclick="soumettreRetrait()" style="margin-bottom:8px">✅ Soumettre la demande</button>' +
+    '<button class="btn btn-gh" onclick="closeMo()">Annuler</button>' +
+    '</div>'
+  );
+}
+
+function soumettreRetrait(){
+  var method=document.getElementById("rwMethod").value;
+  var num=(document.getElementById("rwNum").value||"").trim();
+  var name=(document.getElementById("rwName").value||"").trim();
+  var amt=parseInt(document.getElementById("rwAmt").value||0);
+  if(!num||num.length<4){toast("Numéro invalide","er");return;}
+  if(!name||name.length<3){toast("Nom invalide","er");return;}
+  if(!amt||amt<1000){toast("Minimum 1000F","er");return;}
+  if(amt>(CU.fcfa_balance||0)){toast("Solde insuffisant","er");return;}
+  dbU("xa_users",{id:"eq."+CU.id},{fcfa_balance:(CU.fcfa_balance||0)-amt},function(){
+    CU.fcfa_balance-=amt;
+    dbI("xa_transactions",{user_id:CU.id,type:"retrait",fcfa:amt,description:"Retrait "+method+" "+num+" - "+name},function(){});
+    closeMo();
+    toast("Demande de "+amt+"F envoyée ! Traitement sous 24h 💸","ok");
+    loadMarche();
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────
+function init(){
+  try{
+    if(typeof Telegram!=="undefined"&&Telegram.WebApp){
+      Telegram.WebApp.ready();Telegram.WebApp.expand();
+      setTimeout(function(){
+        var tg=Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;
+        if(tg&&tg.id)TID=tg.id;
+      },400);
+    }
+  }catch(e){}
+  // localStorage
+  var saved=lsGet("xa_game_user");
+  if(saved&&saved.id){
+    dbQ("xa_users",{id:"eq."+saved.id},function(e,d){
+      if(!e&&d&&d[0]){
+        CU=d[0];
+        document.getElementById("loader").style.display="none";
+        showApp();
+      } else {showAuth();}
+    });return;
+  }
+  // Telegram ID
+  setTimeout(function(){
+    if(TID){
+      dbQ("xa_users",{telegram_id:"eq."+TID},function(e,d){
+        if(!e&&d&&d[0]){
+          CU=d[0];lsSet("xa_game_user",{id:CU.id});
+          document.getElementById("loader").style.display="none";
+          showApp();
+        } else {showAuth();}
+      });
+    } else {showAuth();}
+  },600);
+}
+function showAuth(){
+  document.getElementById("loader").style.display="none";
+  document.getElementById("authPage").style.display="flex";
+}
+window.onload=function(){init();};
+</script>
+</body>
+</html>
