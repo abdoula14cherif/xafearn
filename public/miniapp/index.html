@@ -1191,17 +1191,44 @@ function soumettreRetrait(){
 }
 
 // ── INIT ──────────────────────────────────────────────────
+// Remplace TON-BOT par le domaine Vercel de ton bot (celui qui contient /api/game_auth)
+var BOT_API = "https://TON-BOT.vercel.app";
+
 function init(){
+  var initData="";
   try{
     if(typeof Telegram!=="undefined"&&Telegram.WebApp){
       Telegram.WebApp.ready();Telegram.WebApp.expand();
-      setTimeout(function(){
-        var tg=Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;
-        if(tg&&tg.id)TID=tg.id;
-      },400);
+      initData=Telegram.WebApp.initData||"";
+      var tg=Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;
+      if(tg&&tg.id)TID=tg.id;
     }
   }catch(e){}
-  // localStorage
+
+  if(initData){
+    // Ouvert depuis Telegram : auth + creation de compte automatique cote bot
+    fetch(BOT_API+"/api/game_auth",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({initData:initData})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res&&res.user){
+        CU=res.user;lsSet("xa_game_user",{id:CU.id});
+        document.getElementById("loader").style.display="none";
+        showApp();
+        if(res.is_new)toast("Bienvenue "+CU.nom+" ! +100 XACoins offerts 🎁","gold");
+      } else {
+        document.getElementById("loader").style.display="none";
+        showAuth();
+      }
+    }).catch(function(){
+      document.getElementById("loader").style.display="none";
+      showAuth();
+    });
+    return;
+  }
+
+  // Ouvert hors Telegram (test navigateur) : ancien flux par numero, en secours
   var saved=lsGet("xa_game_user");
   if(saved&&saved.id){
     dbQ("xa_users",{id:"eq."+saved.id},function(e,d){
@@ -1212,18 +1239,8 @@ function init(){
       } else {showAuth();}
     });return;
   }
-  // Telegram ID
-  setTimeout(function(){
-    if(TID){
-      dbQ("xa_users",{telegram_id:"eq."+TID},function(e,d){
-        if(!e&&d&&d[0]){
-          CU=d[0];lsSet("xa_game_user",{id:CU.id});
-          document.getElementById("loader").style.display="none";
-          showApp();
-        } else {showAuth();}
-      });
-    } else {showAuth();}
-  },600);
+  document.getElementById("loader").style.display="none";
+  showAuth();
 }
 function showAuth(){
   document.getElementById("loader").style.display="none";
