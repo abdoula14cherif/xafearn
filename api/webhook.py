@@ -1,215 +1,123 @@
-import os, json, traceback
-from flask import Flask, request, Response
+import os, json, hmac, hashlib, time
+from urllib.parse import parse_qsl
+from flask import Flask, request, jsonify
 import requests as req
 
 app = Flask(__name__)
 
-TOKEN  = os.environ.get("BOT_TOKEN", "")
-SB_URL = os.environ.get("SUPABASE_URL", "")
-SB_KEY = os.environ.get("SUPABASE_KEY", "")
-API    = f"https://api.telegram.org/bot{TOKEN}"
-DB     = f"{SB_URL}/rest/v1"
-ADMIN_IDS = [int(x.strip()) for x in os.environ.get("ADMIN_IDS", "").split(",") if x.strip().isdigit()]
-BOT_USERNAME = "xafearn_bot"
-
-# ── URLS ──────────────────────────────────────────────────
-GAME_URL = os.environ.get("GAME_URL", "https://abdoula14cherif-xafearn.vercel.app/miniapp")
-
-CHANNELS_CHECK   = ["@xafearn_money"]
-CHANNELS_DISPLAY = [
-    "https://t.me/+JlqLH_-LD4syZmY0",
-    "https://t.me/xafearn_money",
-    "https://t.me/xafearn_info"
-]
-
+BOT_TOKEN    = os.environ.get("BOT_TOKEN", "")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+DB = f"{SUPABASE_URL}/rest/v1"
 H = {
-    "apikey": SB_KEY,
-    "Authorization": f"Bearer {SB_KEY}",
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
     "Content-Type": "application/json",
     "Prefer": "return=representation"
 }
+REFERRAL_BONUS = 10
 
-def tg(method, **kw):
-    try: return req.post(f"{API}/{method}", json=kw, timeout=15).json()
-    except: return {}
-
-def send(uid, text, kb=None):
-    d = {"chat_id": uid, "text": text}
-    if kb: d["reply_markup"] = kb
-    tg("sendMessage", **d)
-
-def db_get(table, f={}):
+def db_get(table, params):
     try:
-        r = req.get(f"{DB}/{table}", headers=H, params=f, timeout=15)
-        data = r.json()
-        return data if isinstance(data, list) else []
+        r = req.get(f"{DB}/{table}", headers=H, params=params, timeout=15)
+        d = r.json()
+        return d if isinstance(d, list) else []
     except: return []
 
 def db_post(table, data):
     try:
         r = req.post(f"{DB}/{table}", headers=H, json=data, timeout=15)
-        result = r.json()
-        return result if isinstance(result, list) else []
+        d = r.json()
+        return d if isinstance(d, list) else []
     except: return []
 
-def db_patch(table, f, data):
-    try: req.patch(f"{DB}/{table}", headers=H, params=f, json=data, timeout=15)
+def db_patch(table, params, data):
+    try: req.patch(f"{DB}/{table}", headers=H, params=params, json=data, timeout=15)
     except: pass
 
-def get_user(uid):
-    r = db_get("bot_users", {"user_id": f"eq.{uid}"})
-    return r[0] if r else None
-
-def check_joined(uid):
-    for ch in CHANNELS_CHECK:
-        try:
-            r = tg("getChatMember", chat_id=ch, user_id=uid)
-            if r.get("result", {}).get("status") in ["left", "kicked"]:
-                return False
-        except: return False
-    return True
-
-# ── MENU (4 boutons) ─────────────────────────────────────
-def main_kb():
-    return {"keyboard": [
-        [{"text": "\U0001f680 Jouer maintenant", "web_app": {"url": GAME_URL}}],
-        ["\U0001f4e2 Nos Canaux", "\U0001f465 Parrainage"],
-        ["\U00002753 Aide"]
-    ], "resize_keyboard": True}
-
-def join_kb():
-    return {"inline_keyboard": [
-        [{"text": "Canal 1 - Rejoindre", "url": CHANNELS_DISPLAY[0]}],
-        [{"text": "Canal 2 - Rejoindre", "url": CHANNELS_DISPLAY[1]}],
-        [{"text": "Canal 3 - Rejoindre", "url": CHANNELS_DISPLAY[2]}],
-        [{"text": "J ai tout rejoint - Verifier", "callback_data": "check_join"}]
-    ]}
-
-@app.route("/api/webhook", methods=["GET"])
-def health():
-    return "XAFEARN BOT OK", 200
-
-@app.route("/api/webhook", methods=["POST"])
-def webhook():
-    uid = None
+def check_telegram_auth(init_data):
+    """Valide la signature Telegram WebApp (voir doc officielle Mini Apps). Retourne le dict user ou None."""
+    if not init_data or not BOT_TOKEN:
+        return None
     try:
-        body = request.get_json(force=True)
-        if not body:
-            return Response('{"ok":true}', mimetype="application/json")
-        if "message" in body:
-            uid   = body["message"]["from"]["id"]
-            uname = body["message"]["from"].get("username") or body["message"]["from"].get("first_name", "User")
-            text  = body["message"].get("text", "")
-            if text: handle_msg(uid, uname, text)
-        elif "callback_query" in body:
-            cq   = body["callback_query"]
-            uid  = cq["from"]["id"]
-            data = cq.get("data", "")
-            mid  = cq["message"]["message_id"]
-            tg("answerCallbackQuery", callback_query_id=cq["id"])
-            handle_cb(uid, data, mid)
+        parsed = dict(parse_qsl(init_data, strict_parsing=True))
     except Exception:
-        print(f"ERROR: {traceback.format_exc()}")
-        if uid:
-            try: send(uid, "Erreur technique. Reessaie.")
-            except: pass
-    return Response('{"ok":true}', mimetype="application/json")
+        return None
+    recv_hash = parsed.pop("hash", None)
+    if not recv_hash:
+        return None
+    data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
+    secret_key = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
+    computed_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(computed_hash, recv_hash):
+        return None
+    try:
+        auth_date = int(parsed.get("auth_date", 0))
+    except: auth_date = 0
+    if time.time() - auth_date > 86400:
+        return None
+    user_raw = parsed.get("user")
+    if not user_raw:
+        return None
+    try:
+        return json.loads(user_raw)
+    except Exception:
+        return None
 
-def handle_msg(uid, uname, text):
-    if text.startswith("/start"):
-        parts = text.split(" ")
-        referred_by = None
-        if len(parts) > 1:
-            try:
-                ref = int(parts[1])
-                if ref != uid: referred_by = ref
-            except: pass
-        u = get_user(uid)
-        if u and u.get("is_banned"): send(uid, "Compte suspendu."); return
-        if not u:
-            db_post("bot_users", {"user_id": uid, "username": uname, "referred_by": referred_by, "is_banned": False, "is_registered": False})
-        send(uid,
-            "Bienvenue sur XAFEARN " + str(uname) + " !\n\n"
-            "Rejoins nos 3 canaux puis clique Verifier pour acceder au jeu.",
-            kb=join_kb())
+def credit_referrer(tg_id):
+    rows = db_get("bot_users", {"user_id": f"eq.{tg_id}", "limit": "1"})
+    if not rows or not rows[0].get("referred_by"):
         return
+    ref_tg_id = rows[0]["referred_by"]
+    ref_rows = db_get("xa_users", {"telegram_id": f"eq.{ref_tg_id}", "limit": "1"})
+    if not ref_rows:
+        return
+    ru = ref_rows[0]
+    db_patch("xa_users", {"id": f"eq.{ru['id']}"}, {"xacoins": (ru.get("xacoins") or 0) + REFERRAL_BONUS})
+    db_post("xa_transactions", {
+        "user_id": ru["id"], "type": "parrainage", "xacoins": REFERRAL_BONUS,
+        "description": "Bonus parrainage - filleul inscrit"
+    })
 
-    u = get_user(uid)
-    if not u:
-        send(uid, "Utilise /start pour commencer."); return
-    if u.get("is_banned"):
-        send(uid, "Compte suspendu."); return
+def cors(resp):
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    return resp
 
-    # ── ADMIN (cache, pas dans les boutons) ──────────────
-    if uid in ADMIN_IDS:
-        if text == "/admin":
-            users = db_get("bot_users")
-            send(uid, "STATS\n\nTotal : " + str(len(users)) +
-                 "\nBannis : " + str(sum(1 for x in users if x.get("is_banned"))))
-            return
-        if text.startswith("/ban "):
-            try:
-                tid = int(text.split()[1])
-                db_patch("bot_users", {"user_id": f"eq.{tid}"}, {"is_banned": True})
-                send(uid, "User " + str(tid) + " banni.")
-            except: send(uid, "ID invalide.")
-            return
-        if text.startswith("/unban "):
-            try:
-                tid = int(text.split()[1])
-                db_patch("bot_users", {"user_id": f"eq.{tid}"}, {"is_banned": False})
-                send(uid, "User " + str(tid) + " debanni.")
-            except: send(uid, "ID invalide.")
-            return
-        if text.startswith("/broadcast "):
-            msg = text[len("/broadcast "):]
-            users = db_get("bot_users")
-            sent = 0
-            for uu in users:
-                if not uu.get("is_banned"):
-                    try:
-                        tg("sendMessage", chat_id=uu["user_id"], text="Message XAFEARN\n\n" + msg)
-                        sent += 1
-                    except: pass
-            send(uid, "Broadcast envoye a " + str(sent) + " utilisateurs.")
-            return
+@app.route("/api/game_auth", methods=["POST", "OPTIONS"])
+def game_auth():
+    if request.method == "OPTIONS":
+        return cors(jsonify({}))
 
-    if not u.get("is_registered"):
-        send(uid, "Rejoins nos canaux d abord.\nEnvoie /start"); return
+    body = request.get_json(force=True) or {}
+    init_data = body.get("initData", "")
+    tg_user = check_telegram_auth(init_data)
+    if not tg_user:
+        return cors(jsonify({"error": "auth_invalide"})), 401
 
-    # ── MENU UTILISATEUR (4 boutons) ─────────────────────
-    if text == "\U0001f4e2 Nos Canaux":
-        send(uid, "Nos canaux officiels :", kb={"inline_keyboard": [
-            [{"text": "Canal 1", "url": CHANNELS_DISPLAY[0]}],
-            [{"text": "Canal 2", "url": CHANNELS_DISPLAY[1]}],
-            [{"text": "Canal 3", "url": CHANNELS_DISPLAY[2]}]
-        ]})
+    tg_id = tg_user.get("id")
+    nom = (str(tg_user.get("first_name","")) + " " + str(tg_user.get("last_name",""))).strip()
+    nom = nom or tg_user.get("username") or "Joueur"
 
-    elif text == "\U0001f465 Parrainage":
-        ref_link = "https://t.me/" + BOT_USERNAME + "?start=" + str(uid)
-        send(uid,
-            "TON LIEN D AFFILIATION\n\n" + ref_link + "\n\n"
-            "Partage ce lien : tes filleuls jouent et tu gagnes des recompenses dans le jeu !")
+    rows = db_get("xa_users", {"telegram_id": f"eq.{tg_id}", "limit": "1"})
+    is_new = False
+    if rows:
+        u = rows[0]
+    else:
+        created = db_post("xa_users", {
+            "telegram_id": tg_id, "nom": nom, "telephone": None, "pays": None,
+            "xacoins": 100, "fcfa_balance": 0, "niveau": 1, "experience": 0
+        })
+        if not created:
+            return cors(jsonify({"error": "creation_echouee"})), 500
+        u = created[0]
+        is_new = True
+        db_post("xa_mining", {"user_id": u["id"], "niveau": 1, "xacoins_total": 0})
+        db_post("xa_empire", {"user_id": u["id"], "nom_empire": nom + " Empire", "niveau": 1, "soldats": 10, "ressources": 100})
+        credit_referrer(tg_id)
 
-    elif text == "\U00002753 Aide":
-        send(uid,
-            "AIDE XAFEARN\n\n"
-            "Clique sur Jouer maintenant pour ouvrir le jeu.\n"
-            "Toutes tes recompenses, ton solde et tes retraits se gerent directement dans le jeu.\n\n"
-            "Support WhatsApp :\nhttps://wa.me/699663183")
-
-def handle_cb(uid, data, mid):
-    if data == "check_join":
-        u = get_user(uid)
-        if not u: return
-        if not check_joined(uid):
-            tg("editMessageText", chat_id=uid, message_id=mid,
-               text="Tu n as pas encore tout rejoint.\nRejoins les 3 canaux puis clique Verifier.",
-               reply_markup=join_kb())
-            return
-        db_patch("bot_users", {"user_id": f"eq.{uid}"}, {"is_registered": True})
-        tg("editMessageText", chat_id=uid, message_id=mid, text="Compte active ! Bienvenue dans XAFEARN.")
-        send(uid, "Menu Principal XAFEARN\n\nClique sur Jouer maintenant pour commencer !", kb=main_kb())
+    return cors(jsonify({"user": u, "is_new": is_new}))
 
 application = app
 handler = app
