@@ -265,6 +265,13 @@ nav::-webkit-scrollbar{display:none}
       </div>
     </div>
     <div class="card">
+      <div class="ct">👥 Parrainage</div>
+      <div style="font-size:12px;color:var(--mu);line-height:1.8">
+        Invite tes amis avec ton lien Telegram (bouton Parrainage du bot).<br>
+        Tu gagnes <strong style="color:var(--ob)">+10 XAC</strong> pour chaque ami qui s'inscrit sur le jeu !
+      </div>
+    </div>
+    <div class="card">
       <div class="ct">📊 Production totale</div>
       <div style="background:var(--bg3);border-radius:11px;padding:12px;font-size:12px;line-height:2;border:1px solid var(--brd)">
         🐔 Ferme : <strong id="totalFerme" style="color:var(--ob)">0 XAC/h</strong><br>
@@ -446,6 +453,7 @@ var CARTES = ["👑","🐯","🦁","🐻","🦊","🐰"];
 var CARTE_FORCE = {"👑":6,"🐯":5,"🦁":4,"🐻":3,"🦊":2,"🐰":1};
 var CONV_RATE = 2; // 2 XAC = 1 FCFA
 var MISE_BATTLE = 200;
+var REFERRAL_BONUS = 10; // XAC gagné par le parrain quand son filleul s'inscrit
 
 var CU = null;
 var TID = null;
@@ -516,6 +524,25 @@ function updateHeader(){
   document.getElementById("hFcfa").textContent=fmt(CU.fcfa_balance||0)+"F";
 }
 
+// ── PARRAINAGE ────────────────────────────────────────────
+// Cherche si ce nouvel utilisateur (identifié par son Telegram ID) a été
+// parrainé via le bot (table bot_users, colonne referred_by), puis crédite
+// +REFERRAL_BONUS XAC au compte jeu du parrain (retrouvé via xa_users.telegram_id).
+function creditReferrerBonus(tid){
+  if(!tid)return;
+  dbQ("bot_users",{user_id:"eq."+tid,limit:"1"},function(e,rows){
+    if(e||!rows||!rows[0]||!rows[0].referred_by)return;
+    var refTid=rows[0].referred_by;
+    dbQ("xa_users",{telegram_id:"eq."+refTid,limit:"1"},function(e2,refRows){
+      if(e2||!refRows||!refRows[0])return; // le parrain n'a pas encore de compte jeu
+      var ru=refRows[0];
+      dbU("xa_users",{id:"eq."+ru.id},{xacoins:(ru.xacoins||0)+REFERRAL_BONUS},function(){
+        dbI("xa_transactions",{user_id:ru.id,type:"parrainage",xacoins:REFERRAL_BONUS,description:"Bonus parrainage - filleul inscrit"},function(){});
+      });
+    });
+  });
+}
+
 // ── AUTH ──────────────────────────────────────────────────
 function switchTab(t){
   document.getElementById("loginForm").style.display=t==="login"?"block":"none";
@@ -582,6 +609,7 @@ function doRegister(){
         // Créer mine + empire par défaut
         dbI("xa_mining",{user_id:u.id,niveau:1,xacoins_total:0},function(){});
         dbI("xa_empire",{user_id:u.id,nom_empire:nom+" Empire",niveau:1,soldats:10,ressources:100},function(){});
+        creditReferrerBonus(TID);
         document.getElementById("authPage").style.display="none";
         showApp();
         toast("Bienvenue ! +100 XACoins offerts 🎁","gold");
@@ -592,6 +620,7 @@ function doRegister(){
             CU=d3[0];lsSet("xa_game_user",{id:CU.id});
             dbI("xa_mining",{user_id:CU.id,niveau:1,xacoins_total:0},function(){});
             dbI("xa_empire",{user_id:CU.id,nom_empire:nom+" Empire",niveau:1,soldats:10,ressources:100},function(){});
+            creditReferrerBonus(TID);
             document.getElementById("authPage").style.display="none";
             showApp();toast("Bienvenue "+nom+" ! 🎉","ok");
           } else {toast("Erreur — réessaie","er");btn.disabled=false;btn.textContent="🚀 Créer";}
@@ -1086,7 +1115,7 @@ function loadMarche(){
     document.getElementById("convFcfa").textContent=Math.floor(v/CONV_RATE)+"F";
   };
   dbQ("xa_transactions",{user_id:"eq."+CU.id,order:"created_at.desc",limit:"10"},function(e,txs){
-    var icons={bonus:"🎁",ferme:"🌾",mining:"⛏️",battle:"⚔️",achat_animal:"🐔",upgrade_mine:"⚙️",retrait:"💸",conversion:"💱"};
+    var icons={bonus:"🎁",ferme:"🌾",mining:"⛏️",battle:"⚔️",achat_animal:"🐔",upgrade_mine:"⚙️",retrait:"💸",conversion:"💱",parrainage:"👥"};
     document.getElementById("transactionsList").innerHTML=(txs&&txs.length)?
       txs.map(function(t){
         return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--brd)">' +
@@ -1162,17 +1191,44 @@ function soumettreRetrait(){
 }
 
 // ── INIT ──────────────────────────────────────────────────
+// Remplace TON-BOT par le domaine Vercel de ton bot (celui qui contient /api/game_auth)
+var BOT_API = "https://TON-BOT.vercel.app";
+
 function init(){
+  var initData="";
   try{
     if(typeof Telegram!=="undefined"&&Telegram.WebApp){
       Telegram.WebApp.ready();Telegram.WebApp.expand();
-      setTimeout(function(){
-        var tg=Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;
-        if(tg&&tg.id)TID=tg.id;
-      },400);
+      initData=Telegram.WebApp.initData||"";
+      var tg=Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;
+      if(tg&&tg.id)TID=tg.id;
     }
   }catch(e){}
-  // localStorage
+
+  if(initData){
+    // Ouvert depuis Telegram : auth + creation de compte automatique cote bot
+    fetch(BOT_API+"/api/game_auth",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({initData:initData})
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res&&res.user){
+        CU=res.user;lsSet("xa_game_user",{id:CU.id});
+        document.getElementById("loader").style.display="none";
+        showApp();
+        if(res.is_new)toast("Bienvenue "+CU.nom+" ! +100 XACoins offerts 🎁","gold");
+      } else {
+        document.getElementById("loader").style.display="none";
+        showAuth();
+      }
+    }).catch(function(){
+      document.getElementById("loader").style.display="none";
+      showAuth();
+    });
+    return;
+  }
+
+  // Ouvert hors Telegram (test navigateur) : ancien flux par numero, en secours
   var saved=lsGet("xa_game_user");
   if(saved&&saved.id){
     dbQ("xa_users",{id:"eq."+saved.id},function(e,d){
@@ -1183,18 +1239,8 @@ function init(){
       } else {showAuth();}
     });return;
   }
-  // Telegram ID
-  setTimeout(function(){
-    if(TID){
-      dbQ("xa_users",{telegram_id:"eq."+TID},function(e,d){
-        if(!e&&d&&d[0]){
-          CU=d[0];lsSet("xa_game_user",{id:CU.id});
-          document.getElementById("loader").style.display="none";
-          showApp();
-        } else {showAuth();}
-      });
-    } else {showAuth();}
-  },600);
+  document.getElementById("loader").style.display="none";
+  showAuth();
 }
 function showAuth(){
   document.getElementById("loader").style.display="none";
