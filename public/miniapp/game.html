@@ -453,7 +453,13 @@ var TG_INIT_DATA = "";
 // Appelle une action securisee cote bot (jamais de calcul de solde cote client)
 function callAction(action, params, cb){
   params = params || {};
-  params.initData = TG_INIT_DATA;
+  var liveInitData = "";
+  try{
+    if(typeof Telegram!=="undefined"&&Telegram.WebApp&&Telegram.WebApp.initData){
+      liveInitData = Telegram.WebApp.initData;
+    }
+  }catch(e){}
+  params.initData = liveInitData || TG_INIT_DATA || "";
   params.action = action;
   fetch(BOT_API+"/api/game_action", {
     method: "POST",
@@ -1086,6 +1092,20 @@ function init(){
       if(tg&&tg.id)TID=tg.id;
     }
   }catch(e){}
+
+  if(!initData && typeof Telegram!=="undefined" && Telegram.WebApp){
+    // Telegram detecte mais initData pas encore injecte : on reessaie une fois apres un court delai
+    setTimeout(function(){
+      var retryData=Telegram.WebApp.initData||"";
+      if(retryData){ TG_INIT_DATA=retryData; startAuth(retryData); }
+      else { startAuth(""); }
+    },350);
+    return;
+  }
+  startAuth(initData);
+}
+
+function startAuth(initData){
 
   if(initData){
     // Ouvert depuis Telegram : auth + creation de compte automatique cote bot
