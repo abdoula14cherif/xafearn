@@ -2,10 +2,14 @@
   "version": 2,
   "builds": [
     {"src": "api/webhook.py", "use": "@vercel/python"},
+    {"src": "api/game_auth.py", "use": "@vercel/python"},
+    {"src": "api/game_action.py", "use": "@vercel/python"},
     {"src": "public/**", "use": "@vercel/static"}
   ],
   "routes": [
     {"src": "/api/webhook", "dest": "/api/webhook.py"},
+    {"src": "/api/game_auth", "dest": "/api/game_auth.py"},
+    {"src": "/api/game_action", "dest": "/api/game_action.py"},
     {"src": "/miniapp", "dest": "/public/miniapp/index.html"},
     {"src": "/miniapp/admin", "dest": "/public/miniapp/admin.html"},
     {"src": "/miniapp/game", "dest": "/public/miniapp/game.html"}
