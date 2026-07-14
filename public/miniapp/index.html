@@ -207,22 +207,16 @@ nav::-webkit-scrollbar{display:none}
     </div>
     <!-- LOGIN -->
     <div id="loginForm">
-      <div class="fg"><label class="fl">Numéro WhatsApp</label>
-        <div class="sel-row">
-          <select id="lCode"><option value="+237">🇨🇲+237</option><option value="+228">🇹🇬+228</option><option value="+225">🇨🇮+225</option><option value="+221">🇸🇳+221</option><option value="+226">🇧🇫+226</option><option value="+223">🇲🇱+223</option><option value="+229">🇧🇯+229</option><option value="+224">🇬🇳+224</option><option value="+227">🇳🇪+227</option><option value="+242">🇨🇬+242</option></select>
-          <input class="fi" id="lTel" type="tel" placeholder="699123456" inputmode="numeric"/>
-        </div>
+      <div class="fg"><label class="fl">Numéro WhatsApp (avec indicatif)</label>
+        <input class="fi" id="lTel" type="tel" placeholder="Ex: +237699123456" inputmode="tel"/>
       </div>
       <button class="btn btn-b" id="loginBtn" onclick="doLogin()">🔑 Se connecter</button>
     </div>
     <!-- REGISTER -->
     <div id="regForm" style="display:none">
       <div class="fg"><label class="fl">Prénom / Nom *</label><input class="fi" id="rNom" type="text" placeholder="Ex: Jean Dupont"/></div>
-      <div class="fg"><label class="fl">Numéro WhatsApp *</label>
-        <div class="sel-row">
-          <select id="rCode"><option value="+237">🇨🇲+237</option><option value="+228">🇹🇬+228</option><option value="+225">🇨🇮+225</option><option value="+221">🇸🇳+221</option><option value="+226">🇧🇫+226</option><option value="+223">🇲🇱+223</option><option value="+229">🇧🇯+229</option><option value="+224">🇬🇳+224</option><option value="+227">🇳🇪+227</option><option value="+242">🇨🇬+242</option></select>
-          <input class="fi" id="rTel" type="tel" placeholder="699123456" inputmode="numeric"/>
-        </div>
+      <div class="fg"><label class="fl">Numéro WhatsApp (avec indicatif) *</label>
+        <input class="fi" id="rTel" type="tel" placeholder="Ex: +237699123456" inputmode="tel"/>
       </div>
       <button class="btn btn-o" id="regBtn" onclick="doRegister()">🚀 Créer mon compte</button>
     </div>
@@ -563,10 +557,8 @@ function switchTab(t){
 }
 
 function doLogin(){
-  var code=document.getElementById("lCode").value;
-  var num=(document.getElementById("lTel").value||"").trim().replace(/\D/g,"");
-  if(!num||num.length<6){toast("Entre ton numéro","er");return;}
-  var tel=code+num;
+  var tel=(document.getElementById("lTel").value||"").trim().replace(/\s+/g,"");
+  if(!tel||tel.replace(/\D/g,"").length<8){toast("Entre ton numéro complet avec indicatif","er");return;}
   var btn=document.getElementById("loginBtn");
   btn.disabled=true;btn.textContent="⏳...";
   dbQ("xa_users",{telephone:"eq."+tel,limit:"1"},function(e,d){
@@ -575,29 +567,18 @@ function doLogin(){
       document.getElementById("authPage").style.display="none";
       showApp();toast("Bienvenue "+CU.nom+" ! 👋","ok");
     } else {
-      // Essai sans indicatif
-      dbQ("xa_users",{telephone:"eq."+num,limit:"1"},function(e2,d2){
-        if(!e2&&d2&&d2[0]){
-          CU=d2[0];lsSet("xa_game_user",{id:CU.id});
-          document.getElementById("authPage").style.display="none";
-          showApp();toast("Bienvenue "+CU.nom+" ! 👋","ok");
-        } else {
-          toast("Numéro introuvable — inscris-toi","er");
-          btn.disabled=false;btn.textContent="🔑 Se connecter";
-          setTimeout(function(){switchTab("reg");},1500);
-        }
-      });
+      toast("Numéro introuvable — inscris-toi","er");
+      btn.disabled=false;btn.textContent="🔑 Se connecter";
+      setTimeout(function(){switchTab("reg");},1500);
     }
   });
 }
 
 function doRegister(){
   var nom=(document.getElementById("rNom").value||"").trim();
-  var code=document.getElementById("rCode").value;
-  var num=(document.getElementById("rTel").value||"").trim().replace(/\D/g,"");
+  var tel=(document.getElementById("rTel").value||"").trim().replace(/\s+/g,"");
   if(!nom||nom.length<2){toast("Entre ton nom","er");return;}
-  if(!num||num.length<6){toast("Numéro invalide","er");return;}
-  var tel=code+num;
+  if(!tel||tel.replace(/\D/g,"").length<8){toast("Numéro invalide — inclus l indicatif","er");return;}
   var btn=document.getElementById("regBtn");
   btn.disabled=true;btn.textContent="⏳ Création...";
   // Vérif doublon
