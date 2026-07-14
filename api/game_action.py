@@ -67,22 +67,35 @@ def today():
     return datetime.now().date().isoformat()
 
 def check_telegram_auth(init_data):
-    if not init_data or not BOT_TOKEN: return None
-    try: parsed = dict(parse_qsl(init_data, strict_parsing=True))
-    except Exception: return None
+    if not init_data:
+        return None, "init_data_vide"
+    if not BOT_TOKEN:
+        return None, "bot_token_absent"
+    try:
+        parsed = dict(parse_qsl(init_data, strict_parsing=True))
+    except Exception:
+        return None, "parse_echec"
     recv_hash = parsed.pop("hash", None)
-    if not recv_hash: return None
+    if not recv_hash:
+        return None, "hash_absent"
     data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
     secret_key = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
     computed_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(computed_hash, recv_hash): return None
-    try: auth_date = int(parsed.get("auth_date", 0))
-    except: auth_date = 0
-    if time.time() - auth_date > 86400: return None
+    if not hmac.compare_digest(computed_hash, recv_hash):
+        return None, "signature_invalide"
+    try:
+        auth_date = int(parsed.get("auth_date", 0))
+    except:
+        auth_date = 0
+    if time.time() - auth_date > 86400:
+        return None, "expire"
     user_raw = parsed.get("user")
-    if not user_raw: return None
-    try: return json.loads(user_raw)
-    except Exception: return None
+    if not user_raw:
+        return None, "user_absent"
+    try:
+        return json.loads(user_raw), "ok"
+    except Exception:
+        return None, "json_invalide"
 
 def cors(resp):
     resp.headers["Access-Control-Allow-Origin"] = "*"
@@ -91,9 +104,9 @@ def cors(resp):
     return resp
 
 def get_authed_user(body):
-    tg_user = check_telegram_auth(body.get("initData", ""))
+    tg_user, reason = check_telegram_auth(body.get("initData", ""))
     if not tg_user:
-        return None, ("auth_invalide", 401)
+        return None, ("auth_invalide:" + reason, 401)
     tg_id = tg_user.get("id")
     rows = db_get("xa_users", {"telegram_id": f"eq.{tg_id}", "limit": "1"})
     if not rows:
