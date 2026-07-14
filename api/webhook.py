@@ -1,249 +1,188 @@
-import os, json, traceback
-from flask import Flask, request, Response
-import requests as req
 
-app = Flask(__name__)
+import json
+import asyncio
+import hmac
+import hashlib
+from http.server import BaseHTTPRequestHandler
 
-TOKEN  = os.environ.get("BOT_TOKEN", "")
-SB_URL = os.environ.get("SUPABASE_URL", "")
-SB_KEY = os.environ.get("SUPABASE_KEY", "")
-API    = f"https://api.telegram.org/bot{TOKEN}"
-DB     = f"{SB_URL}/rest/v1"
-ADMIN_IDS = [int(x.strip()) for x in os.environ.get("ADMIN_IDS", "").split(",") if x.strip().isdigit()]
-BOT_USERNAME = "xafearn_bot"
+from lib.config import BOT_TOKEN, ADMIN_IDS, WEBHOOK_SECRET
+from handlers.user import (
+    handle_start, handle_check_join, handle_bonus, handle_solde,
+    handle_parrainage, handle_tasks, handle_task_complete,
+    handle_historique, handle_classement, handle_aide
+)
+from handlers.admin import (
+    is_admin, handle_admin_panel, handle_all_users, handle_modify_prices,
+    handle_add_task_start, handle_list_withdrawals, handle_ban_start,
+    handle_broadcast_start, handle_admin_session, handle_admin_command,
+    handle_stats
+)
+from handlers.retrait import (
+    handle_retrait_start, handle_retrait_method, handle_retrait_step,
+    handle_cancel_retrait, handle_retrait_decision
+)
+from lib.keyboards import main_keyboard
+from telegram import Bot
 
-# ── URLS ──────────────────────────────────────────────────
-GAME_URL = os.environ.get("GAME_URL", "https://abdoula14cherif-xafearn.vercel.app/miniapp")
+bot = Bot(token=BOT_TOKEN)
 
-CHANNELS_CHECK   = ["@xafearn_money"]
-CHANNELS_DISPLAY = [
-    "https://t.me/+JlqLH_-LD4syZmY0",
-    "https://t.me/xafearn_money",
-    "https://t.me/xafearn_info"
-]
+# ════════════════════════════════════════════════════════════════════
+#  Handler Vercel
+# ════════════════════════════════════════════════════════════════════
 
-H = {
-    "apikey": SB_KEY,
-    "Authorization": f"Bearer {SB_KEY}",
-    "Content-Type": "application/json",
-    "Prefer": "return=representation"
-}
+class handler(BaseHTTPRequestHandler):
 
-def tg(method, **kw):
-    try: return req.post(f"{API}/{method}", json=kw, timeout=15).json()
-    except: return {}
+    def log_message(self, format, *args):
+        pass  # Silencer les logs HTTP
 
-def send(uid, text, kb=None):
-    d = {"chat_id": uid, "text": text}
-    if kb: d["reply_markup"] = kb
-    tg("sendMessage", **d)
+    def do_GET(self):
+        """Health check"""
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"XAFEARN BOT is running OK")
 
-def db_get(table, f={}):
-    try:
-        r = req.get(f"{DB}/{table}", headers=H, params=f, timeout=15)
-        data = r.json()
-        return data if isinstance(data, list) else []
-    except: return []
-
-def db_post(table, data):
-    try:
-        r = req.post(f"{DB}/{table}", headers=H, json=data, timeout=15)
-        result = r.json()
-        return result if isinstance(result, list) else []
-    except: return []
-
-def db_patch(table, f, data):
-    try: req.patch(f"{DB}/{table}", headers=H, params=f, json=data, timeout=15)
-    except: pass
-
-def get_user(uid):
-    r = db_get("bot_users", {"user_id": f"eq.{uid}"})
-    return r[0] if r else None
-
-def check_joined(uid):
-    for ch in CHANNELS_CHECK:
+    def do_POST(self):
         try:
-            r = tg("getChatMember", chat_id=ch, user_id=uid)
-            if r.get("result", {}).get("status") in ["left", "kicked"]:
-                return False
-        except: return False
-    return True
-
-# ── MENU (4 boutons) ─────────────────────────────────────
-def main_kb():
-    return {"keyboard": [
-        [{"text": "\U0001f680 Jouer maintenant", "web_app": {"url": GAME_URL}}],
-        ["\U0001f4e2 Nos Canaux", "\U0001f465 Parrainage"],
-        ["\U00002753 Aide"]
-    ], "resize_keyboard": True}
-
-def join_kb():
-    return {"inline_keyboard": [
-        [{"text": "Canal 1 - Rejoindre", "url": CHANNELS_DISPLAY[0]}],
-        [{"text": "Canal 2 - Rejoindre", "url": CHANNELS_DISPLAY[1]}],
-        [{"text": "Canal 3 - Rejoindre", "url": CHANNELS_DISPLAY[2]}],
-        [{"text": "J ai tout rejoint - Verifier", "callback_data": "check_join"}]
-    ]}
-
-@app.route("/api/webhook", methods=["GET"])
-def health():
-    return "XAFEARN BOT OK", 200
-
-@app.route("/api/webhook", methods=["POST"])
-def webhook():
-    uid = None
-    try:
-        body = request.get_json(force=True)
-        if not body:
-            return Response('{"ok":true}', mimetype="application/json")
-        if "message" in body:
-            uid   = body["message"]["from"]["id"]
-            uname = body["message"]["from"].get("username") or body["message"]["from"].get("first_name", "User")
-            text  = body["message"].get("text", "")
-            if text: handle_msg(uid, uname, text)
-        elif "callback_query" in body:
-            cq   = body["callback_query"]
-            uid  = cq["from"]["id"]
-            data = cq.get("data", "")
-            mid  = cq["message"]["message_id"]
-            tg("answerCallbackQuery", callback_query_id=cq["id"])
-            handle_cb(uid, data, mid)
-    except Exception:
-        print(f"ERROR: {traceback.format_exc()}")
-        if uid:
-            try: send(uid, "Erreur technique. Reessaie.")
-            except: pass
-    return Response('{"ok":true}', mimetype="application/json")
-
-def handle_msg(uid, uname, text):
-    if text.startswith("/start"):
-        parts = text.split(" ")
-        referred_by = None
-        if len(parts) > 1:
-            try:
-                ref = int(parts[1])
-                if ref != uid: referred_by = ref
-            except: pass
-        u = get_user(uid)
-        if u and u.get("is_banned"): send(uid, "Compte suspendu."); return
-        if not u:
-            created = db_post("bot_users", {"user_id": uid, "username": uname, "referred_by": referred_by, "is_banned": False, "is_registered": False})
-            if not created:
-                send(uid, "Erreur technique (base de donnees). Reessaie dans un instant.")
+            content_length = int(self.headers.get("Content-Length", 0))
+            if content_length == 0:
+                self._respond(400)
                 return
-        send(uid,
-            "Bienvenue sur XAFEARN " + str(uname) + " !\n\n"
-            "Rejoins nos 3 canaux puis clique Verifier pour acceder au jeu.",
-            kb=join_kb())
-        return
 
-    u = get_user(uid)
-    if not u:
-        send(uid, "Utilise /start pour commencer."); return
-    if u.get("is_banned"):
-        send(uid, "Compte suspendu."); return
+            body = self.rfile.read(content_length)
 
-    # ── ADMIN (cache, pas dans les boutons) ──────────────
-    if uid in ADMIN_IDS:
-        if text == "/admin":
-            users = db_get("bot_users")
-            send(uid, "STATS\n\nTotal : " + str(len(users)) +
-                 "\nBannis : " + str(sum(1 for x in users if x.get("is_banned"))))
-            return
-        if text.startswith("/ban "):
+            # ── Vérification sécurité du secret webhook ──
+            secret_header = self.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+            if WEBHOOK_SECRET and secret_header != WEBHOOK_SECRET:
+                self._respond(403)
+                return
+
+            update = json.loads(body.decode("utf-8"))
+            asyncio.run(process_update(update))
+            self._respond(200)
+
+        except Exception as e:
+            print(f"Webhook error: {e}")
+            self._respond(200)  # Toujours 200 pour Telegram
+
+    def _respond(self, code: int):
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(b'{"ok":true}')
+
+
+# ════════════════════════════════════════════════════════════════════
+#  Traitement des updates
+# ════════════════════════════════════════════════════════════════════
+
+async def process_update(body: dict):
+    try:
+        # ── Message texte ────────────────────────────────────────
+        if "message" in body:
+            msg     = body["message"]
+            user    = msg.get("from", {})
+            uid     = user.get("id")
+            uname   = user.get("username") or user.get("first_name", "User")
+            text    = msg.get("text", "")
+            chat_id = msg.get("chat", {}).get("id")
+
+            if not uid or not text:
+                return
+
+            # ── Sessions retrait actives ──
+            from handlers.retrait import retrait_sessions
+            if uid in retrait_sessions:
+                await handle_retrait_step(uid, text)
+                return
+
+            # ── Sessions admin actives ──
+            if is_admin(uid):
+                from handlers.admin import admin_sessions
+                if uid in admin_sessions:
+                    await handle_admin_session(uid, text)
+                    return
+
+            # ── Commandes admin directes ──
+            if is_admin(uid):
+                handled = await handle_admin_command(uid, text)
+                if handled:
+                    return
+
+                # Boutons du panel admin
+                admin_actions = {
+                    "👥 Tous les Users":      handle_all_users,
+                    "📊 Statistiques":         handle_stats,
+                    "⚙️ Modifier les Prix":   handle_modify_prices,
+                    "➕ Ajouter une Tâche":   handle_add_task_start,
+                    "💸 Demandes Retrait":    handle_list_withdrawals,
+                    "🚫 Bannir / Débannir":   handle_ban_start,
+                    "📢 Broadcast":            handle_broadcast_start,
+                }
+                if text in admin_actions:
+                    await admin_actions[text](uid)
+                    return
+                if text == "🔙 Mode Utilisateur":
+                    await bot.send_message(uid,
+                        "👤 *Mode Utilisateur activé*",
+                        parse_mode="Markdown",
+                        reply_markup=main_keyboard()
+                    )
+                    return
+
+            # ── Commandes utilisateur ──
+            if text.startswith("/start"):
+                parts = text.split(" ")
+                arg   = parts[1] if len(parts) > 1 else None
+                await handle_start(uid, uname, arg)
+
+            elif text == "🎁 Bonus Journalier":  await handle_bonus(uid)
+            elif text == "💰 Mon Solde":          await handle_solde(uid)
+            elif text == "👥 Parrainage":          await handle_parrainage(uid)
+            elif text == "✅ Tâches du Jour":      await handle_tasks(uid)
+            elif text == "📋 Historique":          await handle_historique(uid)
+            elif text == "💸 Retrait":             await handle_retrait_start(uid)
+            elif text == "🏆 Classement":          await handle_classement(uid)
+            elif text == "❓ Aide":               await handle_aide(uid)
+
+            # ── Commandes cachées ──
+            elif text == "/admin" and is_admin(uid):
+                await handle_admin_panel(uid)
+
+        # ── Callback Query (boutons inline) ──────────────────────
+        elif "callback_query" in body:
+            cq      = body["callback_query"]
+            uid     = cq["from"]["id"]
+            data    = cq.get("data", "")
+            msg_id  = cq["message"]["message_id"]
+            chat_id = cq["message"]["chat"]["id"]
+            cq_id   = cq.get("id", "")
+
+            # Répondre immédiatement pour enlever le loading
             try:
-                tid = int(text.split()[1])
-                db_patch("bot_users", {"user_id": f"eq.{tid}"}, {"is_banned": True})
-                send(uid, "User " + str(tid) + " banni.")
-            except: send(uid, "ID invalide.")
-            return
-        if text.startswith("/unban "):
-            try:
-                tid = int(text.split()[1])
-                db_patch("bot_users", {"user_id": f"eq.{tid}"}, {"is_banned": False})
-                send(uid, "User " + str(tid) + " debanni.")
-            except: send(uid, "ID invalide.")
-            return
-        if text.startswith("/broadcast "):
-            msg = text[len("/broadcast "):]
-            users = db_get("bot_users")
-            sent = 0
-            for uu in users:
-                if not uu.get("is_banned"):
-                    try:
-                        tg("sendMessage", chat_id=uu["user_id"], text="Message XAFEARN\n\n" + msg)
-                        sent += 1
-                    except: pass
-            send(uid, "Broadcast envoye a " + str(sent) + " utilisateurs.")
-            return
+                await bot.answer_callback_query(cq_id)
+            except Exception:
+                pass
 
-    if not u.get("is_registered"):
-        send(uid, "Rejoins nos canaux d abord.\nEnvoie /start"); return
+            if data == "check_join":
+                await handle_check_join(uid, msg_id)
 
-    # ── MENU UTILISATEUR (4 boutons) ─────────────────────
-    if text == "\U0001f4e2 Nos Canaux":
-        send(uid, "Nos canaux officiels :", kb={"inline_keyboard": [
-            [{"text": "Canal 1", "url": CHANNELS_DISPLAY[0]}],
-            [{"text": "Canal 2", "url": CHANNELS_DISPLAY[1]}],
-            [{"text": "Canal 3", "url": CHANNELS_DISPLAY[2]}]
-        ]})
+            elif data.startswith("task_"):
+                task_id = int(data.split("_")[1])
+                await handle_task_complete(uid, task_id, cq_id)
 
-    elif text == "\U0001f465 Parrainage":
-        ref_link = "https://t.me/" + BOT_USERNAME + "?start=" + str(uid)
-        send(uid,
-            "TON LIEN D AFFILIATION\n\n" + ref_link + "\n\n"
-            "Partage ce lien : tes filleuls jouent et tu gagnes des recompenses dans le jeu !")
+            elif data.startswith("method_"):
+                method = data.split("_")[1]
+                await handle_retrait_method(uid, method, msg_id)
 
-    elif text == "\U00002753 Aide":
-        send(uid,
-            "AIDE XAFEARN\n\n"
-            "Clique sur Jouer maintenant pour ouvrir le jeu.\n"
-            "Toutes tes recompenses, ton solde et tes retraits se gerent directement dans le jeu.\n\n"
-            "Support WhatsApp :\nhttps://wa.me/699663183")
+            elif data == "cancel_retrait":
+                await handle_cancel_retrait(uid, msg_id)
 
-def handle_cb(uid, data, mid):
-    if data == "check_join":
-        u = get_user(uid)
-        if not u:
-            send(uid, "Compte introuvable. Envoie /start pour recommencer.")
-            return
-        if not check_joined(uid):
-            tg("editMessageText", chat_id=uid, message_id=mid,
-               text="Tu n as pas encore tout rejoint.\nRejoins les 3 canaux puis clique Verifier.",
-               reply_markup=join_kb())
-            return
-        db_patch("bot_users", {"user_id": f"eq.{uid}"}, {"is_registered": True})
-        r = tg("editMessageText", chat_id=uid, message_id=mid, text="Compte active ! Bienvenue dans XAFEARN.")
-        if not r.get("ok"):
-            print("editMessageText failed:", r)
-        send(uid, "Menu Principal XAFEARN\n\nClique sur Jouer maintenant pour commencer !", kb=main_kb())
+            elif data.startswith("approve_") or data.startswith("reject_"):
+                parts    = data.split("_")
+                decision = parts[0]
+                w_id     = int(parts[1])
+                await handle_retrait_decision(uid, decision, w_id, msg_id, chat_id)
 
-    elif data.startswith("gwok_") or data.startswith("gwno_"):
-        if uid not in ADMIN_IDS:
-            return
-        decision = "ok" if data.startswith("gwok_") else "no"
-        w_id = data.split("_", 1)[1]
-        rows = db_get("xa_withdrawals", {"id": f"eq.{w_id}"})
-        if not rows:
-            send(uid, "Retrait introuvable."); return
-        w = rows[0]
-        if w.get("status") != "pending":
-            send(uid, "Deja traite."); return
-        if decision == "ok":
-            db_patch("xa_withdrawals", {"id": f"eq.{w_id}"}, {"status": "approved"})
-            send(uid, "PAIEMENT EFFECTUE\n\nMontant : " + str(w["amount"]) + "F\nMethode : " + str(w.get("method", "")) +
-                 "\nNumero : " + str(w.get("number", "")) + "\nNom : " + str(w.get("name", "")))
-            try: send(w["telegram_id"], "Retrait approuve !\n\n" + str(w["amount"]) + "F envoye. Merci de ta confiance !")
-            except: pass
-        else:
-            db_patch("xa_withdrawals", {"id": f"eq.{w_id}"}, {"status": "rejected"})
-            u2rows = db_get("xa_users", {"id": f"eq.{w['user_id']}"})
-            if u2rows:
-                u2 = u2rows[0]
-                db_patch("xa_users", {"id": f"eq.{w['user_id']}"}, {"fcfa_balance": (u2.get("fcfa_balance") or 0) + w["amount"]})
-            send(uid, "RETRAIT REJETE #" + str(w_id))
-            try: send(w["telegram_id"], "Retrait refuse.\n\n+" + str(w["amount"]) + "F rembourse.\nSupport : https://wa.me/699663183")
-            except: pass
-
-application = app
-handler = app
+    except Exception as e:
+        print(f"process_update error: {e}")
