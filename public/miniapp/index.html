@@ -459,8 +459,10 @@ function callAction(action, params, cb){
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify(params)
-  }).then(function(r){return r.json();}).then(function(res){cb(res);})
-  .catch(function(){cb({error:"reseau"});});
+  }).then(function(r){
+    return r.json().then(function(j){return {status:r.status, body:j};});
+  }).then(function(res){cb(Object.assign({},res.body,{httpStatus:res.status}));})
+  .catch(function(err){cb({error:"reseau: "+err});});
 }
 
 // ── DB ────────────────────────────────────────────────────
@@ -670,7 +672,7 @@ function claimBonus(){
   if(!CU)return;
   callAction("claim_bonus",{},function(res){
     if(res.error==="deja_reclame"){toast("Bonus déjà réclamé aujourd'hui !","er");return;}
-    if(res.error){toast("Erreur — réessaie","er");return;}
+    if(res.error){toast("Erreur: "+res.error,"er");return;}
     CU=res.user;updateHeader();
     toast("+"+res.gain+" XACoins ! Bonus réclamé 🎁","gold");
     loadHome();
