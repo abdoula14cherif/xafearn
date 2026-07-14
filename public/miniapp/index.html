@@ -224,9 +224,6 @@ nav::-webkit-scrollbar{display:none}
           <input class="fi" id="rTel" type="tel" placeholder="699123456" inputmode="numeric"/>
         </div>
       </div>
-      <div class="fg"><label class="fl">Pays *</label>
-        <select class="fi" id="rPays"><option value="">-- Pays --</option><option value="Cameroun">🇨🇲 Cameroun</option><option value="Togo">🇹🇬 Togo</option><option value="Côte d'Ivoire">🇨🇮 Côte d'Ivoire</option><option value="Sénégal">🇸🇳 Sénégal</option><option value="Burkina Faso">🇧🇫 Burkina Faso</option><option value="Mali">🇲🇱 Mali</option><option value="Bénin">🇧🇯 Bénin</option><option value="Guinée">🇬🇳 Guinée</option><option value="Niger">🇳🇪 Niger</option><option value="Congo">🇨🇬 Congo</option><option value="Gabon">🇬🇦 Gabon</option><option value="Autre">Autre</option></select>
-      </div>
       <button class="btn btn-o" id="regBtn" onclick="doRegister()">🚀 Créer mon compte</button>
     </div>
   </div>
@@ -598,10 +595,8 @@ function doRegister(){
   var nom=(document.getElementById("rNom").value||"").trim();
   var code=document.getElementById("rCode").value;
   var num=(document.getElementById("rTel").value||"").trim().replace(/\D/g,"");
-  var pays=document.getElementById("rPays").value;
   if(!nom||nom.length<2){toast("Entre ton nom","er");return;}
   if(!num||num.length<6){toast("Numéro invalide","er");return;}
-  if(!pays){toast("Choisis ton pays","er");return;}
   var tel=code+num;
   var btn=document.getElementById("regBtn");
   btn.disabled=true;btn.textContent="⏳ Création...";
@@ -613,7 +608,7 @@ function doRegister(){
       showApp();toast("Compte trouvé — connecté ! 👋","ok");return;
     }
     dbI("xa_users",{
-      telegram_id:TID||null,nom:nom,telephone:tel,pays:pays,
+      telegram_id:TID||null,nom:nom,telephone:tel,
       xacoins:100,fcfa_balance:0,niveau:1,experience:0
     },function(err,res){
       if(err){toast("Erreur : "+err,"er");btn.disabled=false;btn.textContent="🚀 Créer";return;}
@@ -1122,11 +1117,15 @@ function init(){
         showApp();
         if(res.is_new)toast("Bienvenue "+CU.nom+" ! +100 XACoins offerts 🎁","gold");
       } else {
+        console.error("game_auth a repondu sans user:",res);
         document.getElementById("loader").style.display="none";
+        toast("Connexion automatique impossible (verifie BOT_API) — formulaire de secours","er");
         showAuth();
       }
-    }).catch(function(){
+    }).catch(function(err){
+      console.error("Echec appel game_auth:",err);
       document.getElementById("loader").style.display="none";
+      toast("Serveur du bot injoignable — verifie BOT_API dans game.html","er");
       showAuth();
     });
     return;
