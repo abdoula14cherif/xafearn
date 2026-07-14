@@ -457,6 +457,20 @@ var REFERRAL_BONUS = 10; // XAC gagné par le parrain quand son filleul s'inscri
 
 var CU = null;
 var TID = null;
+var TG_INIT_DATA = "";
+
+// Appelle une action securisee cote bot (jamais de calcul de solde cote client)
+function callAction(action, params, cb){
+  params = params || {};
+  params.initData = TG_INIT_DATA;
+  params.action = action;
+  fetch(BOT_API+"/api/game_action", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(params)
+  }).then(function(r){return r.json();}).then(function(res){cb(res);})
+  .catch(function(){cb({error:"reseau"});});
+}
 
 // ── DB ────────────────────────────────────────────────────
 function dbQ(t,p,cb){
@@ -678,12 +692,11 @@ function loadHome(){
 
 function claimBonus(){
   if(!CU)return;
-  if(CU.derniere_connexion===today()){toast("Bonus déjà réclamé aujourd'hui !","er");return;}
-  var bonus=50+(CU.niveau||1)*10;
-  dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins+bonus,derniere_connexion:today()},function(){
-    CU.xacoins+=bonus;CU.derniere_connexion=today();
-    dbI("xa_transactions",{user_id:CU.id,type:"bonus",xacoins:bonus,description:"Bonus connexion jour "+today()},function(){});
-    toast("+"+bonus+" XACoins ! Bonus réclamé 🎁","gold");
+  callAction("claim_bonus",{},function(res){
+    if(res.error==="deja_reclame"){toast("Bonus déjà réclamé aujourd'hui !","er");return;}
+    if(res.error){toast("Erreur — réessaie","er");return;}
+    CU=res.user;updateHeader();
+    toast("+"+res.gain+" XACoins ! Bonus réclamé 🎁","gold");
     loadHome();
   });
 }
@@ -744,32 +757,14 @@ function collecterFerme(){
   if(!CU)return;
   var btn=document.getElementById("collectBtn");
   btn.disabled=true;btn.textContent="⏳ Collecte...";
-  dbQ("xa_animaux",{user_id:"eq."+CU.id},function(e,anims){
-    if(!anims||!anims.length){toast("Tu n'as pas encore d'animaux !","er");btn.disabled=false;btn.textContent="🧺 Collecter tout";return;}
-    var total=0;var now=new Date().toISOString();
-    var done=0;
-    anims.forEach(function(anim){
-      var aInfo=ANIMAUX[anim.type_animal];
-      if(!aInfo||anim.quantite===0){done++;if(done===anims.length)finishCollect(total);return;}
-      var heures=hoursAgo(anim.derniere_collecte);
-      var pending=Math.min(heures*aInfo.ph*anim.quantite, aInfo.ph*anim.quantite*24);
-      total+=pending;
-      dbU("xa_animaux",{id:"eq."+anim.id},{derniere_collecte:now},function(){
-        done++;if(done===anims.length)finishCollect(total);
-      });
-    });
+  callAction("collect_ferme",{},function(res){
+    btn.disabled=false;btn.textContent="🧺 Collecter tout";
+    if(res.error==="rien_a_collecter"){toast("Rien à collecter encore — attends un peu !","in");return;}
+    if(res.error){toast("Erreur — réessaie","er");return;}
+    CU=res.user;updateHeader();
+    toast("+"+res.gain+" XAC récoltés ! 🌾","gold");
+    loadFerme();
   });
-  function finishCollect(total){
-    total=Math.floor(total);
-    if(total===0){toast("Rien à collecter encore — attends un peu !","in");btn.disabled=false;btn.textContent="🧺 Collecter tout";return;}
-    dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins+total},function(){
-      dbI("xa_transactions",{user_id:CU.id,type:"ferme",xacoins:total,description:"Collecte ferme"},function(){});
-      CU.xacoins+=total;updateHeader();
-      toast("+"+total+" XAC récoltés ! 🌾","gold");
-      btn.disabled=false;btn.textContent="🧺 Collecter tout";
-      loadFerme();
-    });
-  }
 }
 
 function acheterAnimal(type){
@@ -813,23 +808,10 @@ function confirmerAchatAnimal(type){
 function validerAchatAnimal(type){
   var ref=(document.getElementById("refPay")||{}).value||"";
   if(!ref||ref.length<4){toast("Entre la référence de paiement","er");return;}
-  dbQ("xa_animaux",{user_id:"eq."+CU.id,type_animal:"eq."+type},function(e,ex){
-    if(!e&&ex&&ex[0]){
-      // Incrémenter
-      dbU("xa_animaux",{id:"eq."+ex[0].id},{quantite:ex[0].quantite+1},function(){
-        dbI("xa_transactions",{user_id:CU.id,type:"achat_animal",fcfa:ANIMAUX[type].prix,description:"Achat "+ANIMAUX[type].nom+" ref:"+ref},function(){});
-        closeMo();toast("🐔 "+ANIMAUX[type].nom+" achetée ! En cours d'activation","ok");
-        loadFerme();
-      });
-    } else {
-      dbI("xa_animaux",{user_id:CU.id,type_animal:type,quantite:1,derniere_collecte:new Date().toISOString()},function(err){
-        if(!err){
-          dbI("xa_transactions",{user_id:CU.id,type:"achat_animal",fcfa:ANIMAUX[type].prix,description:"Achat "+ANIMAUX[type].nom+" ref:"+ref},function(){});
-          closeMo();toast("🐔 "+ANIMAUX[type].nom+" achetée ! Production démarrée","ok");
-          loadFerme();
-        } else {toast("Erreur — contacte le support","er");}
-      });
-    }
+  callAction("buy_animal",{type:type,ref:ref},function(res){
+    if(res.error){toast("Erreur — contacte le support","er");return;}
+    closeMo();toast("🐔 "+ANIMAUX[type].nom+" achetée ! En cours d'activation","ok");
+    loadFerme();
   });
 }
 
@@ -867,24 +849,13 @@ function miner(){
   if(!CU)return;
   var btn=document.getElementById("mineBtn");
   btn.disabled=true;btn.textContent="⛏️ Mining...";
-  dbQ("xa_mining",{user_id:"eq."+CU.id},function(e,mine){
-    if(!mine||!mine[0]){btn.disabled=false;btn.textContent="⛏️ Miner";return;}
-    var m=mine[0];
-    var rates=[0,1,5,15];
-    var rate=rates[m.niveau||1]||1;
-    var h=hoursAgo(m.derniere_mine);
-    var gain=Math.min(Math.floor(h*rate),rate*24);
-    if(gain<1){toast("Attends encore un peu ! (min 1 heure)","in");btn.disabled=false;btn.textContent="⛏️ Miner maintenant";return;}
-    var now=new Date().toISOString();
-    dbU("xa_mining",{id:"eq."+m.id},{derniere_mine:now,xacoins_total:(m.xacoins_total||0)+gain},function(){
-      dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins+gain},function(){
-        dbI("xa_transactions",{user_id:CU.id,type:"mining",xacoins:gain,description:"Mining niveau "+m.niveau},function(){});
-        CU.xacoins+=gain;updateHeader();
-        toast("+"+gain+" XAC minés ! ⛏️","gold");
-        btn.disabled=false;btn.textContent="⛏️ Miner maintenant";
-        loadMining();
-      });
-    });
+  callAction("mine",{},function(res){
+    btn.disabled=false;btn.textContent="⛏️ Miner maintenant";
+    if(res.error==="trop_tot"){toast("Attends encore un peu ! (min 1 heure)","in");return;}
+    if(res.error){toast("Erreur — réessaie","er");return;}
+    CU=res.user;updateHeader();
+    toast("+"+res.gain+" XAC minés ! ⛏️","gold");
+    loadMining();
   });
 }
 
@@ -907,13 +878,10 @@ function upgraderMine(niveau,prixFcfa){
 function validerUpgradeMine(niveau,prix){
   var ref=(document.getElementById("refMine")||{}).value||"";
   if(!ref||ref.length<4){toast("Entre la référence","er");return;}
-  dbQ("xa_mining",{user_id:"eq."+CU.id},function(e,mine){
-    if(!mine||!mine[0])return;
-    dbU("xa_mining",{id:"eq."+mine[0].id},{niveau:niveau},function(){
-      dbI("xa_transactions",{user_id:CU.id,type:"upgrade_mine",fcfa:parseInt(prix),description:"Upgrade mine niveau "+niveau+" ref:"+ref},function(){});
-      closeMo();toast("Mine upgradée ! Niveau "+niveau+" actif ✨","ok");
-      loadMining();
-    });
+  callAction("upgrade_mine",{niveau:niveau,ref:ref},function(res){
+    if(res.error){toast("Erreur — réessaie","er");return;}
+    closeMo();toast("Mine upgradée ! Niveau "+niveau+" actif ✨","ok");
+    loadMining();
   });
 }
 
@@ -954,50 +922,29 @@ function loadEmpire(){
 }
 
 function collecterEmpire(){
-  dbQ("xa_empire",{user_id:"eq."+CU.id},function(e,emp){
-    if(!emp||!emp[0])return;
-    var em=emp[0];
-    var h=hoursAgo(em.derniere_collecte);
-    var gain=Math.floor(h*(em.niveau||1)*5);
-    if(gain<1){toast("Attends encore — production en cours","in");return;}
-    dbU("xa_empire",{id:"eq."+em.id},{ressources:em.ressources+gain,derniere_collecte:new Date().toISOString()},function(){
-      toast("+"+gain+" ressources collectées ! 🌾","ok");
-      loadEmpire();
-    });
+  callAction("empire_collect",{},function(res){
+    if(res.error==="trop_tot"){toast("Attends encore — production en cours","in");return;}
+    if(res.error){toast("Erreur — réessaie","er");return;}
+    toast("+"+res.gain+" ressources collectées ! 🌾","ok");
+    loadEmpire();
   });
 }
 
 function ameliorerEmpire(){
-  dbQ("xa_empire",{user_id:"eq."+CU.id},function(e,emp){
-    if(!emp||!emp[0])return;
-    var em=emp[0];
-    var cout=em.niveau*100; // ressources nécessaires
-    if(em.ressources<cout){toast("Pas assez de ressources ! ("+cout+" nécessaires)","er");return;}
-    dbU("xa_empire",{id:"eq."+em.id},{niveau:em.niveau+1,ressources:em.ressources-cout,soldats:em.soldats+5,points_attaque:em.points_attaque+2,points_defense:em.points_defense+2},function(){
-      toast("Empire amélioré ! Niveau "+(em.niveau+1)+" 🏰","gold");
-      loadEmpire();
-    });
+  callAction("empire_upgrade",{},function(res){
+    if(res.error==="ressources_insuffisantes"){toast("Pas assez de ressources !","er");return;}
+    if(res.error){toast("Erreur — réessaie","er");return;}
+    toast("Empire amélioré ! 🏰","gold");
+    loadEmpire();
   });
 }
 
 function attaquerEmpire(empireId,nom,soldatsEnnemi){
-  dbQ("xa_empire",{user_id:"eq."+CU.id},function(e,myEmp){
-    if(!myEmp||!myEmp[0]){toast("Tu n'as pas d'empire","er");return;}
-    var me=myEmp[0];
-    var score_moi=me.soldats*(me.points_attaque||5);
-    var score_enn=soldatsEnnemi*5;
-    var victoire=score_moi>score_enn||Math.random()>0.4; // avantage attaquant
-    if(victoire){
-      var butin=Math.floor(Math.random()*50+20);
-      dbU("xa_empire",{id:"eq."+me.id},{ressources:me.ressources+butin},function(){
-        toast("VICTOIRE ! +"+butin+" ressources pillées ⚔️","gold");loadEmpire();
-      });
-    } else {
-      var perte=Math.floor(Math.random()*20+5);
-      dbU("xa_empire",{id:"eq."+me.id},{soldats:Math.max(1,me.soldats-perte)},function(){
-        toast("DÉFAITE... -"+perte+" soldats perdus 😔","er");loadEmpire();
-      });
-    }
+  callAction("empire_attack",{target_id:empireId},function(res){
+    if(res.error){toast("Erreur — réessaie","er");return;}
+    if(res.victoire){toast("VICTOIRE ! +"+res.gain+" ressources pillées ⚔️","gold");}
+    else{toast("DÉFAITE... -"+res.perte+" soldats perdus 😔","er");}
+    loadEmpire();
   });
 }
 
@@ -1033,55 +980,13 @@ function rejoindreArene(){
 
 function choisirCarte(carte){
   closeMo();
-  // Vérif si bataille en attente
-  dbQ("xa_battles",{status:"eq.waiting",order:"created_at.asc",limit:"1"},function(e,battles){
-    if(!e&&battles&&battles[0]&&battles[0].player1_id!==CU.id){
-      // Rejoindre une bataille existante
-      var bt=battles[0];
-      var maCarte=carte;
-      var cartAdv=bt.player1_carte;
-      var win=CARTE_FORCE[maCarte]>CARTE_FORCE[cartAdv];
-      var commission=Math.floor(bt.mise_xacoins*0.15);
-      var gain=Math.floor(bt.mise_xacoins*2*0.85);
-      var gagnant=win?CU.id:bt.player1_id;
-      var perdant=win?bt.player1_id:CU.id;
-      // Déduire mise du joueur 2
-      var newCoins=CU.xacoins-bt.mise_xacoins;
-      dbU("xa_users",{id:"eq."+CU.id},{xacoins:newCoins},function(){
-        CU.xacoins=newCoins;
-        // Donner gain au gagnant
-        dbQ("xa_users",{id:"eq."+gagnant},function(e2,gu){
-          if(!e2&&gu&&gu[0]){
-            dbU("xa_users",{id:"eq."+gagnant},{xacoins:gu[0].xacoins+gain},function(){
-              if(gagnant===CU.id)CU.xacoins+=gain;
-              dbU("xa_battles",{id:"eq."+bt.id},{player2_id:CU.id,player2_carte:maCarte,status:"finished",gagnant_id:gagnant,commission:commission,finished_at:new Date().toISOString()},function(){
-                updateHeader();
-                if(win){
-                  toast("🏆 VICTOIRE ! "+maCarte+" bat "+cartAdv+" ! +"+gain+" XAC","gold");
-                } else {
-                  toast("😔 DÉFAITE ! "+cartAdv+" bat "+maCarte+"...","er");
-                }
-                loadBattles();
-              });
-            });
-          }
-        });
-      });
-    } else {
-      // Créer nouvelle bataille
-      dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins-MISE_BATTLE},function(){
-        CU.xacoins-=MISE_BATTLE;updateHeader();
-        dbI("xa_battles",{player1_id:CU.id,player1_carte:carte,mise_xacoins:MISE_BATTLE,status:"waiting"},function(err){
-          if(!err){toast("Bataille créée ! En attente d'un adversaire... ⚔️","in");}
-          else{
-            // Rembourser
-            dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins+MISE_BATTLE},function(){CU.xacoins+=MISE_BATTLE;updateHeader();});
-            toast("Erreur — réessaie","er");
-          }
-          loadBattles();
-        });
-      });
-    }
+  callAction("battle_join",{carte:carte},function(res){
+    if(res.error){toast("Erreur — réessaie","er");return;}
+    if(res.user){CU=res.user;updateHeader();}
+    if(res.en_attente){toast("Bataille créée ! En attente d'un adversaire... ⚔️","in");}
+    else if(res.victoire){toast("🏆 VICTOIRE ! "+carte+" bat "+res.adversaire_carte+" ! +"+res.gain+" XAC","gold");}
+    else{toast("😔 DÉFAITE ! "+res.adversaire_carte+" bat "+carte+"...","er");}
+    loadBattles();
   });
 }
 
@@ -1138,13 +1043,11 @@ function convertir(){
   var amt=parseInt(document.getElementById("convAmt").value||0);
   if(!amt||amt<2000){toast("Minimum 2000 XAC à convertir","er");return;}
   if(amt>CU.xacoins){toast("Pas assez de XAC","er");return;}
-  var fcfa=Math.floor(amt/CONV_RATE);
-  dbU("xa_users",{id:"eq."+CU.id},{xacoins:CU.xacoins-amt,fcfa_balance:(CU.fcfa_balance||0)+fcfa},function(){
-    dbI("xa_transactions",{user_id:CU.id,type:"conversion",xacoins:-amt,fcfa:fcfa,description:"Conversion "+amt+" XAC → "+fcfa+"F"},function(){});
-    CU.xacoins-=amt;CU.fcfa_balance=(CU.fcfa_balance||0)+fcfa;
-    updateHeader();
+  callAction("convert",{amount:amt},function(res){
+    if(res.error){toast("Erreur — vérifie ton solde","er");return;}
+    CU=res.user;updateHeader();
     document.getElementById("marcheBalance").textContent=fmt(CU.fcfa_balance)+"F";
-    toast("+"+fcfa+"F converti ! 💱","gold");
+    toast("+"+res.fcfa+"F converti ! 💱","gold");
     document.getElementById("convAmt").value="";
     document.getElementById("convFcfa").textContent="0F";
     loadMarche();
@@ -1181,9 +1084,9 @@ function soumettreRetrait(){
   if(!name||name.length<3){toast("Nom invalide","er");return;}
   if(!amt||amt<1000){toast("Minimum 1000F","er");return;}
   if(amt>(CU.fcfa_balance||0)){toast("Solde insuffisant","er");return;}
-  dbU("xa_users",{id:"eq."+CU.id},{fcfa_balance:(CU.fcfa_balance||0)-amt},function(){
-    CU.fcfa_balance-=amt;
-    dbI("xa_transactions",{user_id:CU.id,type:"retrait",fcfa:amt,description:"Retrait "+method+" "+num+" - "+name},function(){});
+  callAction("withdraw",{method:method,number:num,name:name,amount:amt},function(res){
+    if(res.error){toast("Erreur — réessaie","er");return;}
+    CU=res.user;updateHeader();
     closeMo();
     toast("Demande de "+amt+"F envoyée ! Traitement sous 24h 💸","ok");
     loadMarche();
@@ -1200,6 +1103,7 @@ function init(){
     if(typeof Telegram!=="undefined"&&Telegram.WebApp){
       Telegram.WebApp.ready();Telegram.WebApp.expand();
       initData=Telegram.WebApp.initData||"";
+      TG_INIT_DATA=initData;
       var tg=Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user;
       if(tg&&tg.id)TID=tg.id;
     }
