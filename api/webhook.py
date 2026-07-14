@@ -127,7 +127,10 @@ def handle_msg(uid, uname, text):
         u = get_user(uid)
         if u and u.get("is_banned"): send(uid, "Compte suspendu."); return
         if not u:
-            db_post("bot_users", {"user_id": uid, "username": uname, "referred_by": referred_by, "is_banned": False, "is_registered": False})
+            created = db_post("bot_users", {"user_id": uid, "username": uname, "referred_by": referred_by, "is_banned": False, "is_registered": False})
+            if not created:
+                send(uid, "Erreur technique (base de donnees). Reessaie dans un instant.")
+                return
         send(uid,
             "Bienvenue sur XAFEARN " + str(uname) + " !\n\n"
             "Rejoins nos 3 canaux puis clique Verifier pour acceder au jeu.",
@@ -201,14 +204,18 @@ def handle_msg(uid, uname, text):
 def handle_cb(uid, data, mid):
     if data == "check_join":
         u = get_user(uid)
-        if not u: return
+        if not u:
+            send(uid, "Compte introuvable. Envoie /start pour recommencer.")
+            return
         if not check_joined(uid):
             tg("editMessageText", chat_id=uid, message_id=mid,
                text="Tu n as pas encore tout rejoint.\nRejoins les 3 canaux puis clique Verifier.",
                reply_markup=join_kb())
             return
         db_patch("bot_users", {"user_id": f"eq.{uid}"}, {"is_registered": True})
-        tg("editMessageText", chat_id=uid, message_id=mid, text="Compte active ! Bienvenue dans XAFEARN.")
+        r = tg("editMessageText", chat_id=uid, message_id=mid, text="Compte active ! Bienvenue dans XAFEARN.")
+        if not r.get("ok"):
+            print("editMessageText failed:", r)
         send(uid, "Menu Principal XAFEARN\n\nClique sur Jouer maintenant pour commencer !", kb=main_kb())
 
     elif data.startswith("gwok_") or data.startswith("gwno_"):
