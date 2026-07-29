@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwiftKash — Créer un compte</title>
+<style>
+  body{ margin:0; background:#0B1526; color:#E9EEF7; font-family:sans-serif;
+        display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+  .box{ width:100%; max-width:360px; background:#16233D; border-radius:20px; padding:28px 22px; }
+  h2{ margin:0 0 20px; text-align:center; }
+  label{ font-size:13px; color:rgba(233,238,247,0.6); display:block; margin:14px 0 6px; }
+  input, select{
+    width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(233,238,247,0.15);
+    background:#0B1526; color:#E9EEF7; font-size:14px; box-sizing:border-box;
+  }
+  button{
+    width:100%; margin-top:22px; padding:14px; border:none; border-radius:100px;
+    background:linear-gradient(90deg,#F2811D,#F4B93E); color:#111; font-weight:800; font-size:15px; cursor:pointer;
+  }
+  .erreur{ background:rgba(239,68,68,0.15); border:1px solid #EF4444; color:#FCA5A5;
+           padding:10px 14px; border-radius:10px; font-size:13px; margin-bottom:10px; }
+  a{ color:#F4B93E; display:block; text-align:center; margin-top:16px; font-size:13px; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h2>Créer un compte</h2>
+    {% if erreur %}<div class="erreur">{{ erreur }}</div>{% endif %}
+    <form method="POST">
+      <label>Nom complet</label>
+      <input type="text" name="nom" required>
+      <label>Pays</label>
+      <input type="text" name="pays" required>
+      <label>Numéro de téléphone</label>
+      <input type="tel" name="telephone" required>
+      <label>Adresse e-mail</label>
+      <input type="email" name="email" required>
+      <label>Mot de passe (8 caractères minimum)</label>
+      <input type="password" name="mot_de_passe" minlength="8" required>
+      <button type="submit">Créer mon compte</button>
+    </form>
+    <a href="/">← Retour à l'accueil</a>
+  </div>
+</body>
+</html>

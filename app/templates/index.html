@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwiftKash — Réponds vite, grimpe, gagne.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1526; --navy-2:#101E36; --card:#16233D;
+    --gold:#F4B93E; --orange:#F2811D; --green:#22C55E; --blue:#2FB6E0; --purple:#B26CE0;
+    --red:#EF4444; --ink:#E9EEF7; --dim:rgba(233,238,247,0.55); --line:rgba(233,238,247,0.10);
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0; background:var(--navy); color:var(--ink);
+    font-family:'Manrope', sans-serif; -webkit-font-smoothing:antialiased;
+  }
+  .display{ font-family:'Baloo 2', sans-serif; }
+  .mono{ font-family:'Space Mono', monospace; }
+  a{ color:inherit; }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.001ms !important; } }
+  nav{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px clamp(18px,5vw,48px);
+    background:rgba(11,21,38,0.9); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .logo{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:22px; }
+  .logo .accent{ color:var(--gold); }
+  .nav-cta{
+    background:linear-gradient(90deg, var(--orange), var(--gold)); color:#111;
+    padding:10px 18px; border-radius:100px; font-weight:800; font-size:14px; text-decoration:none;
+  }
+  .wrap{ max-width:520px; margin:0 auto; padding:0 18px; }
+  .hero{ padding:34px 0 10px; text-align:center; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:'Space Mono', monospace; font-size:11.5px; text-transform:uppercase;
+    letter-spacing:0.1em; color:var(--green); margin-bottom:14px;
+  }
+  .eyebrow::before{ content:''; width:6px; height:6px; border-radius:50%; background:var(--green); }
+  .hero h1{
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:clamp(26px,6vw,32px);
+    line-height:1.15; margin:0 0 10px;
+  }
+  .hero h1 .accent{ color:var(--gold); }
+  .hero p{ color:var(--dim); font-size:14.5px; line-height:1.55; margin:0 auto 22px; max-width:380px; }
+  .jackpot{
+    background:radial-gradient(120% 160% at 50% 0%, rgba(244,185,62,0.16), transparent 60%), var(--card);
+    border:1px solid rgba(244,185,62,0.25); border-radius:20px; padding:22px 18px; text-align:center;
+    margin-bottom:18px;
+  }
+  .jackpot .label{ font-size:11.5px; color:var(--dim); font-weight:700; letter-spacing:0.04em; margin-bottom:6px; }
+  .jackpot .amount{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:36px; color:var(--gold);
+    text-shadow:0 0 24px rgba(244,185,62,0.5); line-height:1; }
+  .jackpot .amount span{ font-size:18px; }
+  .jackpot .prog{ display:flex; justify-content:space-between; font-family:'Space Mono', monospace; font-size:11.5px;
+    color:var(--dim); margin:16px 0 6px; }
+  .track{ height:7px; border-radius:100px; background:rgba(233,238,247,0.1); overflow:hidden; }
+  .fill{ height:100%; border-radius:100px; background:linear-gradient(90deg, var(--orange), var(--gold));
+    width:63%; animation:fillIn 1.2s ease both; }
+  @keyframes fillIn{ from{ width:0; } }
+  .play-cta{
+    display:block; width:100%; text-align:center; border:none; cursor:pointer;
+    background:linear-gradient(90deg, var(--orange), var(--gold)); color:#111;
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:17px;
+    padding:18px; border-radius:16px; margin-bottom:8px;
+  }
+  .play-sub{ text-align:center; font-size:12px; color:var(--dim); margin-bottom:28px; }
+  .play-sub b{ color:var(--green); }
+  .section-title{
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:19px; margin:0 0 14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .steps{ display:flex; flex-direction:column; gap:10px; margin-bottom:30px; }
+  .step{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start; }
+  .step .n{ font-family:'Space Mono', monospace; font-weight:700; color:var(--gold); font-size:14px; flex-shrink:0; }
+  .step h4{ margin:0 0 3px; font-size:14.5px; }
+  .step p{ margin:0; font-size:12.5px; color:var(--dim); line-height:1.5; }
+  .rank-list{ list-style:none; margin:0 0 30px; padding:0; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--line); }
+  .rank-list li{ display:grid; grid-template-columns:32px 1fr auto; align-items:center; gap:12px; padding:13px 16px; border-bottom:1px solid var(--line); }
+  .rank-list li:last-child{ border-bottom:none; }
+  .rank-num{ font-family:'Space Mono', monospace; font-weight:700; font-size:13.5px; color:var(--dim); }
+  .rank-list li.top .rank-num{ color:var(--gold); }
+  .rank-name{ font-weight:600; font-size:14.5px; }
+  .rank-sub{ font-size:11.5px; color:var(--dim); margin-top:1px; }
+  .rank-prize{ font-family:'Space Mono', monospace; font-weight:700; font-size:14px; }
+  .rank-list li.top .rank-prize{ color:var(--orange); }
+  .health{
+    margin-bottom:30px; padding:16px; border-radius:16px;
+    background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.3);
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .health .ic{ font-size:20px; }
+  .health h4{ margin:0 0 4px; font-size:13.5px; color:var(--green); font-weight:700; }
+  .health p{ margin:0; font-size:12px; color:var(--dim); line-height:1.5; }
+  footer{ text-align:center; padding:20px 0 34px; font-family:'Space Mono', monospace; font-size:11px; color:var(--dim); }
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100;
+    align-items:center; justify-content:center; padding:16px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .game-card{
+    width:100%; max-width:380px; background:var(--navy-2); border-radius:24px; padding:24px 20px;
+    border:1px solid var(--line);
+  }
+  .game-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .game-head h3{ margin:0; font-family:'Baloo 2', sans-serif; font-size:17px; }
+  .close-btn{ background:var(--card); border:none; color:var(--ink); width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:15px; }
+  .hud{ display:flex; justify-content:space-between; margin-bottom:14px; gap:8px; }
+  .hud .box{ background:var(--card); border-radius:12px; padding:9px 12px; text-align:center; flex:1; }
+  .hud .box .l{ font-size:9.5px; color:var(--dim); text-transform:uppercase; letter-spacing:0.05em; }
+  .hud .box .v{ font-size:18px; font-weight:800; margin-top:2px; }
+  #timerVal{ color:var(--gold); } #scoreVal{ color:var(--green); }
+  .timer-track{ height:6px; background:rgba(233,238,247,0.1); border-radius:100px; overflow:hidden; margin-bottom:20px; }
+  .timer-fill{ height:100%; background:linear-gradient(90deg, var(--orange), var(--gold)); width:100%; transition:width 0.1s linear; }
+  #gameArea{ text-align:center; }
+  .question{ font-size:32px; font-weight:800; margin:14px 0 22px; min-height:44px; }
+  .choices{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .choice-btn{
+    background:var(--card); border:1.5px solid var(--line); color:var(--ink);
+    border-radius:14px; padding:15px 8px; font-size:20px; font-weight:700; cursor:pointer;
+  }
+  .choice-btn:active{ transform:scale(0.96); }
+  .choice-btn.correct{ background:rgba(34,197,94,0.25); border-color:var(--green); }
+  .choice-btn.wrong{ background:rgba(239,68,68,0.25); border-color:var(--red); }
+  #startScreen, #endScreen{ text-align:center; padding:10px 0; }
+  #startScreen p, #endScreen p{ color:var(--dim); font-size:13px; line-height:1.6; margin:0 0 20px; }
+  .big-btn{
+    background:linear-gradient(90deg, var(--orange), var(--gold)); border:none; color:#111;
+    font-weight:800; font-size:15px; padding:15px 26px; border-radius:100px; cursor:pointer; width:100%;
+  }
+  .end-score{ font-size:40px; font-weight:800; color:var(--gold); margin-bottom:4px; }
+  .end-detail{ font-size:12.5px; color:var(--dim); margin-bottom:20px; }
+  .end-rank{ font-size:13px; color:var(--green); font-weight:700; margin-bottom:18px; }
+  .hidden{ display:none !important; }
+  .streak-note{ font-size:11.5px; color:var(--green); min-height:15px; margin-bottom:4px; }
+  .penalty-note{ font-size:11.5px; color:var(--red); min-height:15px; margin-bottom:4px; }
+  .winners-title{ font-size:13px; font-weight:700; margin:6px 0 8px; text-align:left; }
+  .winners-list{ list-style:none; margin:0 0 18px; padding:0; }
+  .winners-list li{
+    display:flex; justify-content:space-between; font-size:13px;
+    padding:8px 12px; background:var(--card); border-radius:10px; margin-bottom:6px;
+  }
+  .winners-list .w-amt{ color:var(--green); font-weight:700; font-family:'Space Mono', monospace; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Swift<span class="accent">Kash</span></div>
+  <a href="#" class="nav-cta" onclick="openGame(); return false;">Jouer</a>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">Jeu de calcul — sans hasard</div>
+    <h1>Réponds vite.<br>Grimpe au classement.<br><span class="accent">Gagne selon ton score.</span></h1>
+    <p>Chaque défi coûte un ticket. Ton classement à la fin du cycle détermine ton gain — jamais un tirage au sort.</p>
+  </div>
+
+  <div class="jackpot">
+    <div class="label">CAGNOTTE DU CYCLE EN COURS</div>
+    <div class="amount">15 000 <span>FCFA</span></div>
+    <div class="prog"><span>19 / 30 défis joués</span><span>Seuil : 30</span></div>
+    <div class="track"><div class="fill"></div></div>
+  </div>
+
+  <button class="play-cta" onclick="openGame()">🎯 Tenter un défi</button>
+  <div class="play-sub">Essai gratuit — <b>crée un compte</b> pour jouer pour de vrai et gagner</div>
+
+  <div class="section-title">🧩 Comment ça marche</div>
+  <div class="steps">
+    <div class="step"><div class="n">01</div><div><h4>Tu lances un défi</h4><p>90 secondes de calcul mental, difficulté progressive.</p></div></div>
+    <div class="step"><div class="n">02</div><div><h4>Tu es classé en direct</h4><p>Ton score te place dans le classement du cycle en cours.</p></div></div>
+    <div class="step"><div class="n">03</div><div><h4>Le cycle se clôture</h4><p>Au seuil atteint, les gains sont distribués selon le classement final.</p></div></div>
+  </div>
+
+  <div class="section-title">🏆 Classement — cycle en cours</div>
+  <ul class="rank-list">
+    <li class="top"><span class="rank-num">01</span><div><div class="rank-name">A. Ngassa</div><div class="rank-sub">Score 840</div></div><span class="rank-prize">33% du pot</span></li>
+    <li class="top"><span class="rank-num">02</span><div><div class="rank-name">M. Foka</div><div class="rank-sub">Score 790</div></div><span class="rank-prize">12% du pot</span></li>
+    <li><span class="rank-num">03</span><div><div class="rank-name">S. Biya</div><div class="rank-sub">Score 760</div></div><span class="rank-prize">12% du pot</span></li>
+    <li><span class="rank-num">04</span><div><div class="rank-name">R. Etoundi</div><div class="rank-sub">Score 705</div></div><span class="rank-prize">6% du pot</span></li>
+    <li><span class="rank-num">…</span><div><div class="rank-name">Toi ?</div><div class="rank-sub">Joue pour apparaître ici</div></div><span class="rank-prize">—</span></li>
+  </ul>
+
+  <div class="health">
+    <div class="ic">❤️</div>
+    <div>
+      <h4>Conseil santé du jour</h4>
+      <p>Buvez suffisamment d'eau chaque jour et évitez les excès de sucre. Prenez soin de vous !</p>
+    </div>
+  </div>
+</div>
+
+<footer>SwiftKash — jeu de compétence, résultat basé sur la performance.</footer>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="game-card">
+    <div class="game-head">
+      <h3>SwiftKash — Défi calcul</h3>
+      <button class="close-btn" onclick="closeGame()">✕</button>
+    </div>
+
+    <div id="startScreen">
+      <p>90 secondes. Résous un maximum de calculs. La difficulté augmente à chaque bonne réponse.
+      Une erreur te coûte 3 secondes de pénalité.</p>
+      <button class="big-btn" onclick="startGame()">Commencer</button>
+    </div>
+
+    <div id="playScreen" class="hidden">
+      <div class="hud">
+        <div class="box"><div class="l">Temps</div><div class="v" id="timerVal">90</div></div>
+        <div class="box"><div class="l">Score</div><div class="v" id="scoreVal">0</div></div>
+        <div class="box"><div class="l">Niveau</div><div class="v" id="levelVal">1</div></div>
+      </div>
+      <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+      <div id="gameArea">
+        <div class="streak-note" id="streakNote">&nbsp;</div>
+        <div class="question" id="questionText">—</div>
+        <div class="choices" id="choicesArea"></div>
+        <div class="penalty-note" id="penaltyNote">&nbsp;</div>
+      </div>
+    </div>
+
+    <div id="endScreen" class="hidden">
+      <div class="end-score" id="finalScore">0</div>
+      <div class="end-detail" id="finalDetail">points</div>
+      <div class="end-rank" id="finalRank"></div>
+
+      <div class="winners-title">🏆 Ils ont gagné récemment</div>
+      <ul class="winners-list">
+        <li><span>A. Ngassa</span><span class="w-amt">4 950 F</span></li>
+        <li><span>M. Foka</span><span class="w-amt">1 800 F</span></li>
+        <li><span>S. Biya</span><span class="w-amt">900 F</span></li>
+      </ul>
+
+      <a href="/inscription" class="big-btn" style="display:block; text-decoration:none; box-sizing:border-box;">Créer mon compte pour jouer pour de vrai</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function openGame(){ document.getElementById('modalOverlay').classList.add('open'); }
+function closeGame(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  clearInterval(timerInterval);
+}
+let timeLeft, score, correctCount, wrongCount, level, streak, timerInterval, currentAnswer;
+const TOTAL_TIME = 90;
+const MOCK_SCORES = [840, 790, 760, 705, 690, 650, 610, 580, 540, 500, 460, 420];
+function startGame(){
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.add('hidden');
+  document.getElementById('playScreen').classList.remove('hidden');
+  timeLeft = TOTAL_TIME * 10;
+  score = 0; correctCount = 0; wrongCount = 0; level = 1; streak = 0;
+  updateHud();
+  nextQuestion();
+  timerInterval = setInterval(tick, 100);
+}
+function tick(){
+  timeLeft -= 1;
+  if(timeLeft <= 0){ timeLeft = 0; endGame(); return; }
+  updateHud();
+}
+function updateHud(){
+  document.getElementById('timerVal').textContent = (timeLeft/10).toFixed(1);
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('levelVal').textContent = level;
+  document.getElementById('timerFill').style.width = (timeLeft/(TOTAL_TIME*10)*100)+'%';
+}
+function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function genQuestion(){
+  let a, b, c, d, text, answer;
+  if(level <= 2){
+    const op = Math.random() < 0.5 ? '+' : '-';
+    a = randInt(1,20); b = randInt(1,20);
+    if(op === '-' && b > a) [a,b] = [b,a];
+    answer = op === '+' ? a+b : a-b;
+    text = `${a} ${op} ${b}`;
+  } else if(level <= 4){
+    const ops = ['+','-','×']; const op = ops[randInt(0,2)];
+    if(op === '×'){ a = randInt(2,12); b = randInt(2,12); answer = a*b; }
+    else { a = randInt(10,99); b = randInt(10,99); if(op==='-' && b>a)[a,b]=[b,a]; answer = op==='+'?a+b:a-b; }
+    text = `${a} ${op} ${b}`;
+  } else if(level <= 6){
+    const variant = randInt(0,2);
+    if(variant === 0){
+      a = randInt(2,12); b = randInt(2,12); c = randInt(1,20);
+      const useMinus = Math.random() < 0.5;
+      answer = useMinus ? a*b - c : a*b + c;
+      text = `${a} × ${b} ${useMinus ? '−' : '+'} ${c}`;
+    } else if(variant === 1){
+      b = randInt(2,9); const q = randInt(2,15); a = b*q; c = randInt(1,10);
+      answer = q + c;
+      text = `${a} ÷ ${b} + ${c}`;
+    } else {
+      a = randInt(3,15); b = randInt(3,15); c = randInt(2,9);
+      answer = (a+b)*c;
+      text = `(${a} + ${b}) × ${c}`;
+    }
+  } else {
+    const variant = randInt(0,2);
+    if(variant === 0){
+      a = randInt(4,15); c = randInt(1,30);
+      answer = a*a + c;
+      text = `${a}² + ${c}`;
+    } else if(variant === 1){
+      const bases = [100,200,300,400,500]; const pct = [10,20,25,50];
+      a = bases[randInt(0,bases.length-1)]; b = pct[randInt(0,pct.length-1)];
+      answer = (a*b)/100; c = randInt(1,10); answer += c;
+      text = `${b}% de ${a} + ${c}`;
+    } else {
+      a = randInt(2,10); b = randInt(2,10); c = randInt(2,10); d = randInt(1,15);
+      answer = a*b - c*2 + d;
+      text = `${a} × ${b} − ${c}×2 + ${d}`;
+    }
+  }
+  return {text, answer};
+}
+function nextQuestion(){
+  const q = genQuestion();
+  currentAnswer = q.answer;
+  document.getElementById('questionText').textContent = q.text + ' = ?';
+  let choices = new Set([q.answer]);
+  while(choices.size < 4){
+    const delta = randInt(-5,5) * (Math.random()<0.5?1:2);
+    const candidate = q.answer + (delta === 0 ? randInt(1,3) : delta);
+    if(candidate !== q.answer) choices.add(candidate);
+  }
+  choices = Array.from(choices).sort(()=>Math.random()-0.5);
+  const area = document.getElementById('choicesArea');
+  area.innerHTML = '';
+  choices.forEach(c=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn'; btn.textContent = c;
+    btn.onclick = () => handleAnswer(c, btn);
+    area.appendChild(btn);
+  });
+}
+function handleAnswer(chosen, btn){
+  document.querySelectorAll('.choice-btn').forEach(b => b.onclick = null);
+  if(chosen === currentAnswer){
+    btn.classList.add('correct');
+    correctCount++; streak++; score += 10;
+    document.getElementById('streakNote').textContent = streak >= 3 ? `🔥 Série de ${streak} !` : '';
+    document.getElementById('penaltyNote').textContent = '\u00A0';
+    if(correctCount % 3 === 0 && level < 8) level++;
+  } else {
+    btn.classList.add('wrong');
+    wrongCount++; streak = 0;
+    timeLeft = Math.max(0, timeLeft - 30);
+    document.getElementById('penaltyNote').textContent = '−3s de pénalité';
+    document.getElementById('streakNote').textContent = '';
+    document.querySelectorAll('.choice-btn').forEach(b => { if(parseInt(b.textContent) === currentAnswer) b.classList.add('correct'); });
+  }
+  updateHud();
+  setTimeout(nextQuestion, 550);
+}
+function endGame(){
+  clearInterval(timerInterval);
+  document.getElementById('playScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.remove('hidden');
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalDetail').textContent =
+    `${correctCount} bonnes réponses · ${wrongCount} erreurs · niveau atteint ${level}`;
+  const better = MOCK_SCORES.filter(s => s > score).length;
+  const rank = better + 1;
+  document.getElementById('finalRank').textContent =
+    `Ce score te placerait ${rank}${rank===1?'er':'e'} sur ${MOCK_SCORES.length+1} ce cycle (simulation)`;
+}
+function resetGame(){
+  document.getElementById('endScreen').classList.add('hidden');
+  document.getElementById('startScreen').classList.remove('hidden');
+}
+</script>
+
+</body>
+</html>
