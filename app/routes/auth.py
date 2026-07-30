@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from werkzeug.security import generate_password_hash
+from flask import Blueprint, render_template, request, redirect, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from app.security import limiter
 from app.supabase_client import create_user, get_user_by_email
 import re
@@ -36,8 +36,37 @@ def inscription():
     if r.status_code not in (200, 201):
         return render_template("inscription.html", erreur="Erreur lors de la création du compte. Réessaie.")
 
-    return redirect(url_for("auth.inscription_succes"))
+    user_data = r.json()[0] if isinstance(r.json(), list) else r.json()
+    session["user_id"] = user_data.get("id")
+    session["nom"] = nom
+    session["email"] = email
+    session["telephone"] = telephone
+    session["pays"] = pays
 
-@auth_bp.route("/inscription/succes")
-def inscription_succes():
-    return render_template("inscription_succes.html")
+    return redirect(url_for("dashboard.accueil"))
+
+@auth_bp.route("/connexion", methods=["GET", "POST"])
+@limiter.limit("10 per hour")
+def connexion():
+    if request.method == "GET":
+        return render_template("connexion.html")
+
+    email = request.form.get("email", "").strip().lower()
+    mot_de_passe = request.form.get("mot_de_passe", "")
+
+    user = get_user_by_email(email)
+    if not user or not check_password_hash(user["mot_de_passe_hash"], mot_de_passe):
+        return render_template("connexion.html", erreur="E-mail ou mot de passe incorrect.")
+
+    session["user_id"] = user["id"]
+    session["nom"] = user["nom"]
+    session["email"] = user["email"]
+    session["telephone"] = user["telephone"]
+    session["pays"] = user["pays"]
+
+    return redirect(url_for("dashboard.accueil"))
+
+@auth_bp.route("/deconnexion")
+def deconnexion():
+    session.clear()
+    return redirect(url_for("main.home"))

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Dashboard{% endblock %} — SwiftKash</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1526; --navy-2:#101E36; --card:#16233D;
+    --gold:#F4B93E; --orange:#F2811D; --green:#22C55E; --red:#EF4444;
+    --ink:#E9EEF7; --dim:rgba(233,238,247,0.55); --line:rgba(233,238,247,0.10);
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--navy); color:var(--ink); font-family:'Manrope',sans-serif;
+        min-height:100vh; display:flex; flex-direction:column; }
+  a{ color:inherit; text-decoration:none; }
+  .display{ font-family:'Baloo 2', sans-serif; }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; border-bottom:1px solid var(--line);
+    position:sticky; top:0; background:rgba(11,21,38,0.92); backdrop-filter:blur(8px); z-index:10;
+  }
+  .logo{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:19px; }
+  .logo .accent{ color:var(--gold); }
+  main{ flex:1; max-width:480px; width:100%; margin:0 auto; padding:20px 18px 90px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 18px; margin-bottom:14px; }
+  .navbar{
+    position:fixed; bottom:0; left:0; right:0; z-index:20;
+    display:flex; justify-content:space-around; align-items:center;
+    background:rgba(16,30,54,0.96); backdrop-filter:blur(8px);
+    border-top:1px solid var(--line); padding:10px 6px calc(10px + env(safe-area-inset-bottom));
+  }
+  .nav-item{ text-align:center; font-size:10px; color:var(--dim); font-weight:600; flex:1; }
+  .nav-item .ic{ font-size:18px; margin-bottom:2px; }
+  .nav-item.active{ color:var(--gold); }
+  h1.page-title{ font-family:'Baloo 2', sans-serif; font-size:21px; margin:0 0 18px; }
+  .mono{ font-family:'Space Mono', monospace; }
+</style>
+{% block extra_style %}{% endblock %}
+</head>
+<body>
+
+<header>
+  <div class="logo">Swift<span class="accent">Kash</span></div>
+  <span class="mono" style="font-size:11px; color:var(--dim);">{{ session.get('nom', 'Compte') }}</span>
+</header>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<nav class="navbar">
+  <a href="{{ url_for('dashboard.accueil') }}" class="nav-item {{ 'active' if active=='accueil' }}">
+    <div class="ic">🏠</div>Accueil</a>
+  <a href="{{ url_for('dashboard.historique') }}" class="nav-item {{ 'active' if active=='historique' }}">
+    <div class="ic">🕐</div>Historique</a>
+  <a href="{{ url_for('dashboard.gains') }}" class="nav-item {{ 'active' if active=='gains' }}">
+    <div class="ic">💰</div>Gains</a>
+  <a href="{{ url_for('dashboard.classement') }}" class="nav-item {{ 'active' if active=='classement' }}">
+    <div class="ic">🏆</div>Classement</a>
+  <a href="{{ url_for('dashboard.profil') }}" class="nav-item {{ 'active' if active=='profil' }}">
+    <div class="ic">👤</div>Profil</a>
+</nav>
+
+</body>
+</html>

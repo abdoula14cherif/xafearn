@@ -1,0 +1,18 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Classement{% endblock %}
+{% block content %}
+<h1 class="page-title">Classement — cycle en cours</h1>
+
+<div class="card" style="padding:0; overflow:hidden;">
+  {% for joueur in classement %}
+  <div style="display:grid; grid-template-columns:32px 1fr auto; align-items:center; gap:12px; padding:13px 16px; border-bottom:1px solid var(--line); {{ 'background:rgba(244,185,62,0.06);' if joueur.moi }}">
+    <span class="mono" style="font-weight:700; color:{{ 'var(--gold)' if joueur.rang <= 3 else 'var(--dim)' }};">{{ '%02d' % joueur.rang }}</span>
+    <div>
+      <div style="font-weight:600; font-size:14.5px;">{{ joueur.nom }}{{ ' (toi)' if joueur.moi }}</div>
+      <div style="font-size:11.5px; color:var(--dim);">Score {{ joueur.score }}</div>
+    </div>
+    <span class="mono" style="font-weight:700; color:{{ 'var(--orange)' if joueur.rang <= 3 else 'var(--dim)' }};">{{ joueur.part }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

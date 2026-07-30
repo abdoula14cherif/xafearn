@@ -1,0 +1,25 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Accueil{% endblock %}
+{% block content %}
+<h1 class="page-title">Bonjour 👋</h1>
+
+<div class="card" style="text-align:center; background:radial-gradient(120% 160% at 50% 0%, rgba(244,185,62,0.16), transparent 60%), var(--card); border-color:rgba(244,185,62,0.25);">
+  <div style="font-size:11.5px; color:var(--dim); font-weight:700; margin-bottom:6px;">CAGNOTTE DU CYCLE EN COURS</div>
+  <div class="display" style="font-size:34px; font-weight:800; color:var(--gold);">{{ pot }} <span style="font-size:16px;">FCFA</span></div>
+  <div class="mono" style="font-size:11.5px; color:var(--dim); margin-top:10px;">{{ tickets_joues }} / {{ seuil }} défis joués ce cycle</div>
+</div>
+
+<a href="#" class="card" style="display:block; text-align:center; background:linear-gradient(90deg,var(--orange),var(--gold)); color:#111; font-weight:800; border:none;">
+  🎯 Acheter un ticket — {{ prix_ticket }} FCFA
+</a>
+
+<div class="card">
+  <div style="font-size:13px; color:var(--dim); margin-bottom:6px;">Ton dernier score</div>
+  <div class="display" style="font-size:24px; font-weight:800;">{{ dernier_score }} pts</div>
+</div>
+
+<div class="card">
+  <div style="font-size:13px; color:var(--dim); margin-bottom:6px;">Ta position actuelle</div>
+  <div class="display" style="font-size:24px; font-weight:800; color:var(--green);">{{ position }}<sup style="font-size:13px;">e</sup> / {{ total_joueurs }} joueurs</div>
+</div>
+{% endblock %}
