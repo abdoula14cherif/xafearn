@@ -45,9 +45,11 @@ def compter_tickets_cycle(cycle_id):
     r = requests.get(url, params=params, headers=_headers(), timeout=10)
     return len(r.json()) if r.status_code == 200 else 0
 
-def creer_ticket(user_id, cycle_id, score):
+def creer_ticket(user_id, cycle_id, score, paiement_id=None):
     url = f"{SUPABASE_URL}/rest/v1/tickets"
     payload = {"user_id": user_id, "cycle_id": cycle_id, "score": score}
+    if paiement_id:
+        payload["paiement_id"] = paiement_id
     r = requests.post(url, json=payload, headers=_headers(), timeout=10)
     return r
 
@@ -82,3 +84,46 @@ def incrementer_pot(cycle_id, montant):
     payload = {"p_cycle_id": cycle_id, "p_montant": montant}
     r = requests.post(url, json=payload, headers=_headers(), timeout=10)
     return r
+
+def creer_paiement(user_id, cycle_id, order_id, montant, telephone, operateur, pays):
+    url = f"{SUPABASE_URL}/rest/v1/paiements"
+    payload = {
+        "user_id": user_id, "cycle_id": cycle_id, "order_id": order_id,
+        "montant": montant, "telephone": telephone, "operateur": operateur, "pays": pays,
+    }
+    r = requests.post(url, json=payload, headers=_headers(), timeout=10)
+    if r.status_code in (200, 201):
+        data = r.json()
+        return data[0] if isinstance(data, list) else data
+    return None
+
+def get_paiement_par_order_id(order_id):
+    url = f"{SUPABASE_URL}/rest/v1/paiements"
+    params = {"order_id": f"eq.{order_id}", "select": "*"}
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    if r.status_code == 200 and r.json():
+        return r.json()[0]
+    return None
+
+def maj_statut_paiement(order_id, statut, token=None):
+    url = f"{SUPABASE_URL}/rest/v1/paiements"
+    params = {"order_id": f"eq.{order_id}"}
+    payload = {"statut": statut}
+    if token:
+        payload["token"] = token
+    r = requests.patch(url, params=params, json=payload, headers=_headers(), timeout=10)
+    return r
+
+def get_paiement_paye_non_consomme(user_id, cycle_id):
+    url = f"{SUPABASE_URL}/rest/v1/paiements"
+    params = {
+        "user_id": f"eq.{user_id}", "cycle_id": f"eq.{cycle_id}",
+        "statut": "eq.paid", "select": "*,tickets(id)",
+        "order": "created_at.desc",
+    }
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    if r.status_code == 200:
+        for p in r.json():
+            if not p.get("tickets"):
+                return p
+    return None

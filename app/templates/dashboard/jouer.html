@@ -59,6 +59,7 @@
 </div>
 
 <script>
+const PAIEMENT_ID = "{{ paiement_id }}";
 let timeLeft, score, correctCount, wrongCount, level, streak, timerInterval, currentAnswer;
 const TOTAL_TIME = 90;
 
@@ -141,7 +142,7 @@ function endGame(){
   fetch("{{ url_for('dashboard.jouer_soumettre') }}", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({score: score})
+    body: JSON.stringify({score: score, paiement_id: PAIEMENT_ID})
   }).then(() => {
     setTimeout(() => { window.location.href = "{{ url_for('dashboard.accueil') }}"; }, 1500);
   });

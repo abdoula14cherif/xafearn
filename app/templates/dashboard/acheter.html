@@ -1,0 +1,41 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Acheter un ticket{% endblock %}
+{% block content %}
+<h1 class="page-title">Acheter un ticket</h1>
+
+{% if erreur %}
+<div class="card" style="border-color:rgba(239,68,68,0.4); color:#FCA5A5; font-size:13.5px;">{{ erreur }}</div>
+{% endif %}
+
+<div class="card">
+  <div class="stat-label">MONTANT</div>
+  <div class="stat-value" style="color:var(--gold); margin-bottom:16px;">{{ prix_ticket }}<span class="unit">FCFA</span></div>
+
+  <form method="POST">
+    <div class="section-label" style="margin-top:0;">Pays</div>
+    <select name="country" required style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--navy); color:var(--ink); font-size:14px; margin-bottom:14px;">
+      <option value="CI">Côte d'Ivoire</option>
+      <option value="CM">Cameroun</option>
+      <option value="SN">Sénégal</option>
+      <option value="BJ">Bénin</option>
+      <option value="TG">Togo</option>
+      <option value="BF">Burkina Faso</option>
+      <option value="TD">Tchad</option>
+    </select>
+
+    <div class="section-label">Opérateur</div>
+    <select name="operator" required style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--navy); color:var(--ink); font-size:14px; margin-bottom:14px;">
+      <option value="momo">MTN Mobile Money</option>
+      <option value="om">Orange Money</option>
+    </select>
+
+    <div class="section-label">Numéro mobile money</div>
+    <input type="tel" name="phone" required placeholder="07XXXXXXXX"
+      style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--navy); color:var(--ink); font-size:14px; box-sizing:border-box;">
+
+    <button type="submit" class="card-link" style="width:100%; border:none; justify-content:center; margin-top:20px;">
+      Confirmer le paiement
+    </button>
+  </form>
+</div>
+{% endblock %}

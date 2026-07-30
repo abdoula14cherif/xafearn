@@ -1,0 +1,17 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Paiement en attente{% endblock %}
+{% block content %}
+<h1 class="page-title">Confirmation du paiement</h1>
+
+<div class="card" style="text-align:center;">
+  <div class="stat-label">EN ATTENTE</div>
+  <p style="font-size:14px; color:var(--dim); line-height:1.6; margin:10px 0 0;">
+    Une confirmation a été envoyée sur ton téléphone (USSD).
+    Valide-la, puis appuie sur le bouton ci-dessous.
+  </p>
+</div>
+
+<a href="{{ url_for('dashboard.verifier_paiement', order_id=order_id) }}" class="card-link" style="justify-content:center;">
+  J'ai confirmé — vérifier maintenant
+</a>
+{% endblock %}

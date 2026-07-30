@@ -3,7 +3,9 @@ from app.supabase_client import (
     get_cycle_ouvert, compter_tickets_cycle, get_historique_user,
     get_gains_user, get_solde_user, get_classement_cycle,
     creer_ticket, incrementer_pot,
+    creer_paiement, get_paiement_par_order_id, get_paiement_paye_non_consomme,
 )
+from app.flinpay_client import initier_paiement
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -34,12 +36,66 @@ def accueil():
         total_joueurs=len(classement),
     )
 
+@dashboard_bp.route("/acheter", methods=["GET", "POST"])
+def acheter():
+    if not _require_login():
+        return redirect(url_for("auth.connexion"))
+
+    cycle = get_cycle_ouvert()
+    if not cycle:
+        return render_template("dashboard/acheter.html", prix_ticket=500, erreur="Aucun cycle ouvert pour l'instant.")
+
+    if request.method == "GET":
+        return render_template("dashboard/acheter.html", prix_ticket=cycle["prix_ticket"])
+
+    country = request.form.get("country")
+    operator = request.form.get("operator")
+    phone = request.form.get("phone", "").strip()
+
+    if not all([country, operator, phone]):
+        return render_template("dashboard/acheter.html", prix_ticket=cycle["prix_ticket"], erreur="Tous les champs sont obligatoires.")
+
+    order_id, r = initier_paiement(
+        amount=cycle["prix_ticket"], phone=phone,
+        client_name=session.get("nom", "Client"), country=country, operator=operator,
+    )
+
+    if r.status_code != 200 or not r.json().get("ok"):
+        return render_template("dashboard/acheter.html", prix_ticket=cycle["prix_ticket"], erreur="Échec de l'initiation du paiement. Réessaie.")
+
+    creer_paiement(session["user_id"], cycle["id"], order_id, cycle["prix_ticket"], phone, operator, country)
+
+    return render_template("dashboard/attente.html", order_id=order_id)
+
+@dashboard_bp.route("/paiement/<order_id>/verifier")
+def verifier_paiement(order_id):
+    if not _require_login():
+        return redirect(url_for("auth.connexion"))
+
+    paiement = get_paiement_par_order_id(order_id)
+    if not paiement:
+        return redirect(url_for("dashboard.acheter"))
+
+    if paiement["statut"] == "paid":
+        return redirect(url_for("dashboard.jouer"))
+    elif paiement["statut"] == "failed":
+        return render_template("dashboard/acheter.html", prix_ticket=paiement["montant"], erreur="Le paiement a échoué ou a été annulé.")
+    else:
+        return render_template("dashboard/attente.html", order_id=order_id)
+
 @dashboard_bp.route("/jouer")
 def jouer():
     if not _require_login():
         return redirect(url_for("auth.connexion"))
     cycle = get_cycle_ouvert()
-    return render_template("dashboard/jouer.html", prix_ticket=cycle["prix_ticket"] if cycle else 500)
+    if not cycle:
+        return redirect(url_for("dashboard.accueil"))
+
+    paiement = get_paiement_paye_non_consomme(session["user_id"], cycle["id"])
+    if not paiement:
+        return redirect(url_for("dashboard.acheter"))
+
+    return render_template("dashboard/jouer.html", prix_ticket=cycle["prix_ticket"], paiement_id=paiement["id"])
 
 @dashboard_bp.route("/jouer/soumettre", methods=["POST"])
 def jouer_soumettre():
@@ -47,12 +103,13 @@ def jouer_soumettre():
         return {"error": "non connecté"}, 401
     data = request.get_json(silent=True) or {}
     score = int(data.get("score", 0))
+    paiement_id = data.get("paiement_id")
 
     cycle = get_cycle_ouvert()
-    if not cycle:
-        return {"error": "aucun cycle ouvert"}, 400
+    if not cycle or not paiement_id:
+        return {"error": "session de jeu invalide"}, 400
 
-    creer_ticket(session["user_id"], cycle["id"], score)
+    creer_ticket(session["user_id"], cycle["id"], score, paiement_id=paiement_id)
     incrementer_pot(cycle["id"], cycle["prix_ticket"])
 
     return {"status": "ok"}
