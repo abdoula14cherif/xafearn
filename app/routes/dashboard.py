@@ -61,7 +61,8 @@ def acheter():
     )
 
     if r.status_code != 200 or not r.json().get("ok"):
-        return render_template("dashboard/acheter.html", prix_ticket=cycle["prix_ticket"], erreur="Échec de l'initiation du paiement. Réessaie.")
+        detail = r.json().get("error", "erreur inconnue") if r.headers.get("content-type","").startswith("application/json") else r.text[:200]
+        return render_template("dashboard/acheter.html", prix_ticket=cycle["prix_ticket"], erreur=f"Échec Flinpay ({r.status_code}) : {detail}")
 
     creer_paiement(session["user_id"], cycle["id"], order_id, cycle["prix_ticket"], phone, operator, country)
 
