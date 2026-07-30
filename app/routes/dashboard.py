@@ -4,6 +4,7 @@ from app.supabase_client import (
     get_gains_user, get_solde_user, get_classement_cycle,
     creer_ticket, incrementer_pot,
     creer_paiement, get_paiement_par_order_id, get_paiement_paye_non_consomme,
+    get_jeux, get_jeu_par_slug,
 )
 from app.flinpay_client import initier_paiement
 from app.cycle_logic import verifier_et_cloturer
@@ -17,44 +18,55 @@ def _require_login():
 def accueil():
     if not _require_login():
         return redirect(url_for("auth.connexion"))
+    return redirect(url_for("dashboard.jeux_hub"))
 
-    cycle = get_cycle_ouvert()
+@dashboard_bp.route("/jeux")
+def jeux_hub():
+    if not _require_login():
+        return redirect(url_for("auth.connexion"))
+    jeux = get_jeux()
+    return render_template("dashboard/jeux_hub.html", active="accueil", jeux=jeux)
+
+@dashboard_bp.route("/jeux/<slug>")
+def jeu_detail(slug):
+    if not _require_login():
+        return redirect(url_for("auth.connexion"))
+    jeu = get_jeu_par_slug(slug)
+    if not jeu or not jeu["actif"]:
+        return redirect(url_for("dashboard.jeux_hub"))
+
+    cycle = get_cycle_ouvert(jeu["id"])
     tickets_joues = compter_tickets_cycle(cycle["id"]) if cycle else 0
-    historique = get_historique_user(session["user_id"])
-    dernier_score = historique[0]["score"] if historique else 0
-
-    classement = get_classement_cycle(cycle["id"]) if cycle else []
-    position = next((i + 1 for i, t in enumerate(classement) if t["user_id"] == session["user_id"]), "—")
 
     return render_template(
-        "dashboard/accueil.html", active="accueil",
+        "dashboard/jeu_detail.html", active="accueil", jeu=jeu,
         pot=cycle["pot"] if cycle else 0,
         tickets_joues=tickets_joues,
-        seuil=cycle["seuil"] if cycle else 30,
-        prix_ticket=cycle["prix_ticket"] if cycle else 500,
-        dernier_score=dernier_score,
-        position=position,
-        total_joueurs=len(classement),
+        seuil=cycle["seuil"] if cycle else jeu["seuil"],
     )
 
-@dashboard_bp.route("/acheter", methods=["GET", "POST"])
-def acheter():
+@dashboard_bp.route("/jeux/<slug>/acheter", methods=["GET", "POST"])
+def acheter(slug):
     if not _require_login():
         return redirect(url_for("auth.connexion"))
 
-    cycle = get_cycle_ouvert()
+    jeu = get_jeu_par_slug(slug)
+    if not jeu or not jeu["actif"]:
+        return redirect(url_for("dashboard.jeux_hub"))
+
+    cycle = get_cycle_ouvert(jeu["id"])
     if not cycle:
-        return render_template("dashboard/acheter.html", prix_ticket=500, erreur="Aucun cycle ouvert pour l'instant.")
+        return render_template("dashboard/acheter.html", jeu=jeu, prix_ticket=jeu["prix_ticket"], erreur="Aucun cycle ouvert pour l'instant.")
 
     if request.method == "GET":
-        return render_template("dashboard/acheter.html", prix_ticket=cycle["prix_ticket"])
+        return render_template("dashboard/acheter.html", jeu=jeu, prix_ticket=cycle["prix_ticket"])
 
     country = request.form.get("country")
     operator = request.form.get("operator")
     phone = request.form.get("phone", "").strip()
 
     if not all([country, operator, phone]):
-        return render_template("dashboard/acheter.html", prix_ticket=cycle["prix_ticket"], erreur="Tous les champs sont obligatoires.")
+        return render_template("dashboard/acheter.html", jeu=jeu, prix_ticket=cycle["prix_ticket"], erreur="Tous les champs sont obligatoires.")
 
     order_id, r = initier_paiement(
         amount=cycle["prix_ticket"], phone=phone,
@@ -63,11 +75,11 @@ def acheter():
 
     if r.status_code != 200 or not r.json().get("ok"):
         detail = r.json().get("error", "erreur inconnue") if r.headers.get("content-type","").startswith("application/json") else r.text[:200]
-        return render_template("dashboard/acheter.html", prix_ticket=cycle["prix_ticket"], erreur=f"Échec Flinpay ({r.status_code}) : {detail}")
+        return render_template("dashboard/acheter.html", jeu=jeu, prix_ticket=cycle["prix_ticket"], erreur=f"Échec Flinpay ({r.status_code}) : {detail}")
 
     creer_paiement(session["user_id"], cycle["id"], order_id, cycle["prix_ticket"], phone, operator, country)
 
-    return render_template("dashboard/attente.html", order_id=order_id)
+    return render_template("dashboard/attente.html", order_id=order_id, slug=slug)
 
 @dashboard_bp.route("/paiement/<order_id>/verifier")
 def verifier_paiement(order_id):
@@ -76,28 +88,40 @@ def verifier_paiement(order_id):
 
     paiement = get_paiement_par_order_id(order_id)
     if not paiement:
-        return redirect(url_for("dashboard.acheter"))
+        return redirect(url_for("dashboard.jeux_hub"))
+
+    jeu_slug = request.args.get("slug", "calcul")
 
     if paiement["statut"] == "paid":
-        return redirect(url_for("dashboard.jouer"))
+        return redirect(url_for("dashboard.jouer", slug=jeu_slug))
     elif paiement["statut"] == "failed":
-        return render_template("dashboard/acheter.html", prix_ticket=paiement["montant"], erreur="Le paiement a échoué ou a été annulé.")
+        jeu = get_jeu_par_slug(jeu_slug)
+        return render_template("dashboard/acheter.html", jeu=jeu, prix_ticket=paiement["montant"], erreur="Le paiement a échoué ou a été annulé.")
     else:
-        return render_template("dashboard/attente.html", order_id=order_id)
+        return render_template("dashboard/attente.html", order_id=order_id, slug=jeu_slug)
 
-@dashboard_bp.route("/jouer")
-def jouer():
+@dashboard_bp.route("/jeux/<slug>/jouer")
+def jouer(slug):
     if not _require_login():
         return redirect(url_for("auth.connexion"))
-    cycle = get_cycle_ouvert()
+
+    jeu = get_jeu_par_slug(slug)
+    if not jeu or not jeu["actif"]:
+        return redirect(url_for("dashboard.jeux_hub"))
+
+    cycle = get_cycle_ouvert(jeu["id"])
     if not cycle:
-        return redirect(url_for("dashboard.accueil"))
+        return redirect(url_for("dashboard.jeu_detail", slug=slug))
 
     paiement = get_paiement_paye_non_consomme(session["user_id"], cycle["id"])
     if not paiement:
-        return redirect(url_for("dashboard.acheter"))
+        return redirect(url_for("dashboard.acheter", slug=slug))
 
-    return render_template("dashboard/jouer.html", prix_ticket=cycle["prix_ticket"], paiement_id=paiement["id"])
+    if slug != "calcul":
+        # Les mécaniques des autres jeux ne sont pas encore développées
+        return redirect(url_for("dashboard.jeux_hub"))
+
+    return render_template("dashboard/jouer.html", prix_ticket=cycle["prix_ticket"], paiement_id=paiement["id"], slug=slug)
 
 @dashboard_bp.route("/jouer/soumettre", methods=["POST"])
 def jouer_soumettre():
@@ -106,8 +130,10 @@ def jouer_soumettre():
     data = request.get_json(silent=True) or {}
     score = int(data.get("score", 0))
     paiement_id = data.get("paiement_id")
+    slug = data.get("slug", "calcul")
 
-    cycle = get_cycle_ouvert()
+    jeu = get_jeu_par_slug(slug)
+    cycle = get_cycle_ouvert(jeu["id"]) if jeu else None
     if not cycle or not paiement_id:
         return {"error": "session de jeu invalide"}, 400
 
@@ -141,7 +167,8 @@ def gains():
 def classement():
     if not _require_login():
         return redirect(url_for("auth.connexion"))
-    cycle = get_cycle_ouvert()
+    jeu = get_jeu_par_slug(request.args.get("slug", "calcul"))
+    cycle = get_cycle_ouvert(jeu["id"]) if jeu else None
     joueurs = get_classement_cycle(cycle["id"]) if cycle else []
     vue = []
     for i, j in enumerate(joueurs):

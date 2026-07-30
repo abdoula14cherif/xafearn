@@ -142,7 +142,7 @@ function endGame(){
   fetch("{{ url_for('dashboard.jouer_soumettre') }}", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({score: score, paiement_id: PAIEMENT_ID})
+    body: JSON.stringify({score: score, paiement_id: PAIEMENT_ID, slug: "{{ slug }}"})
   }).then(() => {
     setTimeout(() => { window.location.href = "{{ url_for('dashboard.accueil') }}"; }, 1500);
   });

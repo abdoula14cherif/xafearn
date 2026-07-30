@@ -31,9 +31,26 @@ def get_user_by_email(email):
         return r.json()[0]
     return None
 
-def get_cycle_ouvert():
+def get_cycle_ouvert(jeu_id):
     url = f"{SUPABASE_URL}/rest/v1/cycles"
-    params = {"statut": "eq.ouvert", "select": "*", "order": "created_at.desc", "limit": "1"}
+    params = {
+        "jeu_id": f"eq.{jeu_id}", "statut": "eq.ouvert",
+        "select": "*", "order": "created_at.desc", "limit": "1",
+    }
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    if r.status_code == 200 and r.json():
+        return r.json()[0]
+    return None
+
+def get_jeux():
+    url = f"{SUPABASE_URL}/rest/v1/jeux"
+    params = {"select": "*", "order": "created_at.asc"}
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    return r.json() if r.status_code == 200 else []
+
+def get_jeu_par_slug(slug):
+    url = f"{SUPABASE_URL}/rest/v1/jeux"
+    params = {"slug": f"eq.{slug}", "select": "*"}
     r = requests.get(url, params=params, headers=_headers(), timeout=10)
     if r.status_code == 200 and r.json():
         return r.json()[0]
@@ -142,9 +159,9 @@ def cloturer_cycle_db(cycle_id):
     r = requests.patch(url, params=params, json=payload, headers=_headers(), timeout=10)
     return r
 
-def creer_nouveau_cycle(seuil, prix_ticket):
+def creer_nouveau_cycle(seuil, prix_ticket, jeu_id):
     url = f"{SUPABASE_URL}/rest/v1/cycles"
-    payload = {"seuil": seuil, "prix_ticket": prix_ticket, "pot": 0, "statut": "ouvert"}
+    payload = {"seuil": seuil, "prix_ticket": prix_ticket, "pot": 0, "statut": "ouvert", "jeu_id": jeu_id}
     r = requests.post(url, json=payload, headers=_headers(), timeout=10)
     if r.status_code in (200, 201):
         data = r.json()

@@ -29,5 +29,5 @@ def verifier_et_cloturer(cycle):
             creer_gain(gagnant["user_id"], cycle["id"], montant)
 
     cloturer_cycle_db(cycle["id"])
-    nouveau_cycle = creer_nouveau_cycle(cycle["seuil"], cycle["prix_ticket"])
+    nouveau_cycle = creer_nouveau_cycle(cycle["seuil"], cycle["prix_ticket"], cycle["jeu_id"])
     return nouveau_cycle
