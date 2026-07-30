@@ -30,3 +30,49 @@ def get_user_by_email(email):
     if r.status_code == 200 and r.json():
         return r.json()[0]
     return None
+
+def get_cycle_ouvert():
+    url = f"{SUPABASE_URL}/rest/v1/cycles"
+    params = {"statut": "eq.ouvert", "select": "*", "order": "created_at.desc", "limit": "1"}
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    if r.status_code == 200 and r.json():
+        return r.json()[0]
+    return None
+
+def compter_tickets_cycle(cycle_id):
+    url = f"{SUPABASE_URL}/rest/v1/tickets"
+    params = {"cycle_id": f"eq.{cycle_id}", "select": "id"}
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    return len(r.json()) if r.status_code == 200 else 0
+
+def creer_ticket(user_id, cycle_id, score):
+    url = f"{SUPABASE_URL}/rest/v1/tickets"
+    payload = {"user_id": user_id, "cycle_id": cycle_id, "score": score}
+    r = requests.post(url, json=payload, headers=_headers(), timeout=10)
+    return r
+
+def get_historique_user(user_id):
+    url = f"{SUPABASE_URL}/rest/v1/tickets"
+    params = {"user_id": f"eq.{user_id}", "select": "*", "order": "created_at.desc"}
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    return r.json() if r.status_code == 200 else []
+
+def get_gains_user(user_id):
+    url = f"{SUPABASE_URL}/rest/v1/gains"
+    params = {"user_id": f"eq.{user_id}", "select": "*", "order": "created_at.desc"}
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    return r.json() if r.status_code == 200 else []
+
+def get_solde_user(user_id):
+    gains_list = get_gains_user(user_id)
+    return sum(g["montant"] for g in gains_list)
+
+def get_classement_cycle(cycle_id):
+    url = f"{SUPABASE_URL}/rest/v1/tickets"
+    params = {
+        "cycle_id": f"eq.{cycle_id}",
+        "select": "score,user_id,utilisateurs(nom)",
+        "order": "score.desc",
+    }
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    return r.json() if r.status_code == 200 else []
