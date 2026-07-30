@@ -127,3 +127,26 @@ def get_paiement_paye_non_consomme(user_id, cycle_id):
             if not p.get("tickets"):
                 return p
     return None
+
+def creer_gain(user_id, cycle_id, montant):
+    url = f"{SUPABASE_URL}/rest/v1/gains"
+    payload = {"user_id": user_id, "cycle_id": cycle_id, "montant": montant}
+    r = requests.post(url, json=payload, headers=_headers(), timeout=10)
+    return r
+
+def cloturer_cycle_db(cycle_id):
+    from datetime import datetime, timezone
+    url = f"{SUPABASE_URL}/rest/v1/cycles"
+    params = {"id": f"eq.{cycle_id}"}
+    payload = {"statut": "cloture", "cloture_at": datetime.now(timezone.utc).isoformat()}
+    r = requests.patch(url, params=params, json=payload, headers=_headers(), timeout=10)
+    return r
+
+def creer_nouveau_cycle(seuil, prix_ticket):
+    url = f"{SUPABASE_URL}/rest/v1/cycles"
+    payload = {"seuil": seuil, "prix_ticket": prix_ticket, "pot": 0, "statut": "ouvert"}
+    r = requests.post(url, json=payload, headers=_headers(), timeout=10)
+    if r.status_code in (200, 201):
+        data = r.json()
+        return data[0] if isinstance(data, list) else data
+    return None

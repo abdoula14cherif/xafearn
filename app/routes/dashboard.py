@@ -6,6 +6,7 @@ from app.supabase_client import (
     creer_paiement, get_paiement_par_order_id, get_paiement_paye_non_consomme,
 )
 from app.flinpay_client import initier_paiement
+from app.cycle_logic import verifier_et_cloturer
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -112,6 +113,10 @@ def jouer_soumettre():
 
     creer_ticket(session["user_id"], cycle["id"], score, paiement_id=paiement_id)
     incrementer_pot(cycle["id"], cycle["prix_ticket"])
+
+    cycle_a_jour = dict(cycle)
+    cycle_a_jour["pot"] = cycle["pot"] + cycle["prix_ticket"]
+    verifier_et_cloturer(cycle_a_jour)
 
     return {"status": "ok"}
 
