@@ -1,25 +1,54 @@
 {% extends "dashboard/base.html" %}
 {% block title %}Accueil{% endblock %}
 {% block content %}
-<h1 class="page-title">Bonjour 👋</h1>
+<h1 class="page-title">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>
+  </svg>
+  Accueil
+</h1>
 
-<div class="card" style="text-align:center; background:radial-gradient(120% 160% at 50% 0%, rgba(244,185,62,0.16), transparent 60%), var(--card); border-color:rgba(244,185,62,0.25);">
-  <div style="font-size:11.5px; color:var(--dim); font-weight:700; margin-bottom:6px;">CAGNOTTE DU CYCLE EN COURS</div>
-  <div class="display" style="font-size:34px; font-weight:800; color:var(--gold);">{{ pot }} <span style="font-size:16px;">FCFA</span></div>
-  <div class="mono" style="font-size:11.5px; color:var(--dim); margin-top:10px;">{{ tickets_joues }} / {{ seuil }} défis joués ce cycle</div>
+<div class="section-label">Cagnotte du cycle en cours</div>
+<div class="card" style="background:radial-gradient(120% 160% at 50% 0%, rgba(244,185,62,0.14), transparent 60%), var(--card); border-color:rgba(244,185,62,0.22);">
+  <div class="stat-label">POT COLLECTÉ</div>
+  <div class="stat-value" style="color:var(--gold);">{{ pot }}<span class="unit">FCFA</span></div>
+  <div class="mono" style="font-size:11.5px; color:var(--dim); margin-top:12px;">{{ tickets_joues }} / {{ seuil }} défis joués ce cycle</div>
 </div>
 
-<a href="#" class="card" style="display:block; text-align:center; background:linear-gradient(90deg,var(--orange),var(--gold)); color:#111; font-weight:800; border:none;">
-  🎯 Acheter un ticket — {{ prix_ticket }} FCFA
+<a href="{{ url_for('dashboard.jouer') }}" class="card-link">
+  <div class="ic-wrap">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v3z"/>
+      <path d="M13 5v2M13 11v2M13 17v2"/>
+    </svg>
+  </div>
+  Acheter un ticket — {{ prix_ticket }} FCFA
 </a>
 
+<div class="section-label">Tes statistiques</div>
 <div class="card">
-  <div style="font-size:13px; color:var(--dim); margin-bottom:6px;">Ton dernier score</div>
-  <div class="display" style="font-size:24px; font-weight:800;">{{ dernier_score }} pts</div>
-</div>
-
-<div class="card">
-  <div style="font-size:13px; color:var(--dim); margin-bottom:6px;">Ta position actuelle</div>
-  <div class="display" style="font-size:24px; font-weight:800; color:var(--green);">{{ position }}<sup style="font-size:13px;">e</sup> / {{ total_joueurs }} joueurs</div>
+  <div class="icon-row" style="margin-bottom:14px;">
+    <div class="icon-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="stat-label" style="margin-bottom:2px;">Dernier score</div>
+      <div class="display" style="font-size:20px; font-weight:800;">{{ dernier_score }} pts</div>
+    </div>
+  </div>
+  <div class="icon-row">
+    <div class="icon-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/>
+        <path d="M7 6H4a2 2 0 0 0 2 4"/><path d="M17 6h3a2 2 0 0 1-2 4"/>
+      </svg>
+    </div>
+    <div>
+      <div class="stat-label" style="margin-bottom:2px;">Position actuelle</div>
+      <div class="display" style="font-size:20px; font-weight:800; color:var(--green);">{{ position }}<sup style="font-size:12px;">e</sup> / {{ total_joueurs }} joueurs</div>
+    </div>
+  </div>
 </div>
 {% endblock %}

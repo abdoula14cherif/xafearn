@@ -7,35 +7,91 @@
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#0B1526; --navy-2:#101E36; --card:#16233D;
+    --navy:#0B1526; --navy-2:#101E36; --card:#16233D; --card-2:#1B2A48;
     --gold:#F4B93E; --orange:#F2811D; --green:#22C55E; --red:#EF4444;
-    --ink:#E9EEF7; --dim:rgba(233,238,247,0.55); --line:rgba(233,238,247,0.10);
+    --ink:#E9EEF7; --dim:rgba(233,238,247,0.52); --dim-2:rgba(233,238,247,0.32);
+    --line:rgba(233,238,247,0.09);
   }
   *{ box-sizing:border-box; }
   body{ margin:0; background:var(--navy); color:var(--ink); font-family:'Manrope',sans-serif;
-        min-height:100vh; display:flex; flex-direction:column; }
+        min-height:100vh; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; }
   a{ color:inherit; text-decoration:none; }
   .display{ font-family:'Baloo 2', sans-serif; }
+  .mono{ font-family:'Space Mono', monospace; }
+  svg{ display:block; }
+
   header{
     display:flex; align-items:center; justify-content:space-between;
     padding:16px 20px; border-bottom:1px solid var(--line);
-    position:sticky; top:0; background:rgba(11,21,38,0.92); backdrop-filter:blur(8px); z-index:10;
+    position:sticky; top:0; background:rgba(11,21,38,0.94); backdrop-filter:blur(10px); z-index:10;
   }
-  .logo{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:19px; }
+  .logo{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:19px; letter-spacing:-0.01em; }
   .logo .accent{ color:var(--gold); }
-  main{ flex:1; max-width:480px; width:100%; margin:0 auto; padding:20px 18px 90px; }
-  .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 18px; margin-bottom:14px; }
+  .user-chip{
+    display:flex; align-items:center; gap:8px; font-size:12px; color:var(--dim);
+    background:var(--card); padding:6px 12px 6px 6px; border-radius:100px; border:1px solid var(--line);
+  }
+  .user-chip .avatar{
+    width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,var(--orange),var(--gold));
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#111;
+  }
+
+  main{ flex:1; max-width:480px; width:100%; margin:0 auto; padding:22px 18px 96px; }
+
+  h1.page-title{
+    font-family:'Baloo 2', sans-serif; font-size:22px; font-weight:700; margin:0 0 20px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-label{
+    font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--dim); margin:22px 0 10px;
+  }
+  .section-label:first-of-type{ margin-top:0; }
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:18px 18px; margin-bottom:12px;
+  }
+  .card-row{ display:flex; align-items:center; justify-content:space-between; }
+  .card-link{
+    display:flex; align-items:center; gap:12px; padding:16px 18px; border-radius:16px;
+    background:linear-gradient(90deg, var(--orange), var(--gold)); color:#111; font-weight:800;
+    margin-bottom:12px; border:none;
+  }
+  .card-link .ic-wrap{
+    width:34px; height:34px; border-radius:10px; background:rgba(0,0,0,0.12);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .card-danger{ color:var(--red); border-color:rgba(239,68,68,0.25); }
+
+  .stat-label{ font-size:11.5px; color:var(--dim); font-weight:700; letter-spacing:0.03em; margin-bottom:8px; }
+  .stat-value{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:32px; line-height:1; }
+  .stat-value .unit{ font-size:15px; font-weight:600; color:var(--dim); margin-left:4px; }
+
+  .icon-row{ display:flex; align-items:center; gap:12px; }
+  .icon-box{
+    width:38px; height:38px; border-radius:10px; background:var(--card-2);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+
   .navbar{
     position:fixed; bottom:0; left:0; right:0; z-index:20;
     display:flex; justify-content:space-around; align-items:center;
-    background:rgba(16,30,54,0.96); backdrop-filter:blur(8px);
-    border-top:1px solid var(--line); padding:10px 6px calc(10px + env(safe-area-inset-bottom));
+    background:rgba(14,25,45,0.97); backdrop-filter:blur(10px);
+    border-top:1px solid var(--line); padding:8px 6px calc(8px + env(safe-area-inset-bottom));
   }
-  .nav-item{ text-align:center; font-size:10px; color:var(--dim); font-weight:600; flex:1; }
-  .nav-item .ic{ font-size:18px; margin-bottom:2px; }
+  .nav-item{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    font-size:10px; color:var(--dim-2); font-weight:600; flex:1; padding:6px 0; border-radius:12px;
+  }
+  .nav-item svg{ opacity:0.55; transition:opacity 0.15s ease; }
   .nav-item.active{ color:var(--gold); }
-  h1.page-title{ font-family:'Baloo 2', sans-serif; font-size:21px; margin:0 0 18px; }
-  .mono{ font-family:'Space Mono', monospace; }
+  .nav-item.active svg{ opacity:1; }
+  .nav-item .dot{
+    width:4px; height:4px; border-radius:50%; background:var(--gold); margin-top:1px;
+    opacity:0; transition:opacity 0.15s ease;
+  }
+  .nav-item.active .dot{ opacity:1; }
 </style>
 {% block extra_style %}{% endblock %}
 </head>
@@ -43,7 +99,10 @@
 
 <header>
   <div class="logo">Swift<span class="accent">Kash</span></div>
-  <span class="mono" style="font-size:11px; color:var(--dim);">{{ session.get('nom', 'Compte') }}</span>
+  <div class="user-chip">
+    <div class="avatar">{{ session.get('nom', 'U')[0]|upper }}</div>
+    {{ session.get('nom', 'Compte') }}
+  </div>
 </header>
 
 <main>
@@ -52,15 +111,36 @@
 
 <nav class="navbar">
   <a href="{{ url_for('dashboard.accueil') }}" class="nav-item {{ 'active' if active=='accueil' }}">
-    <div class="ic">🏠</div>Accueil</a>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>
+    </svg>
+    Accueil<span class="dot"></span>
+  </a>
   <a href="{{ url_for('dashboard.historique') }}" class="nav-item {{ 'active' if active=='historique' }}">
-    <div class="ic">🕐</div>Historique</a>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
+    </svg>
+    Historique<span class="dot"></span>
+  </a>
   <a href="{{ url_for('dashboard.gains') }}" class="nav-item {{ 'active' if active=='gains' }}">
-    <div class="ic">💰</div>Gains</a>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="7.5" cy="14.5" r="1"/>
+    </svg>
+    Gains<span class="dot"></span>
+  </a>
   <a href="{{ url_for('dashboard.classement') }}" class="nav-item {{ 'active' if active=='classement' }}">
-    <div class="ic">🏆</div>Classement</a>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/>
+      <path d="M7 6H4a2 2 0 0 0 2 4"/><path d="M17 6h3a2 2 0 0 1-2 4"/>
+    </svg>
+    Classement<span class="dot"></span>
+  </a>
   <a href="{{ url_for('dashboard.profil') }}" class="nav-item {{ 'active' if active=='profil' }}">
-    <div class="ic">👤</div>Profil</a>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+    </svg>
+    Profil<span class="dot"></span>
+  </a>
 </nav>
 
 </body>

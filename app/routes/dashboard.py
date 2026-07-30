@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, session, redirect, url_for
+from flask import Blueprint, render_template, session, redirect, url_for, request
 from app.supabase_client import (
     get_cycle_ouvert, compter_tickets_cycle, get_historique_user,
     get_gains_user, get_solde_user, get_classement_cycle,
+    creer_ticket, incrementer_pot,
 )
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
@@ -33,19 +34,35 @@ def accueil():
         total_joueurs=len(classement),
     )
 
+@dashboard_bp.route("/jouer")
+def jouer():
+    if not _require_login():
+        return redirect(url_for("auth.connexion"))
+    cycle = get_cycle_ouvert()
+    return render_template("dashboard/jouer.html", prix_ticket=cycle["prix_ticket"] if cycle else 500)
+
+@dashboard_bp.route("/jouer/soumettre", methods=["POST"])
+def jouer_soumettre():
+    if not _require_login():
+        return {"error": "non connecté"}, 401
+    data = request.get_json(silent=True) or {}
+    score = int(data.get("score", 0))
+
+    cycle = get_cycle_ouvert()
+    if not cycle:
+        return {"error": "aucun cycle ouvert"}, 400
+
+    creer_ticket(session["user_id"], cycle["id"], score)
+    incrementer_pot(cycle["id"], cycle["prix_ticket"])
+
+    return {"status": "ok"}
+
 @dashboard_bp.route("/historique")
 def historique():
     if not _require_login():
         return redirect(url_for("auth.connexion"))
     tickets = get_historique_user(session["user_id"])
-    vue = [
-        {
-            "date": t["created_at"][:10],
-            "score": t["score"],
-            "gain": None,
-        }
-        for t in tickets
-    ]
+    vue = [{"date": t["created_at"][:10], "score": t["score"], "gain": None} for t in tickets]
     return render_template("dashboard/historique.html", active="historique", historique=vue)
 
 @dashboard_bp.route("/gains")

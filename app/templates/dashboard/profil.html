@@ -1,23 +1,32 @@
 {% extends "dashboard/base.html" %}
 {% block title %}Profil{% endblock %}
 {% block content %}
-<h1 class="page-title">Ton profil</h1>
+<h1 class="page-title">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+  </svg>
+  Profil
+</h1>
 
+<div class="section-label">Informations</div>
 <div class="card">
-  <div style="font-size:12px; color:var(--dim); margin-bottom:4px;">Nom complet</div>
-  <div style="font-weight:600; margin-bottom:14px;">{{ user.nom }}</div>
+  <div class="stat-label" style="margin-bottom:4px;">Nom complet</div>
+  <div style="font-weight:600; margin-bottom:16px; font-size:14.5px;">{{ user.nom }}</div>
 
-  <div style="font-size:12px; color:var(--dim); margin-bottom:4px;">E-mail</div>
-  <div style="font-weight:600; margin-bottom:14px;">{{ user.email }}</div>
+  <div class="stat-label" style="margin-bottom:4px;">E-mail</div>
+  <div style="font-weight:600; margin-bottom:16px; font-size:14.5px;">{{ user.email }}</div>
 
-  <div style="font-size:12px; color:var(--dim); margin-bottom:4px;">Téléphone</div>
-  <div style="font-weight:600; margin-bottom:14px;">{{ user.telephone }}</div>
+  <div class="stat-label" style="margin-bottom:4px;">Téléphone</div>
+  <div style="font-weight:600; margin-bottom:16px; font-size:14.5px;">{{ user.telephone }}</div>
 
-  <div style="font-size:12px; color:var(--dim); margin-bottom:4px;">Pays</div>
-  <div style="font-weight:600;">{{ user.pays }}</div>
+  <div class="stat-label" style="margin-bottom:4px;">Pays</div>
+  <div style="font-weight:600; font-size:14.5px;">{{ user.pays }}</div>
 </div>
 
-<a href="{{ url_for('auth.deconnexion') }}" class="card" style="display:block; text-align:center; color:var(--red); font-weight:700; border-color:rgba(239,68,68,0.3);">
+<a href="{{ url_for('auth.deconnexion') }}" class="card card-row card-danger" style="justify-content:center; gap:10px; font-weight:700;">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>
+  </svg>
   Se déconnecter
 </a>
 {% endblock %}

@@ -1,0 +1,150 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Défi{% endblock %}
+{% block extra_style %}
+<style>
+  .hud{ display:flex; gap:8px; margin-bottom:14px; }
+  .hud .box{ background:var(--card); border-radius:12px; padding:10px 12px; text-align:center; flex:1; }
+  .hud .box .l{ font-size:9.5px; color:var(--dim); text-transform:uppercase; letter-spacing:0.05em; }
+  .hud .box .v{ font-size:19px; font-weight:800; margin-top:2px; }
+  #timerVal{ color:var(--gold); } #scoreVal{ color:var(--green); }
+  .timer-track{ height:6px; background:rgba(233,238,247,0.1); border-radius:100px; overflow:hidden; margin-bottom:22px; }
+  .timer-fill{ height:100%; background:linear-gradient(90deg, var(--orange), var(--gold)); width:100%; transition:width 0.1s linear; }
+  #gameArea{ text-align:center; }
+  .question{ font-size:34px; font-weight:800; margin:16px 0 24px; min-height:46px; }
+  .choices{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .choice-btn{
+    background:var(--card); border:1.5px solid var(--line); color:var(--ink);
+    border-radius:14px; padding:16px 8px; font-size:21px; font-weight:700; cursor:pointer;
+  }
+  .choice-btn.correct{ background:rgba(34,197,94,0.25); border-color:var(--green); }
+  .choice-btn.wrong{ background:rgba(239,68,68,0.25); border-color:var(--red); }
+  .streak-note{ font-size:11.5px; color:var(--green); min-height:15px; }
+  .penalty-note{ font-size:11.5px; color:var(--red); min-height:15px; }
+  #startScreen p{ color:var(--dim); font-size:13.5px; line-height:1.6; }
+  .hidden{ display:none !important; }
+</style>
+{% endblock %}
+{% block content %}
+<h1 class="page-title">Défi calcul</h1>
+
+<div id="startScreen">
+  <div class="card">
+    <p>Ce ticket a été débité de <b class="mono">{{ prix_ticket }} FCFA</b> une fois la partie lancée.
+    90 secondes, difficulté progressive. Ton score compte pour le classement du cycle en cours.</p>
+  </div>
+  <button class="card-link" style="width:100%; border:none; justify-content:center;" onclick="startGame()">Lancer le défi</button>
+</div>
+
+<div id="playScreen" class="hidden">
+  <div class="hud">
+    <div class="box"><div class="l">Temps</div><div class="v" id="timerVal">90</div></div>
+    <div class="box"><div class="l">Score</div><div class="v" id="scoreVal">0</div></div>
+    <div class="box"><div class="l">Niveau</div><div class="v" id="levelVal">1</div></div>
+  </div>
+  <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+  <div id="gameArea">
+    <div class="streak-note" id="streakNote">&nbsp;</div>
+    <div class="question" id="questionText">—</div>
+    <div class="choices" id="choicesArea"></div>
+    <div class="penalty-note" id="penaltyNote">&nbsp;</div>
+  </div>
+</div>
+
+<div id="endScreen" class="hidden">
+  <div class="card" style="text-align:center;">
+    <div class="stat-value" id="finalScore">0</div>
+    <div style="color:var(--dim); font-size:13px; margin-top:8px;" id="finalDetail"></div>
+  </div>
+  <div class="card" style="text-align:center; color:var(--dim); font-size:13px;">Enregistrement du score…</div>
+</div>
+
+<script>
+let timeLeft, score, correctCount, wrongCount, level, streak, timerInterval, currentAnswer;
+const TOTAL_TIME = 90;
+
+function startGame(){
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('playScreen').classList.remove('hidden');
+  timeLeft = TOTAL_TIME * 10;
+  score = 0; correctCount = 0; wrongCount = 0; level = 1; streak = 0;
+  updateHud();
+  nextQuestion();
+  timerInterval = setInterval(tick, 100);
+}
+function tick(){
+  timeLeft -= 1;
+  if(timeLeft <= 0){ timeLeft = 0; endGame(); return; }
+  updateHud();
+}
+function updateHud(){
+  document.getElementById('timerVal').textContent = (timeLeft/10).toFixed(1);
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('levelVal').textContent = level;
+  document.getElementById('timerFill').style.width = (timeLeft/(TOTAL_TIME*10)*100)+'%';
+}
+function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function genQuestion(){
+  let a,b,c,d,text,answer;
+  if(level<=2){ const op=Math.random()<0.5?'+':'-'; a=randInt(1,20); b=randInt(1,20);
+    if(op==='-'&&b>a)[a,b]=[b,a]; answer=op==='+'?a+b:a-b; text=`${a} ${op} ${b}`;
+  } else if(level<=4){ const ops=['+','-','×']; const op=ops[randInt(0,2)];
+    if(op==='×'){a=randInt(2,12);b=randInt(2,12);answer=a*b;}
+    else{a=randInt(10,99);b=randInt(10,99); if(op==='-'&&b>a)[a,b]=[b,a]; answer=op==='+'?a+b:a-b;}
+    text=`${a} ${op} ${b}`;
+  } else if(level<=6){ const v=randInt(0,2);
+    if(v===0){a=randInt(2,12);b=randInt(2,12);c=randInt(1,20); const m=Math.random()<0.5;
+      answer=m?a*b-c:a*b+c; text=`${a} × ${b} ${m?'−':'+'} ${c}`;}
+    else if(v===1){b=randInt(2,9); const q=randInt(2,15); a=b*q; c=randInt(1,10); answer=q+c; text=`${a} ÷ ${b} + ${c}`;}
+    else{a=randInt(3,15);b=randInt(3,15);c=randInt(2,9); answer=(a+b)*c; text=`(${a} + ${b}) × ${c}`;}
+  } else { const v=randInt(0,2);
+    if(v===0){a=randInt(4,15);c=randInt(1,30); answer=a*a+c; text=`${a}² + ${c}`;}
+    else if(v===1){const bases=[100,200,300,400,500]; const pct=[10,20,25,50];
+      a=bases[randInt(0,bases.length-1)]; b=pct[randInt(0,pct.length-1)]; answer=(a*b)/100; c=randInt(1,10); answer+=c;
+      text=`${b}% de ${a} + ${c}`;}
+    else{a=randInt(2,10);b=randInt(2,10);c=randInt(2,10);d=randInt(1,15); answer=a*b-c*2+d; text=`${a} × ${b} − ${c}×2 + ${d}`;}
+  }
+  return {text, answer};
+}
+function nextQuestion(){
+  const q=genQuestion(); currentAnswer=q.answer;
+  document.getElementById('questionText').textContent=q.text+' = ?';
+  let choices=new Set([q.answer]);
+  while(choices.size<4){ const delta=randInt(-5,5)*(Math.random()<0.5?1:2);
+    const cand=q.answer+(delta===0?randInt(1,3):delta); if(cand!==q.answer)choices.add(cand); }
+  choices=Array.from(choices).sort(()=>Math.random()-0.5);
+  const area=document.getElementById('choicesArea'); area.innerHTML='';
+  choices.forEach(c=>{ const btn=document.createElement('button'); btn.className='choice-btn'; btn.textContent=c;
+    btn.onclick=()=>handleAnswer(c,btn); area.appendChild(btn); });
+}
+function handleAnswer(chosen, btn){
+  document.querySelectorAll('.choice-btn').forEach(b=>b.onclick=null);
+  if(chosen===currentAnswer){ btn.classList.add('correct'); correctCount++; streak++; score+=10;
+    document.getElementById('streakNote').textContent = streak>=3?`Série de ${streak} !`:'';
+    document.getElementById('penaltyNote').textContent='\u00A0';
+    if(correctCount%3===0 && level<8) level++;
+  } else { btn.classList.add('wrong'); wrongCount++; streak=0; timeLeft=Math.max(0,timeLeft-30);
+    document.getElementById('penaltyNote').textContent='−3s de pénalité';
+    document.getElementById('streakNote').textContent='';
+    document.querySelectorAll('.choice-btn').forEach(b=>{ if(parseInt(b.textContent)===currentAnswer) b.classList.add('correct'); });
+  }
+  updateHud();
+  setTimeout(nextQuestion, 550);
+}
+function endGame(){
+  clearInterval(timerInterval);
+  document.getElementById('playScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.remove('hidden');
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalDetail').textContent =
+    `${correctCount} bonnes réponses · ${wrongCount} erreurs · niveau ${level}`;
+
+  fetch("{{ url_for('dashboard.jouer_soumettre') }}", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({score: score})
+  }).then(() => {
+    setTimeout(() => { window.location.href = "{{ url_for('dashboard.accueil') }}"; }, 1500);
+  });
+}
+</script>
+{% endblock %}

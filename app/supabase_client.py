@@ -76,3 +76,9 @@ def get_classement_cycle(cycle_id):
     }
     r = requests.get(url, params=params, headers=_headers(), timeout=10)
     return r.json() if r.status_code == 200 else []
+
+def incrementer_pot(cycle_id, montant):
+    url = f"{SUPABASE_URL}/rest/v1/rpc/incrementer_pot_cycle"
+    payload = {"p_cycle_id": cycle_id, "p_montant": montant}
+    r = requests.post(url, json=payload, headers=_headers(), timeout=10)
+    return r
