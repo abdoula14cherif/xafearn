@@ -27,6 +27,7 @@
 {% block content %}
 <h1 class="page-title">{{ jeu.nom }} — Démo</h1>
 <span class="demo-badge">Mode test — aucun gain, aucun ticket débité</span>
+<p style="font-size:11px; color:var(--dim); margin:-6px 0 14px;">*Aperçu basé sur un ticket fictif de 500 F — le vrai calcul dépend du montant réellement payé.</p>
 
 <div id="startScreen">
   <div class="card"><p style="color:var(--dim); font-size:13.5px;">90 secondes pour t'entraîner. Ce score ne compte pour aucun classement.</p></div>
@@ -36,8 +37,8 @@
 <div id="playScreen" class="hidden">
   <div class="hud">
     <div class="box"><div class="l">Temps</div><div class="v" id="timerVal">90</div></div>
-    <div class="box"><div class="l">Score</div><div class="v" id="scoreVal">0</div></div>
     <div class="box"><div class="l">Niveau</div><div class="v" id="levelVal">1</div></div>
+    <div class="box"><div class="l">Aperçu gain*</div><div class="v mono" id="gagneVal" style="color:var(--dim);">0 F</div></div>
   </div>
   <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
   <div id="gameArea">
@@ -57,8 +58,19 @@
 </div>
 
 <script>
+// Simulation basée sur un ticket de référence à 500F — juste pour donner un aperçu du principe
+const MONTANT_REFERENCE = 500;
+const POURCENTAGE_INSTANT = 0.20;
+const PLAFOND_BONNES_REPONSES = 25;
+const REWARD_PAR_REPONSE = Math.max(1, Math.floor(Math.round(MONTANT_REFERENCE * POURCENTAGE_INSTANT) / PLAFOND_BONNES_REPONSES));
+
 let timeLeft, score, correctCount, wrongCount, level, streak, timerInterval, currentAnswer;
 const TOTAL_TIME = 90;
+
+function updateGagne(){
+  const recompensees = Math.min(correctCount, PLAFOND_BONNES_REPONSES);
+  document.getElementById('gagneVal').textContent = (recompensees * REWARD_PAR_REPONSE) + ' F';
+}
 function startGame(){
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('playScreen').classList.remove('hidden');
@@ -111,6 +123,7 @@ function handleAnswer(chosen, btn){
   if(chosen===currentAnswer){ btn.classList.add('correct'); correctCount++; streak++; score+=10;
     document.getElementById('streakNote').textContent = streak>=3?`Série de ${streak} !`:'';
     document.getElementById('penaltyNote').textContent='\u00A0';
+    updateGagne();
     if(correctCount%3===0 && level<8) level++;
   } else { btn.classList.add('wrong'); wrongCount++; streak=0; timeLeft=Math.max(0,timeLeft-30);
     document.getElementById('penaltyNote').textContent='−3s de pénalité';
