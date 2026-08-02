@@ -1,0 +1,191 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Tri Sous Pression — Démo{% endblock %}
+{% block extra_style %}
+<style>
+  .hud{ display:flex; gap:8px; margin-bottom:14px; }
+  .hud .box{ background:var(--card); border-radius:12px; padding:10px 12px; text-align:center; flex:1; }
+  .hud .box .l{ font-size:9.5px; color:var(--dim); text-transform:uppercase; letter-spacing:0.05em; }
+  .hud .box .v{ font-size:19px; font-weight:800; margin-top:2px; }
+  #timerVal{ color:var(--gold); } #scoreVal{ color:var(--green); }
+  .timer-track{ height:6px; background:rgba(233,238,247,0.1); border-radius:100px; overflow:hidden; margin-bottom:20px; }
+  .timer-fill{ height:100%; background:linear-gradient(90deg, var(--orange), var(--gold)); width:100%; transition:width 0.1s linear; }
+
+  .drop-zone{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:30px 20px 20px; text-align:center; margin-bottom:16px;
+  }
+  .falling-item{
+    width:64px; height:64px; border-radius:50%; margin:0 auto 18px;
+    box-shadow:0 8px 24px -6px rgba(0,0,0,0.5);
+  }
+  .item-track{ height:6px; border-radius:100px; background:rgba(233,238,247,0.1); overflow:hidden; }
+  .item-fill{ height:100%; border-radius:100px; background:linear-gradient(90deg, var(--red), var(--orange)); width:100%; }
+
+  .basket-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .basket-btn{
+    border:1.5px solid var(--line); border-radius:14px; padding:18px 10px;
+    text-align:center; font-weight:700; font-size:14px; cursor:pointer; color:#111;
+  }
+  .basket-btn.wrong-flash{ outline:2px solid var(--red); }
+  .streak-note{ font-size:11.5px; color:var(--green); min-height:15px; text-align:center; }
+  .penalty-note{ font-size:11.5px; color:var(--red); min-height:15px; text-align:center; }
+  .hidden{ display:none !important; }
+  .demo-badge{
+    display:inline-block; font-size:10.5px; font-weight:700; color:var(--dim);
+    background:rgba(233,238,247,0.06); padding:4px 10px; border-radius:100px; margin-bottom:14px;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<h1 class="page-title">{{ jeu.nom }} — Démo</h1>
+<span class="demo-badge">Mode test — aucun gain, aucun ticket débité</span>
+
+<div id="startScreen">
+  <div class="card"><p style="color:var(--dim); font-size:13.5px;">Un objet coloré tombe — tape le panier de la bonne couleur avant qu'il n'atteigne le bas. 90 secondes, la vitesse augmente.</p></div>
+  <button class="card-link" style="width:100%; border:none; justify-content:center;" onclick="startGame()">Lancer le test</button>
+</div>
+
+<div id="playScreen" class="hidden">
+  <div class="hud">
+    <div class="box"><div class="l">Temps</div><div class="v" id="timerVal">90</div></div>
+    <div class="box"><div class="l">Score</div><div class="v" id="scoreVal">0</div></div>
+    <div class="box"><div class="l">Niveau</div><div class="v" id="levelVal">1</div></div>
+  </div>
+  <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+
+  <div class="streak-note" id="streakNote">&nbsp;</div>
+  <div class="drop-zone">
+    <div class="falling-item" id="fallingItem"></div>
+    <div class="item-track"><div class="item-fill" id="itemFill"></div></div>
+  </div>
+  <div class="penalty-note" id="penaltyNote">&nbsp;</div>
+
+  <div class="basket-grid" id="basketGrid"></div>
+</div>
+
+<div id="endScreen" class="hidden">
+  <div class="card" style="text-align:center;">
+    <div class="stat-value" id="finalScore">0</div>
+    <div style="color:var(--dim); font-size:13px; margin-top:8px;" id="finalDetail"></div>
+  </div>
+  <a href="{{ url_for('dashboard.acheter', slug=jeu.slug) }}" class="card-link" style="justify-content:center;">Jouer pour de vrai</a>
+</div>
+
+<script>
+const COULEURS = [
+  {nom:"Rouge", val:"#EF4444"},
+  {nom:"Bleu",  val:"#2FB6E0"},
+  {nom:"Vert",  val:"#22C55E"},
+  {nom:"Jaune", val:"#F4B93E"},
+];
+
+let timeLeft, score, correctCount, wrongCount, level, streak, timerInterval;
+let itemInterval, itemTimeMs, itemElapsed, currentCouleur, acceptingInput;
+const TOTAL_TIME = 90;
+
+function startGame(){
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('playScreen').classList.remove('hidden');
+  timeLeft = TOTAL_TIME * 10; score=0; correctCount=0; wrongCount=0; level=1; streak=0;
+  buildBaskets();
+  updateHud();
+  spawnItem();
+  timerInterval = setInterval(tick, 100);
+}
+
+function buildBaskets(){
+  const grid = document.getElementById('basketGrid');
+  grid.innerHTML = '';
+  COULEURS.forEach(c=>{
+    const btn = document.createElement('div');
+    btn.className = 'basket-btn';
+    btn.style.background = c.val;
+    btn.textContent = c.nom;
+    btn.onclick = () => handleBasket(c.nom, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function tick(){
+  timeLeft -= 1;
+  if(timeLeft <= 0){ timeLeft = 0; endGame(); return; }
+  updateHud();
+}
+function updateHud(){
+  document.getElementById('timerVal').textContent = (timeLeft/10).toFixed(1);
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('levelVal').textContent = level;
+  document.getElementById('timerFill').style.width = (timeLeft/(TOTAL_TIME*10)*100)+'%';
+}
+
+function itemDurationForLevel(){
+  return Math.max(900, 2400 - (level-1)*200);
+}
+
+function spawnItem(){
+  acceptingInput = true;
+  currentCouleur = COULEURS[Math.floor(Math.random()*COULEURS.length)];
+  document.getElementById('fallingItem').style.background = currentCouleur.val;
+  document.getElementById('penaltyNote').textContent = '\u00A0';
+
+  itemTimeMs = itemDurationForLevel();
+  itemElapsed = 0;
+  const fill = document.getElementById('itemFill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+
+  clearInterval(itemInterval);
+  const stepMs = 50;
+  itemInterval = setInterval(()=>{
+    itemElapsed += stepMs;
+    const pct = Math.max(0, 100 - (itemElapsed/itemTimeMs*100));
+    fill.style.width = pct + '%';
+    if(itemElapsed >= itemTimeMs){
+      clearInterval(itemInterval);
+      if(acceptingInput) missItem();
+    }
+  }, stepMs);
+}
+
+function missItem(){
+  acceptingInput = false;
+  wrongCount++; streak = 0;
+  timeLeft = Math.max(0, timeLeft - 20);
+  document.getElementById('penaltyNote').textContent = 'Raté — −2s';
+  document.getElementById('streakNote').textContent = '';
+  updateHud();
+  setTimeout(spawnItem, 400);
+}
+
+function handleBasket(nomChoisi, btn){
+  if(!acceptingInput) return;
+  acceptingInput = false;
+  clearInterval(itemInterval);
+
+  if(nomChoisi === currentCouleur.nom){
+    correctCount++; streak++; score += 10;
+    document.getElementById('streakNote').textContent = streak>=3 ? `Série de ${streak} !` : '';
+    if(correctCount % 3 === 0 && level < 8) level++;
+  } else {
+    wrongCount++; streak = 0;
+    timeLeft = Math.max(0, timeLeft - 30);
+    document.getElementById('penaltyNote').textContent = 'Mauvais panier — −3s';
+    btn.classList.add('wrong-flash');
+    setTimeout(()=>btn.classList.remove('wrong-flash'), 300);
+    document.getElementById('streakNote').textContent = '';
+  }
+  updateHud();
+  setTimeout(spawnItem, 350);
+}
+
+function endGame(){
+  clearInterval(timerInterval);
+  clearInterval(itemInterval);
+  document.getElementById('playScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.remove('hidden');
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalDetail').textContent =
+    `${correctCount} bons tris · ${wrongCount} ratés/erreurs · niveau ${level}`;
+}
+</script>
+{% endblock %}

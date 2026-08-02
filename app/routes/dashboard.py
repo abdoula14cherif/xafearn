@@ -48,15 +48,20 @@ def jeu_detail(slug):
 MONTANTS_AUTORISES = [300, 500, 700, 1000]
 
 @dashboard_bp.route("/jeux/<slug>/demo")
+JEUX_AVEC_DEMO = {
+    "calcul": "dashboard/demo.html",
+    "tri": "dashboard/demo_tri.html",
+}
+
 def demo(slug):
     if not _require_login():
         return redirect(url_for("auth.connexion"))
     jeu = get_jeu_par_slug(slug)
     if not jeu or not jeu["actif"]:
         return redirect(url_for("dashboard.jeux_hub"))
-    if slug != "calcul":
+    if slug not in JEUX_AVEC_DEMO:
         return redirect(url_for("dashboard.jeu_detail", slug=slug))
-    return render_template("dashboard/demo.html", jeu=jeu)
+    return render_template(JEUX_AVEC_DEMO[slug], jeu=jeu)
 
 @dashboard_bp.route("/jeux/<slug>/acheter", methods=["GET", "POST"])
 def acheter(slug):
@@ -137,11 +142,15 @@ def jouer(slug):
     if not paiement:
         return redirect(url_for("dashboard.acheter", slug=slug))
 
-    if slug != "calcul":
+    JEUX_JOUABLES = {
+        "calcul": "dashboard/jouer.html",
+        "tri": "dashboard/jouer_tri.html",
+    }
+    if slug not in JEUX_JOUABLES:
         # Les mécaniques des autres jeux ne sont pas encore développées
         return redirect(url_for("dashboard.jeux_hub"))
 
-    return render_template("dashboard/jouer.html", prix_ticket=cycle["prix_ticket"], paiement_id=paiement["id"], slug=slug)
+    return render_template(JEUX_JOUABLES[slug], prix_ticket=cycle["prix_ticket"], paiement_id=paiement["id"], slug=slug)
 
 @dashboard_bp.route("/jouer/soumettre", methods=["POST"])
 def jouer_soumettre():
