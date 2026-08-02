@@ -22,7 +22,19 @@
     display:inline-block; font-size:10.5px; font-weight:700; color:var(--dim);
     background:rgba(233,238,247,0.06); padding:4px 10px; border-radius:100px; margin-bottom:14px;
   }
-</style>
+  @keyframes gagnePulse{
+    0%{ transform:scale(1); }
+    50%{ transform:scale(1.18); }
+    100%{ transform:scale(1); }
+  }
+  .gagne-pulse{ animation:gagnePulse 0.35s ease; }
+  .fly-gain{
+    position:fixed; z-index:999; pointer-events:none;
+    font-family:'Space Mono', monospace; font-weight:800; font-size:15px; color:var(--green);
+    transition:transform 0.7s cubic-bezier(.2,.8,.2,1), opacity 0.7s ease;
+    opacity:1; will-change:transform, opacity;
+  }
+
 {% endblock %}
 {% block content %}
 <h1 class="page-title">{{ jeu.nom }} — Démo</h1>
@@ -38,7 +50,7 @@
   <div class="hud">
     <div class="box"><div class="l">Temps</div><div class="v" id="timerVal">90</div></div>
     <div class="box"><div class="l">Niveau</div><div class="v" id="levelVal">1</div></div>
-    <div class="box"><div class="l">Aperçu gain*</div><div class="v mono" id="gagneVal" style="color:var(--dim);">0 F</div></div>
+    <div class="box" id="gagneBox"><div class="l">Aperçu gain*</div><div class="v mono" id="gagneVal" style="color:var(--dim);">0 F</div></div>
   </div>
   <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
   <div id="gameArea">
@@ -70,6 +82,36 @@ const TOTAL_TIME = 90;
 function updateGagne(){
   const recompensees = Math.min(correctCount, PLAFOND_BONNES_REPONSES);
   document.getElementById('gagneVal').textContent = (recompensees * REWARD_PAR_REPONSE) + ' F';
+}
+
+function lancerAnimationGain(startEl, montant){
+  if(!startEl || montant <= 0) return;
+  const startRect = startEl.getBoundingClientRect();
+  const targetEl = document.getElementById('gagneBox');
+  if(!targetEl) return;
+  const targetRect = targetEl.getBoundingClientRect();
+
+  const el = document.createElement('div');
+  el.className = 'fly-gain';
+  el.textContent = '+' + montant + ' F';
+  el.style.left = (startRect.left + startRect.width/2 - 20) + 'px';
+  el.style.top = (startRect.top + startRect.height/2 - 10) + 'px';
+  document.body.appendChild(el);
+
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      const dx = (targetRect.left + targetRect.width/2) - (startRect.left + startRect.width/2);
+      const dy = (targetRect.top + targetRect.height/2) - (startRect.top + startRect.height/2);
+      el.style.transform = `translate(${dx}px, ${dy}px) scale(0.5)`;
+      el.style.opacity = '0';
+    });
+  });
+
+  setTimeout(()=>{
+    el.remove();
+    targetEl.classList.add('gagne-pulse');
+    setTimeout(()=>targetEl.classList.remove('gagne-pulse'), 350);
+  }, 700);
 }
 function startGame(){
   document.getElementById('startScreen').classList.add('hidden');
@@ -124,6 +166,7 @@ function handleAnswer(chosen, btn){
     document.getElementById('streakNote').textContent = streak>=3?`Série de ${streak} !`:'';
     document.getElementById('penaltyNote').textContent='\u00A0';
     updateGagne();
+    if(correctCount <= PLAFOND_BONNES_REPONSES) lancerAnimationGain(btn, REWARD_PAR_REPONSE);
     if(correctCount%3===0 && level<8) level++;
   } else { btn.classList.add('wrong'); wrongCount++; streak=0; timeLeft=Math.max(0,timeLeft-30);
     document.getElementById('penaltyNote').textContent='−3s de pénalité';
