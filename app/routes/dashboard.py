@@ -47,12 +47,12 @@ def jeu_detail(slug):
 
 MONTANTS_AUTORISES = [300, 500, 700, 1000]
 
-@dashboard_bp.route("/jeux/<slug>/demo")
 JEUX_AVEC_DEMO = {
     "calcul": "dashboard/demo.html",
     "tri": "dashboard/demo_tri.html",
 }
 
+@dashboard_bp.route("/jeux/<slug>/demo")
 def demo(slug):
     if not _require_login():
         return redirect(url_for("auth.connexion"))
