@@ -79,8 +79,8 @@ function tick(){
 }
 function updateHud(){
   document.getElementById('timerVal').textContent = (timeLeft/10).toFixed(1);
-  document.getElementById('scoreVal').textContent = score;
   document.getElementById('levelVal').textContent = level;
+  if(typeof updateGagne==='function') updateGagne();
   document.getElementById('timerFill').style.width = (timeLeft/(TOTAL_TIME*10)*100)+'%';
 }
 function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
