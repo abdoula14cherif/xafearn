@@ -3,7 +3,7 @@ from app.supabase_client import (
     get_cycle_ouvert, compter_tickets_cycle, get_historique_user,
     get_gains_user, get_solde_user, get_classement_cycle,
     creer_ticket, incrementer_pot,
-    creer_paiement, get_paiement_par_order_id, get_paiement_paye_non_consomme,
+    creer_paiement, get_paiement_par_order_id, get_paiement_paye_non_consomme, get_paiement_par_id,
     get_jeux, get_jeu_par_slug,
 )
 from app.flinpay_client import initier_paiement
@@ -45,6 +45,8 @@ def jeu_detail(slug):
         seuil=cycle["seuil"] if cycle else jeu["seuil"],
     )
 
+MONTANTS_AUTORISES = [300, 500, 700, 1000]
+
 @dashboard_bp.route("/jeux/<slug>/acheter", methods=["GET", "POST"])
 def acheter(slug):
     if not _require_login():
@@ -56,28 +58,35 @@ def acheter(slug):
 
     cycle = get_cycle_ouvert(jeu["id"])
     if not cycle:
-        return render_template("dashboard/acheter.html", jeu=jeu, prix_ticket=jeu["prix_ticket"], erreur="Aucun cycle ouvert pour l'instant.")
+        return render_template("dashboard/acheter.html", jeu=jeu, erreur="Aucune cagnotte en cours pour ce jeu. Reviens plus tard.")
 
     if request.method == "GET":
-        return render_template("dashboard/acheter.html", jeu=jeu, prix_ticket=cycle["prix_ticket"])
+        return render_template("dashboard/acheter.html", jeu=jeu)
 
     country = request.form.get("country")
     operator = request.form.get("operator")
     phone = request.form.get("phone", "").strip()
+    try:
+        montant = int(request.form.get("montant", 0))
+    except ValueError:
+        montant = 0
+
+    if montant not in MONTANTS_AUTORISES:
+        return render_template("dashboard/acheter.html", jeu=jeu, erreur="Montant invalide.")
 
     if not all([country, operator, phone]):
-        return render_template("dashboard/acheter.html", jeu=jeu, prix_ticket=cycle["prix_ticket"], erreur="Tous les champs sont obligatoires.")
+        return render_template("dashboard/acheter.html", jeu=jeu, erreur="Tous les champs sont obligatoires.")
 
     order_id, r = initier_paiement(
-        amount=cycle["prix_ticket"], phone=phone,
+        amount=montant, phone=phone,
         client_name=session.get("nom", "Client"), country=country, operator=operator,
     )
 
     if r.status_code != 200 or not r.json().get("ok"):
         detail = r.json().get("error", "erreur inconnue") if r.headers.get("content-type","").startswith("application/json") else r.text[:200]
-        return render_template("dashboard/acheter.html", jeu=jeu, prix_ticket=cycle["prix_ticket"], erreur=f"Échec Flinpay ({r.status_code}) : {detail}")
+        return render_template("dashboard/acheter.html", jeu=jeu, erreur=f"Échec Flinpay ({r.status_code}) : {detail}")
 
-    creer_paiement(session["user_id"], cycle["id"], order_id, cycle["prix_ticket"], phone, operator, country)
+    creer_paiement(session["user_id"], cycle["id"], order_id, montant, phone, operator, country)
 
     return render_template("dashboard/attente.html", order_id=order_id, slug=slug)
 
@@ -137,11 +146,13 @@ def jouer_soumettre():
     if not cycle or not paiement_id:
         return {"error": "session de jeu invalide"}, 400
 
-    creer_ticket(session["user_id"], cycle["id"], score, paiement_id=paiement_id)
-    incrementer_pot(cycle["id"], cycle["prix_ticket"])
+    montant_paye = paiement_row["montant"] if (paiement_row := get_paiement_par_id(paiement_id)) else 0
+
+    creer_ticket(session["user_id"], cycle["id"], score, montant_paye, paiement_id=paiement_id)
+    incrementer_pot(cycle["id"], montant_paye)
 
     cycle_a_jour = dict(cycle)
-    cycle_a_jour["pot"] = cycle["pot"] + cycle["prix_ticket"]
+    cycle_a_jour["pot"] = cycle["pot"] + montant_paye
     verifier_et_cloturer(cycle_a_jour)
 
     return {"status": "ok"}

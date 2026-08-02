@@ -1,5 +1,5 @@
 from app.supabase_client import (
-    get_classement_cycle, creer_gain, cloturer_cycle_db, creer_nouveau_cycle,
+    get_classement_cycle, creer_gain, cloturer_cycle_db,
     compter_tickets_cycle,
 )
 
@@ -29,5 +29,7 @@ def verifier_et_cloturer(cycle):
             creer_gain(gagnant["user_id"], cycle["id"], montant)
 
     cloturer_cycle_db(cycle["id"])
-    nouveau_cycle = creer_nouveau_cycle(cycle["seuil"], cycle["prix_ticket"], cycle["jeu_id"])
-    return nouveau_cycle
+    # Plus de réouverture automatique : c'est l'admin qui relance
+    # une nouvelle cagnotte manuellement (insertion directe dans Supabase)
+    # quand il le décide.
+    return None

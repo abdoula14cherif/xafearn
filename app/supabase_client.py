@@ -62,9 +62,9 @@ def compter_tickets_cycle(cycle_id):
     r = requests.get(url, params=params, headers=_headers(), timeout=10)
     return len(r.json()) if r.status_code == 200 else 0
 
-def creer_ticket(user_id, cycle_id, score, paiement_id=None):
+def creer_ticket(user_id, cycle_id, score, montant, paiement_id=None):
     url = f"{SUPABASE_URL}/rest/v1/tickets"
-    payload = {"user_id": user_id, "cycle_id": cycle_id, "score": score}
+    payload = {"user_id": user_id, "cycle_id": cycle_id, "score": score, "montant": montant}
     if paiement_id:
         payload["paiement_id"] = paiement_id
     r = requests.post(url, json=payload, headers=_headers(), timeout=10)
@@ -166,4 +166,12 @@ def creer_nouveau_cycle(seuil, prix_ticket, jeu_id):
     if r.status_code in (200, 201):
         data = r.json()
         return data[0] if isinstance(data, list) else data
+    return None
+
+def get_paiement_par_id(paiement_id):
+    url = f"{SUPABASE_URL}/rest/v1/paiements"
+    params = {"id": f"eq.{paiement_id}", "select": "*"}
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    if r.status_code == 200 and r.json():
+        return r.json()[0]
     return None

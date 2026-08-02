@@ -1,18 +1,36 @@
 {% extends "dashboard/base.html" %}
 {% block title %}Acheter un ticket{% endblock %}
+{% block extra_style %}
+<style>
+  .tier-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .tier-btn{
+    background:var(--navy); border:1.5px solid var(--line); color:var(--ink);
+    border-radius:12px; padding:14px; text-align:center; font-weight:800; font-size:16px; cursor:pointer;
+  }
+  .tier-btn input{ display:none; }
+  .tier-btn.selected{ border-color:var(--gold); background:rgba(244,185,62,0.1); color:var(--gold); }
+</style>
+{% endblock %}
 {% block content %}
-<h1 class="page-title">Acheter un ticket</h1>
+<h1 class="page-title">{{ jeu.nom }}</h1>
 
 {% if erreur %}
 <div class="card" style="border-color:rgba(239,68,68,0.4); color:#FCA5A5; font-size:13.5px;">{{ erreur }}</div>
 {% endif %}
 
 <div class="card">
-  <div class="stat-label">MONTANT</div>
-  <div class="stat-value" style="color:var(--gold); margin-bottom:16px;">{{ prix_ticket }}<span class="unit">FCFA</span></div>
+  <div class="section-label" style="margin-top:0;">Choisis ta mise</div>
+  <form method="POST" id="achatForm">
+    <div class="tier-grid" id="tierGrid">
+      {% for montant in [300, 500, 700, 1000] %}
+      <label class="tier-btn" data-montant="{{ montant }}">
+        <input type="radio" name="montant" value="{{ montant }}" {{ 'checked' if montant==500 }}>
+        {{ montant }} F
+      </label>
+      {% endfor %}
+    </div>
 
-  <form method="POST">
-    <div class="section-label" style="margin-top:0;">Pays</div>
+    <div class="section-label">Pays</div>
     <select name="country" required style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--navy); color:var(--ink); font-size:14px; margin-bottom:14px;">
       <option value="CI">Côte d'Ivoire</option>
       <option value="CM">Cameroun</option>
@@ -38,4 +56,15 @@
     </button>
   </form>
 </div>
+
+<script>
+document.querySelectorAll('.tier-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    btn.querySelector('input').checked = true;
+  });
+});
+document.querySelector('.tier-btn input:checked').closest('.tier-btn').classList.add('selected');
+</script>
 {% endblock %}
