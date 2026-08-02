@@ -42,6 +42,7 @@ def inscription():
     session["email"] = email
     session["telephone"] = telephone
     session["pays"] = pays
+    session["est_admin"] = user_data.get("est_admin", False)
 
     return redirect(url_for("dashboard.accueil"))
 
@@ -63,6 +64,7 @@ def connexion():
     session["email"] = user["email"]
     session["telephone"] = user["telephone"]
     session["pays"] = user["pays"]
+    session["est_admin"] = user.get("est_admin", False)
 
     return redirect(url_for("dashboard.accueil"))
 

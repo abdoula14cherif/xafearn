@@ -47,6 +47,17 @@ def jeu_detail(slug):
 
 MONTANTS_AUTORISES = [300, 500, 700, 1000]
 
+@dashboard_bp.route("/jeux/<slug>/demo")
+def demo(slug):
+    if not _require_login():
+        return redirect(url_for("auth.connexion"))
+    jeu = get_jeu_par_slug(slug)
+    if not jeu or not jeu["actif"]:
+        return redirect(url_for("dashboard.jeux_hub"))
+    if slug != "calcul":
+        return redirect(url_for("dashboard.jeu_detail", slug=slug))
+    return render_template("dashboard/demo.html", jeu=jeu)
+
 @dashboard_bp.route("/jeux/<slug>/acheter", methods=["GET", "POST"])
 def acheter(slug):
     if not _require_login():

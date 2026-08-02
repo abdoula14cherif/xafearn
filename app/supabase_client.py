@@ -175,3 +175,18 @@ def get_paiement_par_id(paiement_id):
     if r.status_code == 200 and r.json():
         return r.json()[0]
     return None
+
+def get_jeu_par_id(jeu_id):
+    url = f"{SUPABASE_URL}/rest/v1/jeux"
+    params = {"id": f"eq.{jeu_id}", "select": "*"}
+    r = requests.get(url, params=params, headers=_headers(), timeout=10)
+    if r.status_code == 200 and r.json():
+        return r.json()[0]
+    return None
+
+def basculer_jeu_actif(jeu_id, nouveau_statut):
+    url = f"{SUPABASE_URL}/rest/v1/jeux"
+    params = {"id": f"eq.{jeu_id}"}
+    payload = {"actif": nouveau_statut}
+    r = requests.patch(url, params=params, json=payload, headers=_headers(), timeout=10)
+    return r
