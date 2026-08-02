@@ -2,12 +2,13 @@ from flask import Blueprint, render_template, session, redirect, url_for, reques
 from app.supabase_client import (
     get_cycle_ouvert, compter_tickets_cycle, get_historique_user,
     get_gains_user, get_solde_user, get_classement_cycle,
-    creer_ticket, incrementer_pot,
+    creer_ticket, incrementer_pot, creer_gain,
     creer_paiement, get_paiement_par_order_id, get_paiement_paye_non_consomme, get_paiement_par_id,
     get_jeux, get_jeu_par_slug,
 )
 from app.flinpay_client import initier_paiement
 from app.cycle_logic import verifier_et_cloturer
+from app.gains_instantanes import calculer_gain_instantane, calculer_part_cagnotte
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -150,7 +151,7 @@ def jouer(slug):
         # Les mécaniques des autres jeux ne sont pas encore développées
         return redirect(url_for("dashboard.jeux_hub"))
 
-    return render_template(JEUX_JOUABLES[slug], prix_ticket=cycle["prix_ticket"], paiement_id=paiement["id"], slug=slug)
+    return render_template(JEUX_JOUABLES[slug], prix_ticket=paiement["montant"], paiement_id=paiement["id"], slug=slug, montant=paiement["montant"])
 
 @dashboard_bp.route("/jouer/soumettre", methods=["POST"])
 def jouer_soumettre():
@@ -167,15 +168,22 @@ def jouer_soumettre():
         return {"error": "session de jeu invalide"}, 400
 
     montant_paye = paiement_row["montant"] if (paiement_row := get_paiement_par_id(paiement_id)) else 0
+    correct_count = score // 10  # +10 points par bonne réponse dans tous les jeux
 
     creer_ticket(session["user_id"], cycle["id"], score, montant_paye, paiement_id=paiement_id)
-    incrementer_pot(cycle["id"], montant_paye)
+
+    gain_instant = calculer_gain_instantane(montant_paye, correct_count)
+    if gain_instant > 0:
+        creer_gain(session["user_id"], cycle["id"], gain_instant)
+
+    part_cagnotte = calculer_part_cagnotte(montant_paye)
+    incrementer_pot(cycle["id"], part_cagnotte)
 
     cycle_a_jour = dict(cycle)
-    cycle_a_jour["pot"] = cycle["pot"] + montant_paye
+    cycle_a_jour["pot"] = cycle["pot"] + part_cagnotte
     verifier_et_cloturer(cycle_a_jour)
 
-    return {"status": "ok"}
+    return {"status": "ok", "gain_instant": gain_instant}
 
 @dashboard_bp.route("/historique")
 def historique():

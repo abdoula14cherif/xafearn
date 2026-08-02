@@ -38,8 +38,8 @@
 <div id="playScreen" class="hidden">
   <div class="hud">
     <div class="box"><div class="l">Temps</div><div class="v" id="timerVal">90</div></div>
-    <div class="box"><div class="l">Score</div><div class="v" id="scoreVal">0</div></div>
     <div class="box"><div class="l">Niveau</div><div class="v" id="levelVal">1</div></div>
+    <div class="box"><div class="l">Gagné</div><div class="v mono" id="gagneVal" style="color:var(--green);">0 F</div></div>
   </div>
   <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
   <div id="gameArea">
@@ -122,6 +122,7 @@ function handleAnswer(chosen, btn){
   if(chosen===currentAnswer){ btn.classList.add('correct'); correctCount++; streak++; score+=10;
     document.getElementById('streakNote').textContent = streak>=3?`Série de ${streak} !`:'';
     document.getElementById('penaltyNote').textContent='\u00A0';
+    updateGagne();
     if(correctCount%3===0 && level<8) level++;
   } else { btn.classList.add('wrong'); wrongCount++; streak=0; timeLeft=Math.max(0,timeLeft-30);
     document.getElementById('penaltyNote').textContent='−3s de pénalité';
@@ -143,8 +144,9 @@ function endGame(){
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({score: score, paiement_id: PAIEMENT_ID, slug: "{{ slug }}"})
-  }).then(() => {
-    setTimeout(() => { window.location.href = "{{ url_for('dashboard.accueil') }}"; }, 1500);
+  }).then(r => r.json()).then(data => {
+    document.getElementById('finalDetail').innerHTML += `<br><b style="color:var(--green);">+${data.gain_instant || 0} F crédités instantanément</b>`;
+    setTimeout(() => { window.location.href = "{{ url_for('dashboard.jeux_hub') }}"; }, 2200);
   });
 }
 </script>
