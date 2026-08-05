@@ -1,28 +1,147 @@
 {% extends "dashboard/base.html" %}
 {% block title %}Jeux{% endblock %}
+{% block extra_style %}
+<style>
+  @keyframes fadeSlideUp{
+    from{ opacity:0; transform:translateY(16px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @keyframes pulseGlow{
+    0%,100%{ box-shadow:0 0 0 0 rgba(244,185,62,0.0); }
+    50%{ box-shadow:0 0 0 6px rgba(244,185,62,0.08); }
+  }
+  @keyframes liveDot{
+    0%,100%{ opacity:1; } 50%{ opacity:0.3; }
+  }
+  @keyframes countGlow{
+    0%{ text-shadow:0 0 0px rgba(244,185,62,0); }
+    50%{ text-shadow:0 0 18px rgba(244,185,62,0.6); }
+    100%{ text-shadow:0 0 0px rgba(244,185,62,0); }
+  }
+
+  .fade-in{ animation:fadeSlideUp 0.5s cubic-bezier(.2,.8,.2,1) both; }
+
+  .vedette{
+    position:relative; overflow:hidden; border-radius:22px; padding:26px 22px;
+    background:
+      radial-gradient(140% 100% at 15% -10%, rgba(244,185,62,0.22), transparent 55%),
+      radial-gradient(120% 100% at 100% 110%, rgba(242,129,29,0.14), transparent 60%),
+      linear-gradient(160deg, #16233D, #0E1930 70%);
+    border:1px solid rgba(244,185,62,0.22);
+    margin-bottom:26px;
+    animation:pulseGlow 3.5s ease-in-out infinite;
+  }
+  .vedette::before{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(115deg, transparent 0 26px, rgba(244,185,62,0.035) 26px 27px);
+  }
+  .vedette-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; position:relative; }
+  .vedette-tag{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'Space Mono', monospace; font-size:10.5px; font-weight:700; letter-spacing:0.08em;
+    color:var(--gold); text-transform:uppercase;
+  }
+  .live-dot{ width:6px; height:6px; border-radius:50%; background:var(--green); animation:liveDot 1.4s ease-in-out infinite; }
+  .vedette-icon{
+    width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    background:rgba(244,185,62,0.12); border:1px solid rgba(244,185,62,0.25); position:relative;
+  }
+  .vedette h2{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:24px; margin:0 0 4px; position:relative; }
+  .vedette .desc{ font-size:12.5px; color:var(--dim); margin:0 0 18px; position:relative; }
+  .vedette-pot{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:38px; color:var(--gold);
+    animation:countGlow 2.6s ease-in-out infinite; position:relative; line-height:1;
+  }
+  .vedette-pot .unit{ font-size:16px; color:var(--dim); font-weight:600; margin-left:6px; }
+  .vedette-sub{ font-family:'Space Mono', monospace; font-size:11px; color:var(--dim); margin:8px 0 18px; position:relative; }
+  .vedette-cta{
+    position:relative; display:inline-flex; align-items:center; gap:8px;
+    background:linear-gradient(90deg, var(--orange), var(--gold)); color:#111; font-weight:800;
+    padding:13px 22px; border-radius:100px; font-size:14px; text-decoration:none;
+  }
+
+  .section-label{
+    font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--dim); margin:0 0 12px;
+  }
+  .jeu-card{
+    position:relative; overflow:hidden; border-radius:18px; padding:18px 16px;
+    background:var(--card); border:1px solid var(--line); margin-bottom:12px;
+    transition:transform 0.15s ease, border-color 0.15s ease;
+  }
+  .jeu-card:active{ transform:scale(0.98); }
+  .jeu-card.dispo{ border-color:rgba(244,185,62,0.14); }
+  .jeu-card.indispo{ opacity:0.5; }
+  .jeu-top{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .jeu-icon{
+    width:42px; height:42px; border-radius:12px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .jeu-nom{ font-weight:700; font-size:15px; }
+  .jeu-desc{ font-size:11.5px; color:var(--dim); margin-top:2px; line-height:1.4; }
+  .jeu-badge{
+    margin-left:auto; font-family:'Space Mono', monospace; font-size:9.5px; font-weight:700;
+    padding:4px 9px; border-radius:100px; white-space:nowrap; align-self:flex-start;
+  }
+  .badge-dispo{ color:var(--green); background:rgba(34,197,94,0.12); }
+  .badge-indispo{ color:var(--dim); background:rgba(233,238,247,0.06); }
+  .jeu-pot-row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'Space Mono', monospace; font-size:11px; color:var(--dim); margin-bottom:12px;
+  }
+  .jeu-pot-row b{ color:var(--ink); font-weight:700; }
+  .jeu-cta{
+    display:block; text-align:center; padding:11px; border-radius:12px;
+    font-weight:700; font-size:13px; text-decoration:none;
+  }
+</style>
+{% endblock %}
 {% block content %}
 <h1 class="page-title">
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <rect x="2" y="6" width="20" height="12" rx="3"/><path d="M8 10v4M6 12h4"/><circle cx="15.5" cy="10.5" r="1"/><circle cx="17.5" cy="12.5" r="1"/>
   </svg>
-  Choisis un jeu
+  Jeux
 </h1>
 
+{% if vedette %}
+<div class="vedette fade-in">
+  <div class="vedette-top">
+    <div class="vedette-tag"><span class="live-dot"></span> Cagnotte la plus élevée</div>
+    <div class="vedette-icon">{{ icones[vedette.slug]|safe }}</div>
+  </div>
+  <h2>{{ vedette.nom }}</h2>
+  <p class="desc">{{ vedette.description }}</p>
+  <div class="vedette-pot">{{ vedette.pot }}<span class="unit">FCFA</span></div>
+  <div class="vedette-sub">{{ vedette.tickets_joues }} / {{ vedette.seuil_actuel }} défis joués ce cycle</div>
+  <a href="{{ url_for('dashboard.jeu_detail', slug=vedette.slug) }}" class="vedette-cta">
+    Jouer maintenant
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+  </a>
+</div>
+{% endif %}
+
+<div class="section-label">Tous les jeux</div>
 {% for jeu in jeux %}
-<div class="card" style="{{ '' if jeu.actif else 'opacity:0.5;' }}">
-  <div class="card-row">
+<div class="jeu-card {{ 'dispo' if jeu.actif else 'indispo' }} fade-in" style="animation-delay:{{ loop.index0 * 0.06 }}s;">
+  <div class="jeu-top">
+    <div class="jeu-icon" style="background:{{ couleurs[jeu.slug] }}22;">{{ icones[jeu.slug]|safe }}</div>
     <div>
-      <div style="font-weight:700; font-size:15px;">{{ jeu.nom }}</div>
-      <div style="font-size:12px; color:var(--dim); margin-top:3px;">{{ jeu.description }}</div>
+      <div class="jeu-nom">{{ jeu.nom }}</div>
+      <div class="jeu-desc">{{ jeu.description }}</div>
     </div>
     {% if jeu.actif %}
-    <span class="mono" style="font-size:10.5px; color:var(--green); background:rgba(34,197,94,0.12); padding:4px 10px; border-radius:100px;">Disponible</span>
+    <span class="jeu-badge badge-dispo">Disponible</span>
     {% else %}
-    <span class="mono" style="font-size:10.5px; color:var(--dim); background:rgba(233,238,247,0.06); padding:4px 10px; border-radius:100px;">Indisponible</span>
+    <span class="jeu-badge badge-indispo">Bientôt</span>
     {% endif %}
   </div>
   {% if jeu.actif %}
-  <a href="{{ url_for('dashboard.jeu_detail', slug=jeu.slug) }}" class="card-link" style="margin-top:14px; margin-bottom:0; justify-content:center;">
+  <div class="jeu-pot-row">
+    <span>Cagnotte : <b>{{ jeu.pot }} F</b></span>
+    <span>{{ jeu.tickets_joues }}/{{ jeu.seuil_actuel }}</span>
+  </div>
+  <a href="{{ url_for('dashboard.jeu_detail', slug=jeu.slug) }}" class="jeu-cta" style="background:{{ couleurs[jeu.slug] }}; color:#111;">
     Jouer — {{ jeu.prix_ticket }} FCFA
   </a>
   {% endif %}

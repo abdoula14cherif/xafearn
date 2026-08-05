@@ -9,6 +9,7 @@ from app.supabase_client import (
 from app.flinpay_client import initier_paiement
 from app.cycle_logic import verifier_et_cloturer
 from app.gains_instantanes import calculer_gain_instantane, calculer_part_cagnotte
+from app.icones_jeux import ICONES_JEUX, COULEURS_JEUX
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -26,7 +27,17 @@ def jeux_hub():
     if not _require_login():
         return redirect(url_for("auth.connexion"))
     jeux = get_jeux()
-    return render_template("dashboard/jeux_hub.html", active="accueil", jeux=jeux)
+    for jeu in jeux:
+        cycle = get_cycle_ouvert(jeu["id"]) if jeu["actif"] else None
+        jeu["pot"] = cycle["pot"] if cycle else 0
+        jeu["tickets_joues"] = compter_tickets_cycle(cycle["id"]) if cycle else 0
+        jeu["seuil_actuel"] = cycle["seuil"] if cycle else jeu["seuil"]
+
+    actifs = sorted([j for j in jeux if j["actif"]], key=lambda j: j["pot"], reverse=True)
+    vedette = actifs[0] if actifs else None
+    reste = [j for j in jeux if j is not vedette]
+
+    return render_template("dashboard/jeux_hub.html", active="accueil", vedette=vedette, jeux=reste, icones=ICONES_JEUX, couleurs=COULEURS_JEUX)
 
 @dashboard_bp.route("/jeux/<slug>")
 def jeu_detail(slug):
