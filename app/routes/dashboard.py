@@ -62,6 +62,10 @@ MONTANTS_AUTORISES = [300, 500, 700, 1000]
 JEUX_AVEC_DEMO = {
     "calcul": "dashboard/demo.html",
     "tri": "dashboard/demo_tri.html",
+    "reaction": "dashboard/demo_reaction.html",
+    "sequence": "dashboard/demo_sequence.html",
+    "paires": "dashboard/demo_paires.html",
+    "puzzle": "dashboard/demo_puzzle.html",
 }
 
 @dashboard_bp.route("/jeux/<slug>/demo")

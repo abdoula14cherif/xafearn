@@ -1,0 +1,177 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Puzzle Glissant — Démo{% endblock %}
+{% block extra_style %}
+<style>
+  .hud{ display:flex; gap:8px; margin-bottom:14px; }
+  .hud .box{ background:var(--card); border-radius:12px; padding:10px 12px; text-align:center; flex:1; }
+  .hud .box .l{ font-size:9.5px; color:var(--dim); text-transform:uppercase; letter-spacing:0.05em; }
+  .hud .box .v{ font-size:19px; font-weight:800; margin-top:2px; }
+  #timerVal{ color:var(--gold); }
+  .timer-track{ height:6px; background:rgba(233,238,247,0.1); border-radius:100px; overflow:hidden; margin-bottom:16px; }
+  .timer-fill{ height:100%; background:linear-gradient(90deg, var(--orange), var(--gold)); width:100%; transition:width 0.1s linear; }
+  .puzzle-status{ text-align:center; font-size:13px; color:var(--dim); margin-bottom:12px; }
+  .grille{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:10px; }
+  .tuile{
+    aspect-ratio:1; border-radius:14px; background:var(--card); border:1.5px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:26px; color:var(--ink);
+    cursor:pointer; transition:background 0.15s ease, transform 0.1s ease;
+  }
+  .tuile.faite{ background:rgba(34,197,94,0.18); border-color:var(--green); color:var(--green); }
+  .tuile.erreur{ background:rgba(239,68,68,0.2); border-color:var(--red); }
+  .tuile:active{ transform:scale(0.94); }
+  .hidden{ display:none !important; }
+  .demo-badge{
+    display:inline-block; font-size:10.5px; font-weight:700; color:var(--dim);
+    background:rgba(233,238,247,0.06); padding:4px 10px; border-radius:100px; margin-bottom:14px;
+  }
+  @keyframes gagnePulse{ 0%{transform:scale(1);} 50%{transform:scale(1.18);} 100%{transform:scale(1);} }
+  .gagne-pulse{ animation:gagnePulse 0.35s ease; }
+  .fly-gain{
+    position:fixed; z-index:999; pointer-events:none;
+    font-family:'Space Mono', monospace; font-weight:800; font-size:15px; color:var(--green);
+    transition:transform 0.7s cubic-bezier(.2,.8,.2,1), opacity 0.7s ease; opacity:1;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<h1 class="page-title">{{ jeu.nom }} — Démo</h1>
+<span class="demo-badge">Mode test — aucun gain, aucun ticket débité</span>
+<p style="font-size:11px; color:var(--dim); margin:-6px 0 14px;">*Aperçu basé sur un ticket fictif de 500 F — le vrai calcul dépend du montant réellement payé.</p>
+
+<div id="startScreen">
+  <div class="card"><p style="color:var(--dim); font-size:13.5px;">Tape les chiffres de 1 à 9 dans l'ordre croissant, le plus vite possible. Une erreur te coûte du temps.</p></div>
+  <button class="card-link" style="width:100%; border:none; justify-content:center;" onclick="startGame()">Lancer le test</button>
+</div>
+
+<div id="playScreen" class="hidden">
+  <div class="hud">
+    <div class="box"><div class="l">Temps</div><div class="v" id="timerVal">90</div></div>
+    <div class="box"><div class="l">Niveau</div><div class="v" id="levelVal">1</div></div>
+    <div class="box" id="gagneBox"><div class="l">Aperçu gain*</div><div class="v mono" id="gagneVal" style="color:var(--dim);">0 F</div></div>
+  </div>
+  <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+  <div class="puzzle-status" id="puzzleStatus">Tape 1 en premier</div>
+  <div class="grille" id="grille"></div>
+</div>
+
+<div id="endScreen" class="hidden">
+  <div class="card" style="text-align:center;">
+    <div class="stat-value" id="finalScore">0</div>
+    <div style="color:var(--dim); font-size:13px; margin-top:8px;" id="finalDetail"></div>
+  </div>
+  <a href="{{ url_for('dashboard.acheter', slug=jeu.slug) }}" class="card-link" style="justify-content:center;">Jouer pour de vrai</a>
+</div>
+
+<script>
+const MONTANT_REFERENCE = 500;
+const POURCENTAGE_INSTANT = 0.20;
+const PLAFOND_BONNES_REPONSES = 25;
+const REWARD_PAR_REPONSE = Math.max(1, Math.floor(Math.round(MONTANT_REFERENCE * POURCENTAGE_INSTANT) / PLAFOND_BONNES_REPONSES));
+
+let timeLeft, score, correctCount, wrongCount, level, timerInterval;
+let prochainNombre;
+const TOTAL_TIME = 90;
+
+function updateGagne(){
+  const recompensees = Math.min(correctCount, PLAFOND_BONNES_REPONSES);
+  document.getElementById('gagneVal').textContent = (recompensees * REWARD_PAR_REPONSE) + ' F';
+}
+function lancerAnimationGain(startEl, montant){
+  if(!startEl || montant <= 0) return;
+  const startRect = startEl.getBoundingClientRect();
+  const targetEl = document.getElementById('gagneBox');
+  if(!targetEl) return;
+  const targetRect = targetEl.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'fly-gain';
+  el.textContent = '+' + montant + ' F';
+  el.style.left = (startRect.left + startRect.width/2 - 20) + 'px';
+  el.style.top = (startRect.top + startRect.height/2 - 10) + 'px';
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      const dx = (targetRect.left + targetRect.width/2) - (startRect.left + startRect.width/2);
+      const dy = (targetRect.top + targetRect.height/2) - (startRect.top + startRect.height/2);
+      el.style.transform = `translate(${dx}px, ${dy}px) scale(0.5)`;
+      el.style.opacity = '0';
+    });
+  });
+  setTimeout(()=>{
+    el.remove();
+    targetEl.classList.add('gagne-pulse');
+    setTimeout(()=>targetEl.classList.remove('gagne-pulse'), 350);
+  }, 700);
+}
+
+function startGame(){
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('playScreen').classList.remove('hidden');
+  timeLeft = TOTAL_TIME * 10; score=0; correctCount=0; wrongCount=0; level=1;
+  genererGrille();
+  updateHud();
+  timerInterval = setInterval(tick, 100);
+}
+function tick(){
+  timeLeft -= 1;
+  if(timeLeft <= 0){ timeLeft = 0; endGame(); return; }
+  updateHud();
+}
+function updateHud(){
+  document.getElementById('timerVal').textContent = (timeLeft/10).toFixed(1);
+  document.getElementById('levelVal').textContent = level;
+  document.getElementById('timerFill').style.width = (timeLeft/(TOTAL_TIME*10)*100)+'%';
+}
+
+function genererGrille(){
+  prochainNombre = 1;
+  document.getElementById('puzzleStatus').textContent = 'Tape 1 en premier';
+  let nombres = [1,2,3,4,5,6,7,8,9];
+  nombres.sort(()=>Math.random()-0.5);
+  const grille = document.getElementById('grille');
+  grille.innerHTML = '';
+  nombres.forEach(n=>{
+    const t = document.createElement('div');
+    t.className = 'tuile';
+    t.textContent = n;
+    t.dataset.val = n;
+    t.onclick = () => tapNombre(t);
+    grille.appendChild(t);
+  });
+}
+
+function tapNombre(t){
+  if(timeLeft<=0 || t.classList.contains('faite')) return;
+  const val = parseInt(t.dataset.val);
+  if(val === prochainNombre){
+    t.classList.add('faite');
+    prochainNombre++;
+    if(prochainNombre > 9){
+      correctCount++; score += 10;
+      document.getElementById('puzzleStatus').textContent = 'Grille terminée !';
+      updateGagne();
+      if(correctCount <= PLAFOND_BONNES_REPONSES) lancerAnimationGain(t, REWARD_PAR_REPONSE);
+      if(correctCount % 2 === 0 && level < 8) level++;
+      setTimeout(genererGrille, 450);
+    } else {
+      document.getElementById('puzzleStatus').textContent = `Tape ${prochainNombre}`;
+    }
+  } else {
+    wrongCount++;
+    timeLeft = Math.max(0, timeLeft - 30);
+    t.classList.add('erreur');
+    setTimeout(()=>t.classList.remove('erreur'), 250);
+    document.getElementById('puzzleStatus').textContent = `Erreur — −3s (attendu : ${prochainNombre})`;
+    updateHud();
+  }
+}
+
+function endGame(){
+  clearInterval(timerInterval);
+  document.getElementById('playScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.remove('hidden');
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalDetail').textContent =
+    `${correctCount} grilles complétées · ${wrongCount} erreurs · niveau ${level}`;
+}
+</script>
+{% endblock %}
